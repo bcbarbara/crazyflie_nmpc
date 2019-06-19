@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf
 )
 
+set(acados_include "/usr/local/include")
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -90,6 +91,13 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  include/c_generated_code/crazyflie_pos_model
+  include/c_generated_code
+  include/
+  ${acados_include} 
+  ${acados_include}/blasfeo/include/
+  ${acados_include}/acados/ 
+  ${acados_include}/qpOASES_e/
 )
 
 ## Declare a cpp library
@@ -98,17 +106,28 @@ include_directories(
 # )
 
 # Declare a cpp executable
-add_executable(crazyflie_controller
-  src/controller.cpp)
+#add_executable(crazyflie_controller
+#  src/controller.cpp)
+  # Specify libraries to link a library or executable target against
+#target_link_libraries(crazyflie_controller
+#  ${catkin_LIBRARIES}
+#)
+
+
+# acados executable
+add_executable(acados_nmpc src/acados_nmpc.cpp)
+  # Specify libraries to link a library or executable target against
+target_link_libraries(acados_nmpc
+  acados_solver_crazyflie_pos
+  ${catkin_LIBRARIES}
+)
+
 
 # Add cmake target dependencies of the executable/library
 # as an example, message headers may need to be generated before nodes
 # add_dependencies(crazyflie_controller crazyflie_controller_generate_messages_cpp)
 
-# Specify libraries to link a library or executable target against
-target_link_libraries(crazyflie_controller
-  ${catkin_LIBRARIES}
-)
+
 
 #############
 ## Install ##
