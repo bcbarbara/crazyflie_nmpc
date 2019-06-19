@@ -3,3 +3,5 @@
 */catkin_generated/*
 *.cmake
 */Makefile
+crazyflie_controller/*.kdev4
+crazyflie_controller/.kdev4
