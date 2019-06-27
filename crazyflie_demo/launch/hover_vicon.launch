@@ -41,7 +41,7 @@
   </group>
 
   <!-- run vicon bridge -->
-  <include file="$(find vicon_bridge)/launch/vicon.launch"/>
+  <include file="$(find vicon_bridge)/launch/vicon.launch"/> 
 
   <!-- run rviz -->
   <param name="robot_description" command="$(find xacro)/xacro.py $(find crazyflie_description)/urdf/crazyflie.urdf.xacro" />
