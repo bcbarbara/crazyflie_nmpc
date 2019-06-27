@@ -2,13 +2,13 @@
 
 <launch>
   <arg name="uri" default="radio://0/80/2M" />
+  <arg name="frame" default="/cortex/crazyflie/crazyflie" />
   <arg name="joy_dev" default="/dev/input/js0" />
 
   <include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
   </include>
 
   <group ns="crazyflie">
-    <!--<param name="crazyflie/pid_rate/yaw_kp" value="200"/>-->
     <include file="$(find crazyflie_driver)/launch/crazyflie_add.launch">
       <arg name="uri" value="$(arg uri)" />
       <arg name="tf_prefix" value="crazyflie" />
@@ -24,8 +24,13 @@
     </include>
 
   <node name="crazyflie_demo_controller" pkg="crazyflie_demo" type="controller.py" output="screen">
-      <param name="use_crazyflie_controller" value="False" />
+    <param name="use_crazyflie_controller" value="True" />
   </node>
+
+  <include file="$(find crazyflie_controller)/launch/crazyflie2_nmpc.launch">
+    <arg name="frame" value="$(arg frame)" />
+  </include>
+
   </group>
 
   <!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find crazyflie_demo)/launch/crazyflie.rviz" /> -->

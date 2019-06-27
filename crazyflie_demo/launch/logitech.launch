@@ -4,6 +4,18 @@
 
   <!-- Note that axis IDs are those from the joystick message plus one, to be able to invert axes by specifiying either positive or negative axis numbers.-->
   <!-- Axis 2 from joy message thus has to be set as '3' or '-3'(inverted mode) below-->
+
+  <?ignore  Index | Axis name on the actual controller
+            ------|------------------------------------
+              0   | Left/Right Axis stick left
+              1   | Up/Down Axis stick left
+              2   | LT
+              3   | Left/Right Axis stick right
+              4   | Up/Down Axis stick right
+              5   | RT
+              6   | cross key left/right
+              7   | cross key up/down
+  ?>            
   <node name="quadrotor_teleop" pkg="crazyflie_demo" type="quadrotor_teleop">
     <param name="x_axis" value="2"/>
     <param name="y_axis" value="1"/>

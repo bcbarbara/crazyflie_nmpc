@@ -12,7 +12,7 @@
     <include file="$(find crazyflie_driver)/launch/crazyflie_add.launch">
       <arg name="uri" value="$(arg uri)" />
       <arg name="tf_prefix" value="crazyflie" />
-      <arg name="enable_logging" value="True" />
+      <arg name="enable_logging" value="False" />
     </include>
 
     <node name="joy" pkg="joy" type="joy_node" output="screen" >
