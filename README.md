@@ -87,7 +87,7 @@ where the uri specifies the uri of your Crazyflie. You can find valid uris using
 
 For launching the node of the NMPC together with a motion capture system (MOCAP), use:
 ```
-roslaunch crazyflie_demo hover_vicon.launch uri:=radio://0/80/2M frame:=/cortex/crazyflie/crazyflie
+roslaunch crazyflie_demo nmpc.launch uri:=radio://0/80/2M frame:=/cortex/crazyflie/crazyflie
 ```
 ## ROS Features
 
