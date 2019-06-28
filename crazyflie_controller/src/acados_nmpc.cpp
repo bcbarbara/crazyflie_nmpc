@@ -73,9 +73,7 @@ public:
         , m_frame(frame)
 	, m_state(Idle)
         , m_pubNav()
-	, actual_x(0)
-	, actual_y(0)
-	, actual_z(0)
+	, m_listener()
 	, m_thrust(0)
 	, m_startZ(0)
         , m_serviceTakeoff()
@@ -90,12 +88,30 @@ public:
 	}
 
         ros::NodeHandle nh;
-
+	m_listener.waitForTransform(m_worldFrame, m_frame, ros::Time(0), ros::Duration(10.0)); 
         m_pubNav 	 = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
 	m_imu_sub 	 = nh.subscribe("/crazyflie/imu", 1000, &NMPC::imuCallback, this);
-	m_viconpos_sub 	 = nh.subscribe("/vicon/pos", 1000, &NMPC::posViconCallback, this);
         m_serviceTakeoff = nh.advertiseService("takeoff", &NMPC::takeoff, this);
         m_serviceLand    = nh.advertiseService("land", &NMPC::land, this);
+	
+	vx = 0.0;
+	vy = 0.0;
+	vz = 0.0;
+    
+	x_samples.resize(5);
+	y_samples.resize(5);
+	z_samples.resize(5);
+	for (unsigned int i = 0; i <= 4; i++) x_samples[i] = 0.0;
+	for (unsigned int i = 0; i <= 4; i++) y_samples[i] = 0.0;
+	for (unsigned int i = 0; i <= 4; i++) z_samples[i] = 0.0;
+	
+	vx_filter_samples.resize(5);
+	vy_filter_samples.resize(5);
+	vz_filter_samples.resize(5);
+	for (unsigned int i = 0; i <= 4; i++) vx_filter_samples[i] = 0.0;
+	for (unsigned int i = 0; i <= 4; i++) vy_filter_samples[i] = 0.0;
+	for (unsigned int i = 0; i <= 4; i++) vz_filter_samples[i] = 0.0;
+
     }
 
     void run(double frequency)
@@ -145,12 +161,6 @@ private:
 
     int acados_status;
 
-    void posViconCallback( const geometry_msgs::Vector3::ConstPtr& msg){
-
-	actual_x = msg->x;
-	actual_y = msg->y;
-	actual_z = msg->z;
-    }
 
     void imuCallback(const sensor_msgs::Imu::ConstPtr& msg){
 
@@ -166,7 +176,9 @@ private:
         ROS_INFO("Takeoff requested!");
         m_state = TakingOff;
 
-        m_startZ = actual_z;
+        tf::StampedTransform transform;
+        m_listener.lookupTransform(m_worldFrame, m_frame, ros::Time(0), transform);
+	m_startZ = transform.getOrigin().z();
 
         return true;
     }
@@ -185,15 +197,34 @@ private:
     {
         acados_free();
     }
+    
+    /* Estimate the velocity using Euler initially and after a low-pass filter */
+    double linear_velocity(std::vector <double> q_samples, double Ts, double elapsed_time, std::vector <double> dq_samples) {
+
+	double dq = 0;
+
+	if (elapsed_time > 0.1) {
+		dq = 1.573*dq_samples[4] - 0.6188*dq_samples[3] + 22.65*q_samples[4] - 22.65*q_samples[3];
+		//dq = ((25. / 12.)*q_samples[4] - 4 * q_samples[3] + 3 * q_samples[2] - (4. / 3.)*q_samples[1] + 0.25*q_samples[0]) / Ts; 4th order Gear Formula
+	}
+	else {
+		dq = (q_samples[4] - q_samples[3]) / Ts;
+	}
+	
+	return dq;
+}
+
 
     void iteration(const ros::TimerEvent& e)
     {
         float dt = e.current_real.toSec() - e.last_real.toSec();
+	
+	delta_t += dt;
 
 	switch(m_state){
 	      case Idle:
 		{
-		    //ROS_INFO("Idle mode.");
+		    ROS_INFO("Idle mode.");
 		    geometry_msgs::Twist msg;
 
 		    msg.linear.x = 0; // pitch
@@ -207,9 +238,10 @@ private:
 
 	      case TakingOff:
 		{
-		    //ROS_INFO("Taking off.");
-
-		    if (actual_z > m_startZ + 0.05 || m_thrust > 50000)
+		    ROS_INFO("Taking off...");
+		    tf::StampedTransform transform;
+		    m_listener.lookupTransform(m_worldFrame, m_frame, ros::Time(0), transform);
+		    if (transform.getOrigin().z() > m_startZ + 0.05 || m_thrust > 50000)
 		    {
 			m_state = Tracking;
 			m_thrust = 0;
@@ -228,34 +260,26 @@ private:
 
 	      case Landing:
 		{
-		    //ROS_INFO("Landing.");
-		    geometry_msgs::Twist msg;
-
-		    if (actual_z <= m_startZ + 0.05) {
+		    ROS_INFO("Landing...");
+		    tf::StampedTransform transform;
+		    m_listener.lookupTransform(m_worldFrame, m_frame, ros::Time(0), transform);
+		    if (transform.getOrigin().z() <= m_startZ + 0.05){
 			m_state = Idle;
 			geometry_msgs::Twist msg;
 			m_pubNav.publish(msg);
 		    }
-		} // intentional fall thru
+		} // intentional fall-thru
 		break;
 
 
 	      case Tracking:
 		{
-		    //ROS_INFO("NMPC tracker.");
+		    ROS_INFO("NMPC tracker initiated.");
 
 		    geometry_msgs::Twist msg;
 		    solver_input acados_in;
 		    solver_output acados_out;
-
-		    // get position and velocity from the mocap
-		    x0_sign[X] = actual_x;
-		    x0_sign[Y] = actual_y;
-		    x0_sign[Z] = actual_z;
-		    x0_sign[DX] = actual_x/dt;
-		    x0_sign[DY] = actual_y/dt;
-		    x0_sign[DZ] = actual_z/dt;
-
+		    
 		    // update reference
 		    yref_sign[0] = 0.0;
 		    yref_sign[1] = 0.0;
@@ -263,6 +287,55 @@ private:
 		    yref_sign[3] = 0.0;
 		    yref_sign[4] = 0.0;
 		    yref_sign[5] = 0.0;
+		    
+		    tf::StampedTransform currentDrone;
+		    m_listener.lookupTransform(m_frame, m_worldFrame, ros::Time(0), currentDrone);
+		    
+
+		    // get position from the mocap
+		    x0_sign[X] = currentDrone.getOrigin().x();
+		    x0_sign[Y] = currentDrone.getOrigin().y();
+		    x0_sign[Z] = currentDrone.getOrigin().z();
+		    
+		    //estimate the velocity
+		    x_samples[0] = x_samples[1];
+		    x_samples[1] = x_samples[2];
+		    x_samples[2] = x_samples[3];
+		    x_samples[3] = x_samples[4];
+		    x_samples[4] = x0_sign[X];
+		    y_samples[0] = y_samples[1];
+		    y_samples[1] = y_samples[2];
+		    y_samples[2] = y_samples[3];
+		    y_samples[3] = y_samples[4];
+		    y_samples[4] = x0_sign[Y];
+		    z_samples[0] = z_samples[1];
+		    z_samples[1] = z_samples[2];
+		    z_samples[2] = z_samples[3];
+		    z_samples[3] = z_samples[4];
+		    z_samples[4] = x0_sign[Z];
+
+		    vx = linear_velocity(x_samples, dt, delta_t, vx_filter_samples);
+		    vy = linear_velocity(y_samples, dt, delta_t, vy_filter_samples);
+		    vz = linear_velocity(z_samples, dt, delta_t, vz_filter_samples);
+		    // passing to the state vector
+		    x0_sign[DX] = vx;
+		    x0_sign[DY] = vy;
+		    x0_sign[DZ] = vz;
+		    vx_filter_samples[0] = vx_filter_samples[1];
+		    vx_filter_samples[1] = vx_filter_samples[2];
+		    vx_filter_samples[2] = vx_filter_samples[3];
+		    vx_filter_samples[3] = vx_filter_samples[4];
+		    vx_filter_samples[4] = vx;
+		    vy_filter_samples[0] = vy_filter_samples[1];
+		    vy_filter_samples[1] = vy_filter_samples[2];
+		    vy_filter_samples[2] = vy_filter_samples[3];
+		    vy_filter_samples[3] = vy_filter_samples[4];
+		    vy_filter_samples[4] = vy;
+		    vz_filter_samples[0] = vz_filter_samples[1];
+		    vz_filter_samples[1] = vz_filter_samples[2];
+		    vz_filter_samples[2] = vz_filter_samples[3];
+		    vz_filter_samples[3] = vz_filter_samples[4];
+		    vz_filter_samples[4] = vz;
 
 		    // copy signals into local buffers
 		    for (unsigned int i = 0; i < NX; i++) acados_in.x0[i] = x0_sign[i];
@@ -323,13 +396,23 @@ private:
     ros::Subscriber m_joy_sub;
     ros::Subscriber m_task_sub;
     ros::Subscriber m_imu_sub;
-    ros::Subscriber m_viconpos_sub;
+    
+    tf::TransformListener m_listener;
 
     ros::ServiceServer m_serviceTakeoff;
     ros::ServiceServer m_serviceLand;
-
+    
     // Flag to choose the task to perform
     task m_state;
+    
+    double vx,vy,vz;
+    std::vector<double> x_samples;
+    std::vector<double> y_samples;
+    std::vector<double> z_samples;
+    std::vector<double> vx_filter_samples;
+    std::vector<double> vy_filter_samples;
+    std::vector<double> vz_filter_samples;
+    float delta_t;
 
     // Variables of the nmpc control process
     float x0_sign[NX];
@@ -338,11 +421,6 @@ private:
     // Variables for take-off and landing services
     float m_thrust;
     float m_startZ;
-
-    // Variables for the positions coming from the vicon
-    float actual_x;
-    float actual_y;
-    float actual_z;
 
     // Variables for reading the IMU data
     float actual_roll;
