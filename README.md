@@ -1,67 +1,44 @@
-[![Build Status](https://travis-ci.org/whoenig/crazyflie_ros.svg?branch=master)](https://travis-ci.org/whoenig/crazyflie_ros)
-
 crazyflie_ros
 =============
 
-ROS stack for Bitcraze Crazyflie (http://www.bitcraze.se/), with the following features:
+ROS stack for [Bitcraze Crazyflie](http://www.bitcraze.se/), with the following features:
 
-* Support for Crazyflie 1.0 and Crazyflie 2.0 (using stock firmware)
+* Support Crazyflie 2.1
 * Publishes on-board sensors in ROS standard message formats
 * Supports ROS parameters to reconfigure crazyflie parameters
 * Support for using multiple Crazyflies with a single Crazyradio
 * Includes external controller for waypoint navigation (if motion capture system is available)
 * No dependency to the Bitcraze SDK (Driver and Controller written in C++)
 
-A tutorial (for a slightly older version) is available in W. Hönig and N. Ayanian. "Flying Multiple UAVs Using ROS", Chapter in Robot Operating System (ROS): The Complete Reference (Volume 2), Springer, 2017. (see http://act.usc.edu/publications.html for a free pre-print).
+## Installation - Ubuntu 16.04 LTS with ROS Kinetic
+1. Install ROS Kinetic (recommended: “Desktop-Full Install”) following [these instructions](http://wiki.ros.org/kinetic/Installation/Ubuntu).
+2. We work with Catkin Command Line Tools to build packages in the workspace. They can be installed with apt-get following [these instructions](https://catkin-tools.readthedocs.io/en/latest/installing.html#installing-on-ubuntu-with-apt-get).
+> **Note** `catkin build​` instead of ​`catkin_mak​e`
 
-If you want to control many Crazyflies or look for a good controller for a single Crazyflie, take a look at http://crazyswarm.readthedocs.io/en/latest/. We are currently in the process to unify the Crazyswarm and crazyflie_ros as well as contributing the Crazyswarm firmware changes back to the official firmware.
-
-## Citing This Work
-
-This project is published under the very permissive MIT License. However,
-if you use the package we appreciate if you credit this project accordingly.
-
-For academic publications, you can cite the following book chapter:
+3. Setup your catkin workspace:
 ```
-@Inbook{crazyflieROS,
-  author={Wolfgang H{\"o}nig
-          and Nora Ayanian},
-  editor={Anis Koubaa},
-  title={Flying Multiple UAVs Using ROS},
-  bookTitle={Robot Operating System (ROS): The Complete Reference  (Volume 2)},
-  year={2017},
-  publisher={Springer International Publishing},
-  pages={83--118},
-  isbn={978-3-319-54927-9},
-  doi={10.1007/978-3-319-54927-9_3},
-  url={https://doi.org/10.1007/978-3-319-54927-9_3}
-}
-
+$ mkdir -p ~/catkin_ws/src
+$ cd ~/catkin_ws/src
+$ catkin_init_workspace
+$ cd ~/catkin_ws/
+$ catkin build
+$ source devel/setup.bash
+$ echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
+$ source ~/.bashrc
 ```
 
-If your work is related to Mixed Reality, you might cite the paper which introduced the package instead, using the following bibtex entry:
-```
-@conference{HoenigMixedReality2015,
-  author = {Wolfgang H{\"o}nig and Christina Milanes and Lisa Scaria and Thai Phan and Mark Bolas and Nora Ayanian},
-  booktitle = {IEEE/RSJ Intl Conf. Intelligent Robots and Systems},
-  pages = {5382 - 5387},
-  title = {Mixed Reality for Robotics},
-  year = {2015}}
-```
+4. Download and install [acados](https://github.com/acados/acados.git).
 
-For any other mentioning please include my affiliation (ACTLab at University of Southern California or USC in short; The link to our webpage is http://act.usc.edu) as this work was partially done as part of my research at USC.
-
-## Installation
-
-Clone the package into your catkin workspace:
+5. Clone the package into your catkin workspace:
 ```
-git clone https://github.com/whoenig/crazyflie_ros.git
-cd crazyflie_ros
-git submodule init
-git submodule update
+$ cd ~/catkin_ws/src
+$ git clone https://github.com/bcbarbara/crazyflie_ros.git
+$ cd crazyflie_ros
+$ git submodule init
+$ git submodule update
 ```
 
-Use `catkin_make` on your workspace to compile.
+6. Use `catkin build` on your workspace to compile.
 
 ## Usage
 
@@ -92,34 +69,26 @@ This package contains a 3D model of the Crazyflie (1.0). This is for visualizati
 
 ### Crazyflie_controller
 
-This package contains a simple PID controller for hovering or waypoint navigation.
-It can be used with external motion capture systems, such as VICON.
+This package contains an efficient and modular implementation of a Nonlinear Model Predictive Control (NMPC) tailored for the Crazyflie's online trajectory generation and tracking problem. A Real-Time Iteration (RTI) scheme through a Sequential Quadratic Programming (SQP) online algorithm is used in order to solve the Nonlinear Program (NLP).
+
+The package also contains a simple PID controller for hovering or waypoint navigation, which has been develop by Wolfgang Honig, and can be used with external motion capture systems, such as VICON.
+
+
 
 ### Crazyflie_demo
 
-This package contains a rich set of examples to get quickly started with the Crazyflie.
-
 For teleoperation using a joystick, use:
 ```
-roslaunch crazyflie_demo teleop_xbox360.launch uri:=radio://0/100/2M
+roslaunch crazyflie_demo teleop_logitec.launch uri:=radio://0/80/2M
 ```
-where the uri specifies the uri of your Crazyflie. You can find valid uris using the scan command in the crazyflie_tools package.
+where the uri specifies the uri of your Crazyflie. You can find valid uris using the scan command in the `crazyflie_tools` package.
+> **Note** By default the services for take off and landing in teleoperation mode are disable, while the emergency service is always enable in any type of mode. The button mapping for each service can be found in `scripts/controller.py`
 
-For hovering at (0,0,1) using VICON, use:
-```
-roslaunch crazyflie_demo hover_vicon.launch uri:=radio://0/100/2M frame:=/vicon/crazyflie/crazyflie x:=0 y:=0 z:=1
-```
-where the uri specifies the uri of your Crazyflie and frame the tf-frame. The launch file runs vicon_bridge automatically.
 
-For multiple Crazyflies make sure that all Crazyflies have a different address.
-Crazyflies which share a dongle should use the same channel and datarate for best performance.
-The performance degrades with the number of Crazyflies per dongle due to bandwidth limitations, however it was tested successfully to use 3 CFs per Crazyradio.
+For launching the node of the NMPC together with a motion capture system (MOCAP), use:
 ```
-roslaunch crazyflie_demo multi_teleop_xbox360.launch uri1:=radio://0/100/2M/E7E7E7E7E7 uri2:=radio://0/100/2M/E7E7E7E705
+roslaunch crazyflie_demo hover_vicon.launch uri:=radio://0/80/2M frame:=/cortex/crazyflie/crazyflie
 ```
-
-Please check the launch files in the crazyflie_demo package for other examples, including simple waypoint navigation.
-
 ## ROS Features
 
 ### Parameters
@@ -130,17 +99,19 @@ The launch file supports the following arguments:
 * roll_trim: Trim in degrees, e.g. negative if flie drifts to the left
 * pitch_trim: Trim in degrees, e.g. negative if flie drifts forward
 
-See http://wiki.bitcraze.se/projects:crazyflie:userguide:tips_and_tricks for details on how to obtain good trim values.
+See how to obtain good trim values [here](http://wiki.bitcraze.se/projects:crazyflie:userguide:tips_and_tricks for details on).
 
 ### Subscribers
 
 #### cmd_vel
 
-Similar to the hector_quadrotor, package the fields are used as following:
+The following fields are used:
 * linear.y: roll [e.g. -30 to 30 degrees]
 * linear.x: pitch [e.g. -30 to 30 degrees]
 * angular.z: yawrate [e.g. -200 to 200 degrees/second]
 * linear.z: thrust [10000 to 60000 (mapped to PWM output)]
+
+>**Note** See how to tune these parameters for your joystick in `launch/logitech.launch`
 
 ### Publishers
 
@@ -170,26 +141,3 @@ Similar to the hector_quadrotor, package the fields are used as following:
 * Float32
 * Volts
 * update: 100ms (time between crazyflie and ROS not synchronized!)
-
-## Similar Projects
-
-* https://github.com/gtagency/crazyflie-ros
-  * no documentation
-  * no teleop
-* https://github.com/omwdunkley/crazyflieROS
-  * coupled with GUI
-  * based on custom firmware
-* https://github.com/mbeards/crazyflie-ros
-  * incomplete
-* https://github.com/utexas-air-fri/crazyflie_fly
-  * not based on official SDK
-  * no support for logging
-* https://github.com/mchenryc/crazyflie
-  * no documentation
-
-## Notes
-
-* The dynamic_reconfigure package (http://wiki.ros.org/dynamic_reconfigure/) seems like a good fit to map the parameters, however it has severe limitations:
-  * Changed-Callback does not include which parameter(s) were changed. There is only a notion of a level which is a simple bitmask. This would cause that on any parameter change we would need to update all parameters on the Crazyflie.
-  * Parameters are statically generated. There are hacks to add parameters at runtime, however those might not work with future versions of dynamic_reconfigure.
-  * Groups not fully supported (https://github.com/ros-visualization/rqt_common_plugins/issues/162; This seems to be closed now, however the Indigo binary packages did not pick up the fixes yet).
