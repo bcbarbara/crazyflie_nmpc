@@ -40,15 +40,12 @@ class Controller():
             if self._buttons == None or data.buttons[i] != self._buttons[i]:
                 # Button for LANDING in Logitech Gamepad -> A
                 if i == 0 and data.buttons[i] == 1 and self._land != None:
-                    rospy.loginfo("LAND BUTTON -A- PRESSED")
                     self._land()
                 # Button for EMERGENGY in Logitech Gamepad ->  B
                 if i == 1 and data.buttons[i] == 1:
-                    rospy.loginfo("EMERGENCY BUTTON -B- PRESSED")
                     self._emergency()
                 # Button for TAKE OFF in Logitech Gamepad ->  X
                 if i == 2 and data.buttons[i] == 1 and self._takeoff != None:
-                    rospy.loginfo("TAKE OFF BUTTON -X- PRESSED")
                     self._takeoff()
                 if i == 4 and data.buttons[i] == 1:
                     value = int(rospy.get_param("ring/headlightEnable"))
