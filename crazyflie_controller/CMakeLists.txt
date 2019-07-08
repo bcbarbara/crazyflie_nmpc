@@ -122,7 +122,12 @@ target_link_libraries(acados_nmpc
   ${catkin_LIBRARIES}
 )
 
-
+# crazyflie imu node
+add_executable(crazyflie_imu src/crazyflie_imu.cpp)
+  # Specify libraries to link a library or executable target against
+target_link_libraries(crazyflie_imu 
+  ${catkin_LIBRARIES}
+)
 # Add cmake target dependencies of the executable/library
 # as an example, message headers may need to be generated before nodes
 # add_dependencies(crazyflie_controller crazyflie_controller_generate_messages_cpp)

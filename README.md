@@ -5,8 +5,6 @@ ROS stack for [Bitcraze Crazyflie](http://www.bitcraze.se/), with the following 
 
 * Support Crazyflie 2.1
 * Publishes on-board sensors in ROS standard message formats
-* Supports ROS parameters to reconfigure crazyflie parameters
-* Support for using multiple Crazyflies with a single Crazyradio
 * Includes external controller for waypoint navigation (if motion capture system is available)
 * No dependency to the Bitcraze SDK (Driver and Controller written in C++)
 
@@ -43,7 +41,6 @@ $ git submodule update
 ## Usage
 
 There are six packages included: crazyflie_cpp, crazyflie_driver, crazyflie_tools, crazyflie_description, crazyflie_controller, and crazyflie_demo.
-Note that the below description might be slightly out-of-date, as we continue merging the Crazyswarm and crazyflie_ros.
 
 ### Crazyflie_Cpp
 
@@ -89,6 +86,17 @@ For launching the node of the NMPC together with a motion capture system (MOCAP)
 ```
 roslaunch crazyflie_demo nmpc.launch uri:=radio://0/80/2M frame:=/cortex/crazyflie/crazyflie
 ```
+
+For retrieving the data from the IMU, use:
+```
+roslaunch crazyflie_demo imu_feedback.launch uri:=radio://0/80/2M/E7E7E7E7E7
+```
+> **Note** Acceleration: Be careful with acceleration data. Assuming that the Crazyflie is placed in its neutral right-side-up position on a flat surface you will:
+- Measure +9.81 meters per second squared for the Z axis.
+- If the sensor is rolled +90 degrees (left side up), the acceleration should be -9.81 meters per second squared for the Y axis.
+- If the sensor is pitched +90 degrees (front side down), it should read -9.81 meters per second squared for the X axis.
+
+
 ## ROS Features
 
 ### Parameters
@@ -99,7 +107,7 @@ The launch file supports the following arguments:
 * roll_trim: Trim in degrees, e.g. negative if flie drifts to the left
 * pitch_trim: Trim in degrees, e.g. negative if flie drifts forward
 
-See how to obtain good trim values [here](http://wiki.bitcraze.se/projects:crazyflie:userguide:tips_and_tricks for details on).
+See how to obtain good trim values [here](http://wiki.bitcraze.se/projects:crazyflie:userguide:tips_and_tricks) for details on.
 
 ### Subscribers
 

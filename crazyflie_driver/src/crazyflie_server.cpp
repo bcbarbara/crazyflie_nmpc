@@ -592,6 +592,7 @@ void cmdPositionSetpoint(
       msg.header.frame_id = m_tf_prefix + "/base_link";
       msg.orientation_covariance[0] = -1;
 
+
       // measured in deg/s; need to convert to rad/s
       msg.angular_velocity.x = degToRad(data->gyro_x);
       msg.angular_velocity.y = degToRad(data->gyro_y);
