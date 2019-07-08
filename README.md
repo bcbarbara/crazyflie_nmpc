@@ -92,9 +92,9 @@ For retrieving the data from the IMU, use:
 roslaunch crazyflie_demo imu_feedback.launch uri:=radio://0/80/2M/E7E7E7E7E7
 ```
 > **Note** Acceleration: Be careful with acceleration data. Assuming that the Crazyflie is placed in its neutral right-side-up position on a flat surface you will:
-- Measure +9.81 meters per second squared for the Z axis.
-- If the sensor is rolled +90 degrees (left side up), the acceleration should be -9.81 meters per second squared for the Y axis.
-- If the sensor is pitched +90 degrees (front side down), it should read -9.81 meters per second squared for the X axis.
+  > *  Measure +9.81 meters per second squared for the Z axis.
+  > *  If the sensor is rolled +90 degrees (left side up), the acceleration should be -9.81 meters per second squared for the Y axis.
+  > *  If the sensor is pitched +90 degrees (front side down), it should read -9.81 meters per second squared for the X axis.
 
 
 ## ROS Features
