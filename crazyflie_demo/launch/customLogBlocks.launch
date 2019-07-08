@@ -11,6 +11,14 @@
     <node pkg="crazyflie_driver" type="crazyflie_add" name="crazyflie_add" output="screen">
       <param name="uri" value="$(arg uri)" />
       <param name="tf_prefix" value="crazyflie" />
+      <arg name="enable_logging" value="True" />
+      <arg name="enable_logging_battery" value="False" />
+      <arg name="enable_logging_imu" value="True" />
+      <arg name="enable_logging_magnetic_field" value="False" />
+      <arg name="enable_logging_packets" value="False" />
+      <arg name="enable_logging_pose" value="False" />
+      <arg name="enable_logging_pressure" value="False" />
+      <arg name="enable_logging_temperature" value="False" />
       <rosparam>
         genericLogTopics: ["log1", "log2"]
         genericLogTopicFrequencies: [10, 100]
