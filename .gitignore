@@ -7,3 +7,4 @@ crazyflie_controller/*.kdev4
 crazyflie_controller/.kdev4
 *.o
 *.so
+.devcontainer/devcontainer.json
