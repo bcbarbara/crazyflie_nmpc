@@ -25,7 +25,12 @@ $ echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
 $ source ~/.bashrc
 ```
 
-4. Download and install [acados](https://github.com/acados/acados.git).
+4. Download [acados](https://github.com/acados/acados.git). You need to compile and install acados with `qpOASES` solver to be able to use its interface:
+```
+$ mkdir -p ~/acados/build
+$ cd build
+$ cmake -DACADOS_WITH_QPOASES=ON .. & make install
+```
 
 5. Clone the package into your catkin workspace:
 ```
@@ -35,8 +40,14 @@ $ cd crazyflie_ros
 $ git submodule init
 $ git submodule update
 ```
+6. Compile the shared library for the NMPC solver and place it in the system's path:
+```
+$ cd ~/catkin_ws/src/crazyflie_ros/crazyflie_controller/include/c_generated_code
+$ make shared_lib
+$ cp acados_solver_crazyflie_pos.so /usr/local/lib
+```
 
-6. Use `catkin build` on your workspace to compile.
+7. Use `catkin build` on your workspace to compile.
 
 ## Usage
 
@@ -76,7 +87,7 @@ The package also contains a simple PID controller for hovering or waypoint navig
 
 For teleoperation using a joystick, use:
 ```
-roslaunch crazyflie_demo teleop_logitec.launch uri:=radio://0/80/2M
+roslaunch crazyflie_demo teleop_logitech.launch uri:=radio://0/80/2M
 ```
 where the uri specifies the uri of your Crazyflie. You can find valid uris using the scan command in the `crazyflie_tools` package.
 > **Note** By default the services for take off and landing in teleoperation mode are disable, while the emergency service is always enable in any type of mode. The button mapping for each service can be found in `scripts/controller.py`
