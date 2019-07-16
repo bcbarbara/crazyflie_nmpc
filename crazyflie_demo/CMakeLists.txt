@@ -6,6 +6,7 @@ project(crazyflie_demo)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  cortex_stream
 )
 
 ## System dependencies are found with CMake's conventions
