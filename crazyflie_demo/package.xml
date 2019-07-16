@@ -18,4 +18,6 @@
   <build_depend>roscpp</build_depend>
 
   <run_depend>roscpp</run_depend>
+  <run_depend>cortex_stream</run_depend>
+  <build_depend>cortex_stream</build_depend>
 </package>

@@ -52,7 +52,6 @@ def onNewMarkerArray(marker_array):
 
 if __name__ == '__main__':
     rospy.init_node('publish_external_position_eraptor', anonymous=True)
-    topic = rospy.get_param("~topic", "/vicon/cf/cf")
 
     rospy.wait_for_service('update_params')
     rospy.loginfo("found update_params service")
