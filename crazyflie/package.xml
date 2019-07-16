@@ -22,6 +22,7 @@
   <run_depend>crazyflie_controller</run_depend>
   <run_depend>crazyflie_demo</run_depend>
   <run_depend>crazyflie_tools</run_depend>
+  <run_depend>cortex_stream</run_depend>
 
   <export>
     <metapackage/>
