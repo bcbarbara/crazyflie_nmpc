@@ -6,12 +6,11 @@ project(crazyflie_demo)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
-  cortex_stream
 )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-
+find_package(cortex_stream)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -93,6 +92,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${cortex_stream_INCLUDE_DIRS}
 )
 
 ## Declare a cpp library
@@ -110,6 +110,7 @@ add_executable(quadrotor_teleop src/quadrotor_teleop.cpp)
 # Specify libraries to link a library or executable target against
 target_link_libraries(quadrotor_teleop
   ${catkin_LIBRARIES}
+  ${cortex_stream_LIBRARIES}
 )
 
 #############
