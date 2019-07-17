@@ -13,17 +13,17 @@
       <param name="tf_prefix" value="crazyflie" />
       <param name="enable_logging" value="True" />
       <param name="enable_logging_battery" value="False" />
-      <param name="enable_logging_imu" value="True" />
+      <param name="enable_logging_euler_angles" value="True" />
+      <param name="enable_logging_imu" value="False" />
       <param name="enable_logging_magnetic_field" value="False" />
       <param name="enable_logging_packets" value="False" />
       <param name="enable_logging_pose" value="False" />
       <param name="enable_logging_pressure" value="False" />
       <param name="enable_logging_temperature" value="False" />
       <rosparam>
-        genericLogTopics: ["log1", "log2"]
-        genericLogTopicFrequencies: [10, 100]
-        genericLogTopic_log1_Variables: ["pm.vbat"]
-        genericLogTopic_log2_Variables: ["acc.x", "acc.y", "acc.z"]
+        genericLogTopics: ["euler"]
+        genericLogTopicFrequencies: [100]
+        genericLogTopic_log1_Variables: ["stabilizer.roll", "stabilizer.pitch", "stabilizer.yaw"]
       </rosparam>
     </node>
 
