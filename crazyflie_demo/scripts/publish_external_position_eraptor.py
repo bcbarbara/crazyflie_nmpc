@@ -17,15 +17,21 @@ def onNewMarkerArray(marker_array):
 
     if len(marker_array.markers) > 1:
         rospy.logwarn("We expect just one marker but got {}!".format(len(marker_array.markers)))
+        return
         
     marker = marker_array.markers[0]
 
+    if marker.ns != "unidentified":
+        rospy.logwarn("Received a identified marker set. We only expect unidentified markers!")
+        return
+
     if len(marker.points) == 0:
-        rospy.logwarm("Received empty marker!")
+        rospy.logwarn("Received empty marker!")
         return
     
     if len(marker.points) > 1:
-        rospy.logwarm("We received a marker with {} points but expected just one!".format(len(marker.points)))
+        rospy.logwarn("We received a marker with {} points but expected just one!".format(len(marker.points)))
+        return
 
     point = marker.points[0]
 
@@ -40,6 +46,7 @@ def onNewMarkerArray(marker_array):
         # rospy.set_param("locSrv/extPosStdDev", 1e-4)
         update_params(["kalman/resetEstimation"]) #, "locSrv/extPosStdDev"])
         firstTransform = False
+        rospy.loginfo("Reset the estimation to {}".format(point))
     else:
         msg.header.frame_id = marker.header.frame_id
         msg.header.stamp = marker.header.stamp
@@ -64,6 +71,6 @@ if __name__ == '__main__':
     msg.header.stamp = rospy.Time.now()
 
     pub = rospy.Publisher("external_position", PointStamped, queue_size=1)
-    rospy.Subscriber("cortex_marker_array", MarkerArray, onNewMarkerArray)
-
+    rospy.Subscriber("/cortex_marker_array", MarkerArray, onNewMarkerArray)
     rospy.spin()
+
