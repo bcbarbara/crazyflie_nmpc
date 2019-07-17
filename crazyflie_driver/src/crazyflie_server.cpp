@@ -25,6 +25,7 @@
 #include "std_srvs/Empty.h"
 #include <std_msgs/Empty.h>
 #include "geometry_msgs/Twist.h"
+#include "geometry_msgs/TwistStamped.h"
 #include "geometry_msgs/PointStamped.h"
 #include "geometry_msgs/PoseStamped.h"
 #include "sensor_msgs/Imu.h"
@@ -91,6 +92,7 @@ public:
     bool enable_parameters,
     std::vector<crazyflie_driver::LogBlock>& log_blocks,
     bool use_ros_time,
+    bool enable_logging_euler_angles,
     bool enable_logging_imu,
     bool enable_logging_temperature,
     bool enable_logging_magnetic_field,
@@ -110,6 +112,7 @@ public:
     , m_enableParameters(enable_parameters)
     , m_logBlocks(log_blocks)
     , m_use_ros_time(use_ros_time)
+    , m_enable_logging_euler_angles(enable_logging_euler_angles)
     , m_enable_logging_imu(enable_logging_imu)
     , m_enable_logging_temperature(enable_logging_temperature)
     , m_enable_logging_magnetic_field(enable_logging_magnetic_field)
@@ -173,6 +176,12 @@ public:
   }
 
 private:
+  struct logEulerAngles{
+    float roll;
+    float pitch;
+    float yaw;
+  } __attribute__((packed));
+
   struct logImu {
     float acc_x;
     float acc_y;
@@ -389,6 +398,9 @@ void cmdPositionSetpoint(
     m_serviceUploadTrajectory = n.advertiseService(m_tf_prefix + "/upload_trajectory", &CrazyflieROS::uploadTrajectory, this);
     m_serviceStartTrajectory = n.advertiseService(m_tf_prefix + "/start_trajectory", &CrazyflieROS::startTrajectory, this);
 
+    if (m_enable_logging_euler_angles) {
+      m_pubEuler = n.advertise<geometry_msgs::TwistStamped>(m_tf_prefix + "/euler_angles", 10);
+    }
     if (m_enable_logging_imu) {
       m_pubImu = n.advertise<sensor_msgs::Imu>(m_tf_prefix + "/imu", 10);
     }
@@ -464,6 +476,7 @@ void cmdPositionSetpoint(
       m_serviceUpdateParams = n.advertiseService(m_tf_prefix + "/update_params", &CrazyflieROS::updateParams, this);
     }
 
+    std::unique_ptr<LogBlock<logEulerAngles> > logBlockEuler;
     std::unique_ptr<LogBlock<logImu> > logBlockImu;
     std::unique_ptr<LogBlock<log2> > logBlock2;
     std::unique_ptr<LogBlock<logPose> > logBlockPose;
@@ -475,6 +488,18 @@ void cmdPositionSetpoint(
 
       ROS_INFO_NAMED(m_tf_prefix, "Requesting Logging variables...");
       m_cf.requestLogToc();
+
+      if (m_enable_logging_euler_angles) {
+        std::function<void(uint32_t, logEulerAngles*)> cb = std::bind(&CrazyflieROS::onStabilizerData, this, std::placeholders::_1, std::placeholders::_2);
+
+        logBlockEuler.reset(new LogBlock<logEulerAngles>(
+          &m_cf,{
+            {"stabilizer", "roll"},
+            {"stabilizer", "pitch"},
+            {"stabilizer", "yaw"},
+          }, cb));
+        logBlockEuler->start(1); // 10ms
+      }
 
       if (m_enable_logging_imu) {
         std::function<void(uint32_t, logImu*)> cb = std::bind(&CrazyflieROS::onImuData, this, std::placeholders::_1, std::placeholders::_2);
@@ -579,6 +604,24 @@ void cmdPositionSetpoint(
        m_cf.sendSetpoint(0, 0, 0, 0);
     }
 
+  }
+
+  // Get the euler angles from the STABILIZER
+  void onStabilizerData(uint32_t time_in_ms, logEulerAngles* data) {
+    if (m_enable_logging_euler_angles) {
+      geometry_msgs::TwistStamped msg;
+      if (m_use_ros_time) {
+        msg.header.stamp = ros::Time::now();
+      } else {
+        msg.header.stamp = ros::Time(time_in_ms / 1000.0);
+      }
+
+      msg.twist.linear.y = data->roll;
+      msg.twist.linear.x = data->pitch;
+      msg.twist.angular.z = data->yaw;
+
+      m_pubEuler.publish(msg);
+    }
   }
 
   void onImuData(uint32_t time_in_ms, logImu* data) {
@@ -819,6 +862,7 @@ private:
   bool m_enableParameters;
   std::vector<crazyflie_driver::LogBlock> m_logBlocks;
   bool m_use_ros_time;
+  bool m_enable_logging_euler_angles;
   bool m_enable_logging_imu;
   bool m_enable_logging_temperature;
   bool m_enable_logging_magnetic_field;
@@ -847,6 +891,7 @@ private:
   ros::Subscriber m_subscribeCmdPosition;
   ros::Subscriber m_subscribeExternalPosition;
   ros::Subscriber m_subscribeExternalPose;
+  ros::Publisher m_pubEuler;
   ros::Publisher m_pubImu;
   ros::Publisher m_pubTemp;
   ros::Publisher m_pubMag;
@@ -924,6 +969,7 @@ private:
       req.enable_parameters,
       req.log_blocks,
       req.use_ros_time,
+      req.enable_logging_euler_angles,
       req.enable_logging_imu,
       req.enable_logging_temperature,
       req.enable_logging_magnetic_field,
