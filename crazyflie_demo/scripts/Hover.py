@@ -11,7 +11,7 @@ class Crazyflie:
     def __init__(self, prefix):
         self.prefix = prefix
 
-        worldFrame = rospy.get_param("~worldFrame", "/world")
+        worldFrame = rospy.get_param("~mocap", "/mocap")
         self.rate = rospy.Rate(10)
 
         rospy.wait_for_service(prefix + '/update_params')
@@ -173,6 +173,3 @@ if __name__ == '__main__':
     t2 = Thread(target=handler, args=(cf2,))
     t1.start()
     t2.start()
-
-
-

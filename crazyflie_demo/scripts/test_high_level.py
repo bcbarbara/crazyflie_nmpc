@@ -17,10 +17,13 @@ if __name__ == '__main__':
     cf.setParam("kalman/resetEstimation", 1)
 
     cf.takeoff(targetHeight = 0.5, duration = 2.0)
-    time.sleep(3.0)
+    time.sleep(30.0)
 
-    cf.goTo(goal = [0.3, 0.0, 0.0], yaw=0.2, duration = 2.0, relative = True)
-    time.sleep(4.0)
+    #cf.goTo(goal = [0.3, 0.0, 0.0], yaw=0.0, duration = 2.0, relative = True)
+    #time.sleep(2.0)
+
+    #cf.goTo(goal = [0.0, 0.3, 0.0], yaw=0.0, duration = 2.0, relative = True)
+    #time.sleep(2.0)
 
     cf.land(targetHeight = 0.0, duration = 2.0)
     time.sleep(3.0)
