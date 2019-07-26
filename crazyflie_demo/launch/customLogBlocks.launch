@@ -20,10 +20,9 @@
       <param name="enable_logging_pressure" value="False" />
       <param name="enable_logging_temperature" value="False" />
       <rosparam>
-        genericLogTopics: ["log1", "log2"]
-        genericLogTopicFrequencies: [10, 100]
-        genericLogTopic_log1_Variables: ["pm.vbat"]
-        genericLogTopic_log2_Variables: ["acc.x", "acc.y", "acc.z"]
+        genericLogTopics: ["kf"]
+        genericLogTopicFrequencies: [100]
+        genericLogTopic_kf_Variables: ["stateEstimate.x", "stateEstimate.y", "stateEstimate.z"]
       </rosparam>
     </node>
 
