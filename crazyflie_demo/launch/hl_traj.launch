@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<launch>
+  <node name="crazyflie_demo_high_traj" pkg="crazyflie_demo" type="test_high_level.py" output="screen" ns="crazyflie">
+  </node>
+</launch>
