@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<launch>
+  <node name="controller" pkg="crazyflie_controller" type="linvelo_estimation" output="screen">
+  </node>
+
+</launch>

@@ -2,8 +2,8 @@
 #include <tf/transform_listener.h>
 #include <std_srvs/Empty.h>
 #include <std_msgs/String.h>
-#include <geometry_msgs/Twist.h>
 #include <geometry_msgs/Vector3.h>
+#include <geometry_msgs/Twist.h>
 #include <sensor_msgs/Joy.h>
 #include <std_msgs/String.h>
 #include <sensor_msgs/Imu.h>
@@ -73,7 +73,6 @@ public:
         , m_frame(frame)
 	, m_state(Idle)
         , m_pubNav()
-	, m_listener()
 	, m_thrust(0)
 	, m_startZ(0)
         , m_serviceTakeoff()
@@ -88,11 +87,9 @@ public:
 	}
 
         ros::NodeHandle nh;
-	m_listener.waitForTransform(m_worldFrame, m_frame, ros::Time(0), ros::Duration(10.0)); 
-        m_pubNav 	 = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
-	m_imu_sub 	 = nh.subscribe("/crazyflie/imu", 1000, &NMPC::imuCallback, this);
-        m_serviceTakeoff = nh.advertiseService("takeoff", &NMPC::takeoff, this);
-        m_serviceLand    = nh.advertiseService("land", &NMPC::land, this);
+        m_pubNav   = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
+	m_eRaptor_sub = nh.subscribe("/crazyflie/external_positiony", 1000, &NMPC::eRaptorCallback, this);
+	m_imu_sub  = nh.subscribe("/crazyflie/imu", 1000, &NMPC::imuCallback, this);
 	
 	vx = 0.0;
 	vy = 0.0;
@@ -101,6 +98,7 @@ public:
 	x_samples.resize(5);
 	y_samples.resize(5);
 	z_samples.resize(5);
+	
 	for (unsigned int i = 0; i <= 4; i++) x_samples[i] = 0.0;
 	for (unsigned int i = 0; i <= 4; i++) y_samples[i] = 0.0;
 	for (unsigned int i = 0; i <= 4; i++) z_samples[i] = 0.0;
@@ -160,37 +158,28 @@ private:
     };
 
     int acados_status;
+    
+    void eRaptorCallback(const geometry_msgs::Vector3::ConstPtr& msg){
+      
+        // Position of crazyflie marker
+	actual_x = msg->x;
+	actual_y = msg->y;
+	actual_z = msg->z;
+    }
 
 
     void imuCallback(const sensor_msgs::Imu::ConstPtr& msg){
 
-	actual_roll  = msg->angular_velocity.x;
-	actual_pitch = msg->angular_velocity.y;
-	actual_yaw   = msg->angular_velocity.z;
-    }
-
-    bool takeoff(
-        std_srvs::Empty::Request& req,
-        std_srvs::Empty::Response& res)
-    {
-        ROS_INFO("Takeoff requested!");
-        m_state = TakingOff;
-
-        tf::StampedTransform transform;
-        m_listener.lookupTransform(m_worldFrame, m_frame, ros::Time(0), transform);
-	m_startZ = transform.getOrigin().z();
-
-        return true;
-    }
-
-    bool land(
-        std_srvs::Empty::Request& req,
-        std_srvs::Empty::Response& res)
-    {
-        ROS_INFO("Landing requested!");
-        m_state = Landing;
-
-        return true;
+        // Angular rates w.r.t. body frame
+	actual_wx = msg->angular_velocity.x;
+	actual_wy = msg->angular_velocity.y;
+	actual_wz = msg->angular_velocity.z;
+	
+	// Quaternion
+	actual_q1 = msg->orientation.w;
+	actual_q2 = msg->orientation.x;
+	actual_q3 = msg->orientation.y;
+	actual_q4 = msg->orientation.z;	
     }
 
     void nmpcReset()
@@ -393,9 +382,8 @@ private:
     std::string m_frame;
 
     ros::Publisher m_pubNav;
-    ros::Subscriber m_joy_sub;
-    ros::Subscriber m_task_sub;
     ros::Subscriber m_imu_sub;
+    ros::Subscriber m_eRaptor_sub;
     
     tf::TransformListener m_listener;
 
@@ -423,9 +411,18 @@ private:
     float m_startZ;
 
     // Variables for reading the IMU data
-    float actual_roll;
-    float actual_pitch;
-    float actual_yaw;
+    float actual_wx;
+    float actual_wy;
+    float actual_wz;
+    float actual_q1;
+    float actual_q2;
+    float actual_q3;
+    float actual_q4;
+  
+    // Variables for eRaptor data
+    float actual_x;
+    float actual_y;
+    float actual_z;
 };
 
 int main(int argc, char **argv)

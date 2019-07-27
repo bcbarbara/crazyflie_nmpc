@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+
+<launch>
+  <arg name="frame"/>
+  <arg name="worldFrame" default="world"/>
+
+  <node name="controller" pkg="crazyflie_controller" type="linvelo_estimation" output="screen">
+  </node>
+</launch>
