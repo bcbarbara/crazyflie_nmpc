@@ -10,7 +10,6 @@ set(acados_include "/usr/local/include")
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
-
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
@@ -128,6 +127,14 @@ add_executable(crazyflie_imu src/crazyflie_imu.cpp)
 target_link_libraries(crazyflie_imu 
   ${catkin_LIBRARIES}
 )
+
+# linear velocity estimation
+add_executable(linvelo_estimation src/linvelo_estimation.cpp)
+  # Specify libraries to link a library or executable target against
+target_link_libraries(linvelo_estimation
+  ${catkin_LIBRARIES}
+)
+
 # Add cmake target dependencies of the executable/library
 # as an example, message headers may need to be generated before nodes
 # add_dependencies(crazyflie_controller crazyflie_controller_generate_messages_cpp)
