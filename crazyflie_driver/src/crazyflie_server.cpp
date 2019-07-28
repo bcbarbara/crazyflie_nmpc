@@ -26,6 +26,7 @@
 #include <std_msgs/Empty.h>
 #include "geometry_msgs/Twist.h"
 #include "geometry_msgs/TwistStamped.h"
+#include "geometry_msgs/QuaternionStamped.h"
 #include "geometry_msgs/PointStamped.h"
 #include "geometry_msgs/PoseStamped.h"
 #include "sensor_msgs/Imu.h"
@@ -93,6 +94,8 @@ public:
     std::vector<crazyflie_driver::LogBlock>& log_blocks,
     bool use_ros_time,
     bool enable_logging_euler_angles,
+    bool enable_logging_kf_quaternion,
+    bool enable_logging_onboard_position,
     bool enable_logging_imu,
     bool enable_logging_temperature,
     bool enable_logging_magnetic_field,
@@ -113,6 +116,8 @@ public:
     , m_logBlocks(log_blocks)
     , m_use_ros_time(use_ros_time)
     , m_enable_logging_euler_angles(enable_logging_euler_angles)
+    , m_enable_logging_kf_quaternion(enable_logging_kf_quaternion)
+    , m_enable_logging_onboard_position(enable_logging_onboard_position)
     , m_enable_logging_imu(enable_logging_imu)
     , m_enable_logging_temperature(enable_logging_temperature)
     , m_enable_logging_magnetic_field(enable_logging_magnetic_field)
@@ -180,6 +185,19 @@ private:
     float roll;
     float pitch;
     float yaw;
+  } __attribute__((packed));
+
+  struct logKFquaternion{
+    float q0;
+    float q1;
+    float q2;
+    float q3;
+  } __attribute__((packed));
+
+  struct logOnboardPosition {
+    float x;
+    float y;
+    float z;
   } __attribute__((packed));
 
   struct logImu {
@@ -401,6 +419,12 @@ void cmdPositionSetpoint(
     if (m_enable_logging_euler_angles) {
       m_pubEuler = n.advertise<geometry_msgs::TwistStamped>(m_tf_prefix + "/euler_angles", 10);
     }
+    if (m_enable_logging_kf_quaternion) {
+      m_pubKFquaternion = n.advertise<geometry_msgs::QuaternionStamped>(m_tf_prefix + "/kf_quaternion", 10);
+    }
+    if (m_enable_logging_onboard_position) {
+      m_pubOnboardPosition = n.advertise<geometry_msgs::PoseStamped>(m_tf_prefix + "/onboard_position", 10);
+    }
     if (m_enable_logging_imu) {
       m_pubImu = n.advertise<sensor_msgs::Imu>(m_tf_prefix + "/imu", 10);
     }
@@ -477,6 +501,8 @@ void cmdPositionSetpoint(
     }
 
     std::unique_ptr<LogBlock<logEulerAngles> > logBlockEuler;
+    std::unique_ptr<LogBlock<logKFquaternion> > logBlockKFquaternion;
+    std::unique_ptr<LogBlock<logOnboardPosition> > logBlockOnboardPosition;
     std::unique_ptr<LogBlock<logImu> > logBlockImu;
     std::unique_ptr<LogBlock<log2> > logBlock2;
     std::unique_ptr<LogBlock<logPose> > logBlockPose;
@@ -499,6 +525,31 @@ void cmdPositionSetpoint(
             {"stabilizer", "yaw"},
           }, cb));
         logBlockEuler->start(1); // 10ms
+      }
+
+      if (m_enable_logging_kf_quaternion) {
+        std::function<void(uint32_t, logKFquaternion*)> cb = std::bind(&CrazyflieROS::onKFData, this, std::placeholders::_1, std::placeholders::_2);
+
+        logBlockKFquaternion.reset(new LogBlock<logKFquaternion>(
+          &m_cf,{
+            {"kalman", "q0"},
+            {"kalman", "q1"},
+            {"kalman", "q2"},
+            {"kalman", "q3"},
+          }, cb));
+        logBlockKFquaternion->start(1); // 10ms
+      }
+
+      if (m_enable_logging_onboard_position) {
+        std::function<void(uint32_t, logOnboardPosition*)> cb = std::bind(&CrazyflieROS::onOnboardPositionData, this, std::placeholders::_1, std::placeholders::_2);
+
+        logBlockOnboardPosition.reset(new LogBlock<logOnboardPosition>(
+          &m_cf,{
+            {"stateEstimate", "x"},
+            {"stateEstimate", "y"},
+            {"stateEstimate", "z"},
+          }, cb));
+        logBlockOnboardPosition->start(1); // 10ms
       }
 
       if (m_enable_logging_imu) {
@@ -624,6 +675,45 @@ void cmdPositionSetpoint(
     }
   }
 
+  // Get quaternion from onboard kalman
+  void onKFData(uint32_t time_in_ms, logKFquaternion* data){
+    if (m_enable_logging_kf_quaternion) {
+      geometry_msgs::QuaternionStamped msg;
+      if (m_use_ros_time) {
+        msg.header.stamp = ros::Time::now();
+      } else {
+        msg.header.stamp = ros::Time(time_in_ms / 1000.0);
+      }
+      msg.header.frame_id = m_tf_prefix + "/base_link";
+
+      msg.quaternion.w = data->q0;
+      msg.quaternion.x = data->q1;
+      msg.quaternion.y = data->q2;
+      msg.quaternion.z = data->q3;
+
+      m_pubKFquaternion.publish(msg);
+    }
+  }
+
+  // Get estimated position from onboard kalman
+  void onOnboardPositionData(uint32_t time_in_ms, logOnboardPosition* data) {
+    if (m_enable_logging_imu) {
+      geometry_msgs::PoseStamped msg;
+      if (m_use_ros_time) {
+        msg.header.stamp = ros::Time::now();
+      } else {
+        msg.header.stamp = ros::Time(time_in_ms / 1000.0);
+      }
+      msg.header.frame_id = m_tf_prefix + "/base_link";
+
+      msg.pose.position.x = data->x;
+      msg.pose.position.y = data->y;
+      msg.pose.position.z = data->z;
+
+      m_pubOnboardPosition.publish(msg);
+    }
+  }
+
   void onImuData(uint32_t time_in_ms, logImu* data) {
     if (m_enable_logging_imu) {
       sensor_msgs::Imu msg;
@@ -634,7 +724,6 @@ void cmdPositionSetpoint(
       }
       msg.header.frame_id = m_tf_prefix + "/base_link";
       msg.orientation_covariance[0] = -1;
-
 
       // measured in deg/s; need to convert to rad/s
       msg.angular_velocity.x = degToRad(data->gyro_x);
@@ -863,6 +952,8 @@ private:
   std::vector<crazyflie_driver::LogBlock> m_logBlocks;
   bool m_use_ros_time;
   bool m_enable_logging_euler_angles;
+  bool m_enable_logging_kf_quaternion;
+  bool m_enable_logging_onboard_position;
   bool m_enable_logging_imu;
   bool m_enable_logging_temperature;
   bool m_enable_logging_magnetic_field;
@@ -893,6 +984,8 @@ private:
   ros::Subscriber m_subscribeExternalPose;
   ros::Publisher m_pubEuler;
   ros::Publisher m_pubImu;
+  ros::Publisher m_pubKFquaternion;
+  ros::Publisher m_pubOnboardPosition;
   ros::Publisher m_pubTemp;
   ros::Publisher m_pubMag;
   ros::Publisher m_pubPressure;
@@ -970,6 +1063,8 @@ private:
       req.log_blocks,
       req.use_ros_time,
       req.enable_logging_euler_angles,
+      req.enable_logging_kf_quaternion,
+      req.enable_logging_onboard_position,
       req.enable_logging_imu,
       req.enable_logging_temperature,
       req.enable_logging_magnetic_field,

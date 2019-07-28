@@ -24,7 +24,7 @@
 #include "acados/utils/print.h"
 #include "acados_c/ocp_nlp_interface.h"
 #include "acados_c/external_function_interface.h"
-#include "acados_solver_crazyflie_pos.h"
+#include "acados_solver_crazyflie.h"
 
 // ** global data **
 ocp_nlp_in * nlp_in;
@@ -41,6 +41,8 @@ external_function_casadi * forw_vde_casadi;
 
 
 
+
+
 int main() {
 
     int status = 0;
@@ -51,19 +53,33 @@ int main() {
         exit(1); }
 
     // set initial condition
-    double x0[6];
+    double x0[13];
     
-    x0[0] = 0;
+    x0[0] = 0.2;
     
-    x0[1] = 0;
+    x0[1] = -0.4;
     
-    x0[2] = 0;
+    x0[2] = -0.4;
     
-    x0[3] = 0;
+    x0[3] = 1.0;
     
-    x0[4] = 0;
+    x0[4] = 0.0;
     
-    x0[5] = 0;
+    x0[5] = 0.0;
+    
+    x0[6] = 0.0;
+    
+    x0[7] = 0.0;
+    
+    x0[8] = 0.0;
+    
+    x0[9] = 0.0;
+    
+    x0[10] = 0.0;
+    
+    x0[11] = 0.0;
+    
+    x0[12] = 0.0;
     
     
     ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "lbx", x0);
