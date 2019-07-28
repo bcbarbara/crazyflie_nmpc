@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="uri" default="radio://0/80/2M" />
+  <arg name="joy_dev" default="/dev/input/js0"/>
+  <arg name="frame" default="/mocap" />
+
+  <include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
+  </include>
+
+  <group ns="crazyflie">
+    <node pkg="crazyflie_driver" type="crazyflie_add" name="crazyflie_add" output="screen">
+      <param name="uri" value="$(arg uri)" />
+      <param name="tf_prefix" value="/crazyflie" />
+      <param name="enable_logging" value="False"/>
+    </node>
+
+    <node name="pose" pkg="crazyflie_demo" type="publish_external_position_eraptor.py" output="screen">
+    </node>
+  </group>
+
+  <!-- run eraptor bridge -->
+  <include file="$(find cortex_stream)/launch/cortex_stream.launch"/>
+
+</launch>

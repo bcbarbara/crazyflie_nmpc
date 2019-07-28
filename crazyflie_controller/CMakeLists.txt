@@ -6,6 +6,8 @@ find_package(catkin REQUIRED COMPONENTS
   tf
 )
 
+find_package(Eigen3 REQUIRED)
+
 set(acados_include "/usr/local/include")
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -90,7 +92,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
   ${catkin_INCLUDE_DIRS}
-  include/c_generated_code/crazyflie_pos_model
+  include/c_generated_code/crazyflie_model
   include/c_generated_code
   include/
   ${acados_include} 
@@ -117,7 +119,7 @@ include_directories(
 add_executable(acados_nmpc src/acados_nmpc.cpp)
   # Specify libraries to link a library or executable target against
 target_link_libraries(acados_nmpc
-  acados_solver_crazyflie_pos
+  ${PROJECT_SOURCE_DIR}/include/c_generated_code/libacados_solver_crazyflie.so
   ${catkin_LIBRARIES}
 )
 

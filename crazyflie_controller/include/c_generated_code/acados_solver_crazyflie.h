@@ -1,5 +1,5 @@
-#ifndef ACADOS_SOLVER_crazyflie_pos_H_
-#define ACADOS_SOLVER_crazyflie_pos_H_
+#ifndef ACADOS_SOLVER_crazyflie_H_
+#define ACADOS_SOLVER_crazyflie_H_
 
 #include "acados_c/ocp_nlp_interface.h"
 #include "acados_c/external_function_interface.h"
@@ -7,7 +7,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 int acados_create();
 int acados_solve();
@@ -23,6 +22,7 @@ ocp_nlp_dims * acados_get_nlp_dims();
 #ifdef __cplusplus
 }
 #endif
+
 
 // ** global data **
 extern ocp_nlp_in * nlp_in;
@@ -43,5 +43,4 @@ extern external_function_casadi * forw_vde_casadi;
 
 
 
-
-#endif  // ACADOS_SOLVER_crazyflie_pos_H_
+#endif  // ACADOS_SOLVER_crazyflie_H_
