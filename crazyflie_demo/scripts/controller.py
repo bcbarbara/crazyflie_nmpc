@@ -2,7 +2,7 @@
 
 import rospy
 from sensor_msgs.msg import Joy
-from crazyflie_driver.srv import UpdateParams
+from crazyflie_driver.srv import *
 from std_srvs.srv import Empty
 
 class Controller():
@@ -10,6 +10,14 @@ class Controller():
         rospy.wait_for_service('update_params')
         rospy.loginfo("found update_params service")
         self._update_params = rospy.ServiceProxy('update_params', UpdateParams)
+        '''rospy.set_param("commander/enHighLevel", 1)
+        self._update_params(["commander/enHighLevel"])
+        rospy.set_param("stabilizer/estimator", 2) # Use EKF
+        self._update_params(["stabilizer/estimator"])
+        rospy.set_param("stabilizer/controller", 2) # Use mellinger controller
+        self._update_params(["stabilizer/controller"])
+        rospy.set_param("kalman/resetEstimation", 1)
+        self._update_params(["kalman/resetEstimation"])'''
 
         rospy.loginfo("waiting for emergency service")
         rospy.wait_for_service('emergency')

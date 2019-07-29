@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 find_package(Eigen3 REQUIRED)
+find_package(crazyflie_driver)
 
 set(acados_include "/usr/local/include")
 ## System dependencies are found with CMake's conventions
@@ -99,6 +100,7 @@ include_directories(
   ${acados_include}/blasfeo/include/
   ${acados_include}/acados/ 
   ${acados_include}/qpOASES_e/
+  ${crazyflie_driver_INCLUDE_DIRS}
 )
 
 ## Declare a cpp library
@@ -119,6 +121,15 @@ include_directories(
 add_executable(acados_nmpc src/acados_nmpc.cpp)
   # Specify libraries to link a library or executable target against
 target_link_libraries(acados_nmpc
+  ${PROJECT_SOURCE_DIR}/include/c_generated_code/libacados_solver_crazyflie.so
+  ${catkin_LIBRARIES}
+)
+add_dependencies(acados_nmpc ${catkin_EXPORTED_TARGETS})
+
+# acados DEBUG
+add_executable(acados_debug src/acados_debug.cpp)
+  # Specify libraries to link a library or executable target against
+target_link_libraries(acados_debug
   ${PROJECT_SOURCE_DIR}/include/c_generated_code/libacados_solver_crazyflie.so
   ${catkin_LIBRARIES}
 )

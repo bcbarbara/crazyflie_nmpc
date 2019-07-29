@@ -14,7 +14,7 @@
       <param name="enable_logging" value="True" />
       <param name="enable_logging_battery" value="False" />
       <param name="enable_logging_euler_angles" value="False" />
-      <param name="enable_logging_kf_quaternion" value="False" />
+      <param name="enable_logging_kf_quaternion" value="True" />
       <param name="enable_logging_onboard_position" value="False" />
       <param name="enable_logging_imu" value="False" />
       <param name="enable_logging_magnetic_field" value="False" />
@@ -22,12 +22,6 @@
       <param name="enable_logging_pose" value="False" />
       <param name="enable_logging_pressure" value="False" />
       <param name="enable_logging_temperature" value="False" />
-      <rosparam>
-        genericLogTopics: ["kf_position"]
-        genericLogTopicFrequencies: [100]
-        genericLogTopic_kf_position_Variables: ["stateEstimate.x", "stateEstimate.y", "stateEstimate.z"]
-      </rosparam>
-
     </node>
 
 

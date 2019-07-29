@@ -28,6 +28,7 @@
 #include "geometry_msgs/TwistStamped.h"
 #include "geometry_msgs/QuaternionStamped.h"
 #include "geometry_msgs/PointStamped.h"
+#include "geometry_msgs/Vector3Stamped.h"
 #include "geometry_msgs/PoseStamped.h"
 #include "sensor_msgs/Imu.h"
 #include "sensor_msgs/Temperature.h"
@@ -417,7 +418,7 @@ void cmdPositionSetpoint(
     m_serviceStartTrajectory = n.advertiseService(m_tf_prefix + "/start_trajectory", &CrazyflieROS::startTrajectory, this);
 
     if (m_enable_logging_euler_angles) {
-      m_pubEuler = n.advertise<geometry_msgs::TwistStamped>(m_tf_prefix + "/euler_angles", 10);
+      m_pubEuler = n.advertise<geometry_msgs::Vector3Stamped>(m_tf_prefix + "/euler_angles", 10);
     }
     if (m_enable_logging_kf_quaternion) {
       m_pubKFquaternion = n.advertise<geometry_msgs::QuaternionStamped>(m_tf_prefix + "/kf_quaternion", 10);
@@ -660,16 +661,16 @@ void cmdPositionSetpoint(
   // Get the euler angles from the STABILIZER
   void onStabilizerData(uint32_t time_in_ms, logEulerAngles* data) {
     if (m_enable_logging_euler_angles) {
-      geometry_msgs::TwistStamped msg;
+      geometry_msgs::Vector3Stamped msg;
       if (m_use_ros_time) {
         msg.header.stamp = ros::Time::now();
       } else {
         msg.header.stamp = ros::Time(time_in_ms / 1000.0);
       }
 
-      msg.twist.linear.y = data->roll;
-      msg.twist.linear.x = data->pitch;
-      msg.twist.angular.z = data->yaw;
+      msg.vector.x = data->roll;
+      msg.vector.y = data->pitch;
+      msg.vector.z = data->yaw;
 
       m_pubEuler.publish(msg);
     }

@@ -9,6 +9,11 @@
 #include <sensor_msgs/Imu.h>
 #include <geometry_msgs/QuaternionStamped.h>
 
+
+// Crazyflie services
+#include "crazyflie_driver/Takeoff.h"
+#include "crazyflie_driver/Land.h"
+
 // Matrices and vectors
 #include <eigen3/Eigen/Dense>
 
@@ -72,6 +77,8 @@ public:
         , m_pubNav()
 	, m_thrust(0)
 	, m_startZ(0)
+	, m_serviceTakeoff()
+	, m_serviceLand()
     {
 	int status = 0;
 	status = acados_create();
@@ -86,6 +93,8 @@ public:
 	m_eRaptor_sub = nh.subscribe("/crazyflie/external_position", 1000, &NMPC::eRaptorCallback, this);
 	m_imu_sub  = nh.subscribe("/crazyflie/imu", 1000, &NMPC::imuCallback, this);
 	m_quat_sub = nh.subscribe("/crazyflie/kf_quaternion", 1000, &NMPC::quaternionCallback, this);
+	m_serviceTakeoff = nh.advertiseService("takeoff", &NMPC::takeoff, this);
+	m_serviceLand = nh.advertiseService("land", &NMPC::land, this);
 	
 	vx = 0.0;
 	vy = 0.0;
@@ -246,9 +255,9 @@ private:
 	  x0_sign[vby] = vy;
 	  x0_sign[vbz] = vz;
 	  
-	  ROS_INFO_STREAM("vx: "   << x0_sign[vbx] << " " <<
+	  /*ROS_INFO_STREAM("vx: "   << x0_sign[vbx] << " " <<
 			  "vy: "   << x0_sign[vby] << " " <<
-			  "vz: "   << x0_sign[vbz] << std::endl);
+			  "vz: "   << x0_sign[vbz] << std::endl);*/
 
 	  vx_filter_samples[0] = vx_filter_samples[1];
 	  vx_filter_samples[1] = vx_filter_samples[2];
@@ -291,10 +300,34 @@ private:
 	 
 	 vb = Sq*vi;
 	 
-	 // overwriting the value
+	 // overwriting the values
 	  x0_sign[vbx] = vb[0];
 	  x0_sign[vby] = vb[1];
 	  x0_sign[vbz] = vb[2]; 
+    }
+    
+    bool takeoff(
+        crazyflie_driver::Takeoff::Request& req,
+	crazyflie_driver::Takeoff::Response& res)
+    {
+        ROS_INFO("Take off requested!");
+        m_state = TakingOff;
+	
+	req.groupMask = 0;
+	req.height = 0.5;
+	req.duration =  ros::Duration(20.0);
+
+        return true;
+    }
+
+    bool land(
+        crazyflie_driver::Land::Request& req,
+	crazyflie_driver::Land::Response& res)
+    {
+        ROS_INFO("Landing requested!");
+        m_state = Landing;
+
+        return true;
     }
     
     void quaternionCallback(const geometry_msgs::QuaternionStampedPtr& msg){
@@ -325,7 +358,7 @@ private:
     {
         float dt = e.current_real.toSec() - e.last_real.toSec();
 	
-	delta_t += dt;
+	t0 += dt;
 
 	switch(m_state){
 	      case Idle:
@@ -344,20 +377,21 @@ private:
 
 	      case TakingOff:
 		{
-		    ROS_INFO("Taking off...");
+		  m_state = Tracking;
+		    /*ROS_INFO("Taking off...");
 
-		    if (actual_z > m_startZ + 0.05 || m_thrust > 50000)
+		    if (actual_z > m_startZ + 0.5 || m_thrust > 50000)
 		    {
 			m_state = Tracking;
-			m_thrust = 0;
+			//m_thrust = 0;
 		    }
 		    else
 		    {
-			m_thrust += 10000 * dt;
+			m_thrust += 20000 * dt;
 			geometry_msgs::Twist msg;
 			msg.linear.z = m_thrust;
 			m_pubNav.publish(msg);
-		    }
+		    }*/
 
 		}
 		break;
@@ -365,13 +399,13 @@ private:
 
 	      case Landing:
 		{
-		    ROS_INFO("Landing...");
+		    /*ROS_INFO("Landing...");
 		    
-		    if (actual_z <= m_startZ + 0.05){
+		    if (actual_z <= m_startZ + 0.5){
 			m_state = Idle;
 			geometry_msgs::Twist msg;
 			m_pubNav.publish(msg);
-		    }
+		    }*/
 		} // intentional fall-thru
 		break;
 
@@ -415,7 +449,7 @@ private:
 		    x0_sign[q4] = actual_q4;
 		    
 		    // estimate the velocity w.r.t. Earth
-		    estimateWordLinearVelocities(dt,delta_t);
+		    estimateWordLinearVelocities(dt,t0);
 		    
 		    // rotate velocities to Body
 		    q[0] = x0_sign[q1];
@@ -525,7 +559,7 @@ private:
     std::vector<double> vx_filter_samples;
     std::vector<double> vy_filter_samples;
     std::vector<double> vz_filter_samples;
-    float delta_t;
+    float t0;
 
     // Variables of the nmpc control process
     float x0_sign[NX];

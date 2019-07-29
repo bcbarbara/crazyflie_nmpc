@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+
+<launch>
+  <node name="nmpc" pkg="crazyflie_controller" type="acados_debug" output="screen" ns="crazyflie">
+  </node>
+
+</launch>
