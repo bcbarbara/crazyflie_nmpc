@@ -344,10 +344,6 @@ private:
 	
       
       double dt = e.current_real.toSec() - e.last_real.toSec();    
-      /*ROS_INFO_STREAM(  "delta: " << e.current_real.toSec() - t0  << endl
-		      << "dt: "	  << dt     << endl);*/
-	
-      //ROS_INFO("NMPC tracker initiated.");
       
       // cmd_vel message
       geometry_msgs::Twist msg;
@@ -405,7 +401,7 @@ private:
       }
       else{
 	    // update reference	    
-	   for (unsigned int k = 0; k < N; k++) {
+	   for (k = 0; k < N; k++) {
 		yref_sign[k * (NX+NU) + 0] = 0.0;
 		yref_sign[k * (NX+NU) + 1] = 0.0;
 		yref_sign[k * (NX+NU) + 2] = 0.0;
@@ -426,57 +422,57 @@ private:
 	    }
 	    
 	    // Inertial positions
-	  x0_sign[xq] = actual_x;
-	  x0_sign[yq] = actual_y;
-	  x0_sign[zq] = actual_z;
+	    x0_sign[xq] = actual_x;
+	    x0_sign[yq] = actual_y;
+	    x0_sign[zq] = actual_z;
 
-	  // get the euler angles from the onboard stabilizer
-	  eu.phi   = actual_roll*pi/180;
-	  eu.theta = actual_pitch*pi/180;
-	  eu.psi   = actual_yaw*pi/180;
-	  
-	  // Convert to quaternion
-	  acados_q = euler2quatern(eu);
-	  x0_sign[q1] = acados_q.q1;
-	  x0_sign[q2] = acados_q.q2;
-	  x0_sign[q3] = acados_q.q3;
-	  x0_sign[q4] = acados_q.q4;  
-	  
-	  // estimate the velocity w.r.t. Earth
-	  estimateWordLinearVelocities(dt,t0);
+	    // get the euler angles from the onboard stabilizer
+	    eu.phi   = actual_roll*pi/180;
+	    eu.theta = actual_pitch*pi/180;
+	    eu.psi   = actual_yaw*pi/180;
 	    
-	  q[0] = x0_sign[q1];
-	  q[1] = x0_sign[q2];
-	  q[2] = x0_sign[q3];
-	  q[3] = x0_sign[q4];
-	  
-	  // rotate velocities to Body	  
-	  rotateLinearVeloE2B(q);
-	  
-	  // get body angular rates
-	  x0_sign[wx] = actual_wx;
-	  x0_sign[wy] = actual_wy;
-	  x0_sign[wz] = actual_wz; 
+	    // Convert to quaternion
+	    acados_q = euler2quatern(eu);
+	    x0_sign[q1] = acados_q.q1;
+	    x0_sign[q2] = acados_q.q2;
+	    x0_sign[q3] = acados_q.q3;
+	    x0_sign[q4] = acados_q.q4;  
+	    
+	    // estimate the velocity w.r.t. Earth
+	    estimateWordLinearVelocities(dt,t0);
+	      
+	    q[0] = x0_sign[q1];
+	    q[1] = x0_sign[q2];
+	    q[2] = x0_sign[q3];
+	    q[3] = x0_sign[q4];
+	    
+	    // rotate velocities to Body	  
+	    rotateLinearVeloE2B(q);
+	    
+	    // get body angular rates
+	    x0_sign[wx] = actual_wx;
+	    x0_sign[wy] = actual_wy;
+	    x0_sign[wz] = actual_wz; 
 	  
 	    
 	    // up to this point we already stored the 13 states required for the NMPC
-	    ROS_INFO_STREAM(fixed << showpos << "\nQuad flight data BEFORE solver at time [" << e.current_real.toSec() << "s "<< "]" << endl
+	    /*ROS_INFO_STREAM(fixed << showpos << "\nQuad flight data BEFORE solver at time [" << e.current_real.toSec() << "s "<< "]" << endl
 				  << "Position [xq,yq,zq] = [" << x0_sign[xq] << ", " << x0_sign[yq] << ", " << x0_sign[zq] << "]" << endl
 				  << "Quaternion [q1,q2,q3,q4] = [" << x0_sign[q1] << ", " << x0_sign[q2] << ", " << x0_sign[q3] <<  ", " << x0_sign[q4] << "]" << endl			    
 				  << "Linear velo body [vbx,vby,vbz] = [" << x0_sign[vbx] << ", " << x0_sign[vby] << ", " << x0_sign[vbz] << "]" << endl
-				  << "Angular velo body [wx,wy,wz] = [" << x0_sign[wx] << ", " << x0_sign[wy] << ", " << x0_sign[wz] << "]" << endl);
+				  << "Angular velo body [wx,wy,wz] = [" << x0_sign[wx] << ", " << x0_sign[wy] << ", " << x0_sign[wz] << "]" << endl);*/
 	    
 	    // copy signals into local buffers
-	    for (unsigned int i = 0; i < NX; i++){
+	    for (i = 0; i < NX; i++){
 	      acados_in.x0[i] = x0_sign[i];
 	      //cout << "x0: " << acados_in.x0[i] << endl;
 	    }
 	        
-	    for (unsigned int i = 0; i < ((NX+NU)*N); i++){
+	    for (i = 0; i < ((NX+NU)*N); i++){
 	      acados_in.yref[i] =  yref_sign[i];
 	      //cout <<  "yref: " << acados_in.yref[i] << endl;
 	    }
-	    for (unsigned int i = 0; i < NYN; i++){
+	    for (i = 0; i < NYN; i++){
 	      acados_in.yref_e[i] =  yref_sign[i];
 	      //cout <<  "yref_e: " << acados_in.yref_e[i] << endl;
 	    }
@@ -486,7 +482,7 @@ private:
 	    ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "ubx", acados_in.x0);
 
 	    // update reference
-	    for (unsigned int ii = 0; ii < N; ii++) {
+	    for (ii = 0; ii < N; ii++) {
 		ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, ii, "yref", acados_in.yref + ii*(NX+NU));
 	    }
 
@@ -556,6 +552,7 @@ private:
     ros::Subscriber m_eRaptor_sub;
     ros::Subscriber m_euler_sub;
     
+    unsigned int k,i,ii;
     
     double vx,vy,vz;
     std::vector<double> x_samples;
