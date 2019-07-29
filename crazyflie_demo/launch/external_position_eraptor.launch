@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="uri" default="radio://0/80/2M" />
+  <!-- <arg name="uri" default="radio://0/80/2M" /> -->
+  <arg name="uri" default="usb://0" />
   <arg name="joy_dev" default="/dev/input/js0"/>
   <arg name="frame" default="/mocap" />
 
