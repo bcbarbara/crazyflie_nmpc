@@ -2,7 +2,7 @@
 
 import rospy
 from sensor_msgs.msg import Joy
-from crazyflie_driver.srv import UpdateParams
+from crazyflie_driver.srv import UpdateParams, Land, Takeoff
 from std_srvs.srv import Empty
 
 class Controller():
@@ -20,12 +20,12 @@ class Controller():
             rospy.loginfo("waiting for land service")
             rospy.wait_for_service('land')
             rospy.loginfo("found land service")
-            self._land = rospy.ServiceProxy('land', Empty)
+            self._land = rospy.ServiceProxy('land', Land)
 
             rospy.loginfo("waiting for takeoff service")
             rospy.wait_for_service('takeoff')
             rospy.loginfo("found takeoff service")
-            self._takeoff = rospy.ServiceProxy('takeoff', Empty)
+            self._takeoff = rospy.ServiceProxy('takeoff', Takeoff)
         else:
             self._land = None
             self._takeoff = None
