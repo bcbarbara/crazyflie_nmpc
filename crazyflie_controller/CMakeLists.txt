@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(crazyflie_controller)
 
-find_package(PythonLibs REQUIRED)
+#find_package(PythonLibs REQUIRED)
 include_directories(${PYTHON_INCLUDE_DIRS})
 
 find_package(catkin REQUIRED COMPONENTS
   std_msgs
   tf
-  pybind11_catkin
+ # pybind11_catkin
 )
 
 find_package(Eigen3 REQUIRED)
@@ -85,7 +85,7 @@ set(acados_include "/usr/local/include")
 catkin_package(
 #  INCLUDE_DIRS include
 LIBRARIES
-CATKIN_DEPENDS pybind11_catkin
+#CATKIN_DEPENDS pybind11_catkin
 #  DEPENDS system_lib
 )
 
@@ -153,10 +153,10 @@ target_link_libraries(linvelo_estimation
 )
 
 # RL trajectory generation test
-pybind_add_module(rl_trajectory_generation SHARED src/rl_trajectory_generation.cpp)
+#pybind_add_module(rl_trajectory_generation SHARED src/rl_trajectory_generation.cpp)
 
-add_executable(rl_test src/rl_test.cpp)
-target_link_libraries(rl_test ${PYTHON_LIBRARIES} rl_trajectory_generation)
+#add_executable(rl_test src/rl_test.cpp)
+#target_link_libraries(rl_test ${PYTHON_LIBRARIES} rl_trajectory_generation)
 
 
 # Add cmake target dependencies of the executable/library
