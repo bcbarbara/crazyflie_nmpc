@@ -5,12 +5,16 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/embed.h>
 #include <pybind11/numpy.h>
+#include <eigen3/Eigen/Dense>
+
+typedef Eigen::Matrix<double, Eigen::Dynamic, 18> TrajectoryMatrix;
 
 #include <chrono> 
 using namespace std::chrono;
 using namespace std;
 
 namespace py = pybind11;
+
 
 class TrajectoryGenerator {
 private:
@@ -21,7 +25,7 @@ public:
         python_generator_function = py::module::import("rl.rl_trajectory_generator").attr("make_trajectory_generator")();
     }
 
-    py::object generateTrajectory(
+    TrajectoryMatrix generateTrajectory(
         double initial_position[],
         double initial_linear_velocity[],
         double initial_rotation[],
@@ -31,7 +35,7 @@ public:
         float n_seconds
         ) 
     {
-        return python_generator_function(
+        py::array trajectory = python_generator_function(
             py::array_t<double>(3, initial_position),
             py::array_t<double>(3, initial_linear_velocity),
             py::array_t<double>(4, initial_rotation),
@@ -40,6 +44,14 @@ public:
             dt,
             n_seconds
             );
+        // std::cout << trajectory.shape()[1] << std::endl;
+        TrajectoryMatrix matrix_trajectory(trajectory.shape()[0], trajectory.shape()[1]);
+        for(int t = 0; t < trajectory.shape()[0]; ++t) {
+            for(int i = 0; i < 18; ++i) {
+                matrix_trajectory(t, i) = *((double*)trajectory.data(t, i));    
+            }
+        }
+        return matrix_trajectory;
     }
 };
 
@@ -74,4 +86,6 @@ void example()
 
     auto duration = duration_cast<milliseconds>(stop - start);
     cout << duration.count()/100. << endl; 
+
+    
 }
