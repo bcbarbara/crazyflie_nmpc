@@ -223,7 +223,7 @@ int acados_create() {
     double lbx0[NX];
     lbx0[0] = 0.2;
     lbx0[1] = -0.4;
-    lbx0[2] = -0.4;
+    lbx0[2] = 0.0;
     lbx0[3] = 1.0;
     lbx0[4] = 0.0;
     lbx0[5] = 0.0;
@@ -238,7 +238,7 @@ int acados_create() {
     double ubx0[NX];
     ubx0[0] = 0.2;
     ubx0[1] = -0.4;
-    ubx0[2] = -0.4;
+    ubx0[2] = 0.0;
     ubx0[3] = 1.0;
     ubx0[4] = 0.0;
     ubx0[5] = 0.0;
@@ -264,10 +264,10 @@ int acados_create() {
     lbu[3] = 0;
 
     double ubu[NBU];
-    ubu[0] = 50429.24591588807;
-    ubu[1] = 50429.24591588807;
-    ubu[2] = 50429.24591588807;
-    ubu[3] = 50429.24591588807;
+    ubu[0] = 48000.02374769851;
+    ubu[1] = 48000.02374769851;
+    ubu[2] = 48000.02374769851;
+    ubu[3] = 48000.02374769851;
     
     // set up soft bounds for u
     int idxsbu[NSBU];
@@ -1006,23 +1006,23 @@ int acados_create() {
     
     
     
-    yref[0] = 0;
-    yref[1] = 0;
-    yref[2] = 0;
-    yref[3] = 1;
-    yref[4] = 0;
-    yref[5] = 0;
-    yref[6] = 0;
-    yref[7] = 0;
-    yref[8] = 0;
-    yref[9] = 0;
-    yref[10] = 0;
-    yref[11] = 0;
-    yref[12] = 0;
-    yref[13] = 0;
-    yref[14] = 0;
-    yref[15] = 0;
-    yref[16] = 0;
+    yref[0] = 0.0;
+    yref[1] = 0.0;
+    yref[2] = 0.1;
+    yref[3] = 1.0;
+    yref[4] = 0.0;
+    yref[5] = 0.0;
+    yref[6] = 0.0;
+    yref[7] = 0.0;
+    yref[8] = 0.0;
+    yref[9] = 0.0;
+    yref[10] = 0.0;
+    yref[11] = 0.0;
+    yref[12] = 0.0;
+    yref[13] = 0.0;
+    yref[14] = 0.0;
+    yref[15] = 0.0;
+    yref[16] = 0.0;
     
     W_e[0 + (NYN) * 0] = 4.0;
     W_e[0 + (NYN) * 1] = 0.0;
@@ -1387,19 +1387,19 @@ int acados_create() {
     Vx_e[12 + (NYN) * 10] = 0.0;
     Vx_e[12 + (NYN) * 11] = 0.0;
     Vx_e[12 + (NYN) * 12] = 1.0;
-    yref_e[0] = 0;
-    yref_e[1] = 0;
-    yref_e[2] = 0;
-    yref_e[3] = 1;
-    yref_e[4] = 0;
-    yref_e[5] = 0;
-    yref_e[6] = 0;
-    yref_e[7] = 0;
-    yref_e[8] = 0;
-    yref_e[9] = 0;
-    yref_e[10] = 0;
-    yref_e[11] = 0;
-    yref_e[12] = 0;
+    yref_e[0] = 0.0;
+    yref_e[1] = 0.0;
+    yref_e[2] = 0.1;
+    yref_e[3] = 1.0;
+    yref_e[4] = 0.0;
+    yref_e[5] = 0.0;
+    yref_e[6] = 0.0;
+    yref_e[7] = 0.0;
+    yref_e[8] = 0.0;
+    yref_e[9] = 0.0;
+    yref_e[10] = 0.0;
+    yref_e[11] = 0.0;
+    yref_e[12] = 0.0;
 
     int max_num_sqp_iterations = 100;
 
