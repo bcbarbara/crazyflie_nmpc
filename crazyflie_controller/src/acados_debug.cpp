@@ -96,7 +96,12 @@ public:
 	for (unsigned int i = 0; i <= 4; i++) vy_filter_samples[i] = 0.0;
 	for (unsigned int i = 0; i <= 4; i++) vz_filter_samples[i] = 0.0;
 	
+	
 	t0 = 0.0;
+	
+	memset( acados_in.x0, 0, sizeof( acados_in.x0 ) );
+	memset( acados_in.yref, 0, sizeof( acados_in.yref ) );
+	memset( acados_in.yref_e, 0, sizeof( acados_in.yref_e ) );
 	
     }
 
@@ -153,7 +158,7 @@ private:
 
     struct solver_input{
       double x0[NX];
-      double yref[(NX+NU)*N];
+      double yref[(NY*N)+NY];
       double yref_e[NYN];
     };
     
@@ -299,6 +304,7 @@ private:
 	  x0_sign[vbz] = vb[2]; 
     }
     
+    
     void eRaptorCallback(const geometry_msgs::PointStampedConstPtr& msg){
       
         // Position of crazyflie marker
@@ -348,8 +354,6 @@ private:
       // cmd_vel message
       geometry_msgs::Twist msg;
       
-      solver_input acados_in;
-      solver_output acados_out;
       
       cf_cmd_vel cmd_vel;
       quat acados_q;
@@ -400,26 +404,30 @@ private:
 	
       }
       else{
+	
 	    // update reference	    
-	   for (k = 0; k < N; k++) {
-		yref_sign[k * (NX+NU) + 0] = 0.0;
-		yref_sign[k * (NX+NU) + 1] = 0.0;
-		yref_sign[k * (NX+NU) + 2] = 0.0;
-		yref_sign[k * (NX+NU) + 3] = 1.0;
-		yref_sign[k * (NX+NU) + 4] = 0.0;
-		yref_sign[k * (NX+NU) + 5] = 0.0;
-		yref_sign[k * (NX+NU) + 6] = 0.0;
-		yref_sign[k * (NX+NU) + 7] = 0.0;
-		yref_sign[k * (NX+NU) + 8] = 0.0;
-		yref_sign[k * (NX+NU) + 9] = 0.0;
-		yref_sign[k * (NX+NU) + 10] = 0.0;
-		yref_sign[k * (NX+NU) + 11] = 0.0;
-		yref_sign[k * (NX+NU) + 12] = 0.0;
-		yref_sign[k * (NX+NU) + 13] = 0.0;
-		yref_sign[k * (NX+NU) + 14] = 0.0;
-		yref_sign[k * (NX+NU) + 15] = 0.0;
-		yref_sign[k * (NX+NU) + 16] = 0.0;      
+	   for (k = 0; k < N+1; k++) {
+		yref_sign[k * 17 + 0] = 0.0; 	// xq
+		yref_sign[k * 17 + 1] = 0.0;	// yq
+		yref_sign[k * 17 + 2] = 0.0;	// zq
+		yref_sign[k * 17 + 3] = 1.0;	// q1
+		yref_sign[k * 17 + 4] = 0.0;	// q2
+		yref_sign[k * 17 + 5] = 0.0;	// q3
+		yref_sign[k * 17 + 6] = 0.0;	// q4
+		yref_sign[k * 17 + 7] = 0.0;	// vbx
+		yref_sign[k * 17 + 8] = 0.0;	// vby
+		yref_sign[k * 17 + 9] = 0.0;	// vbz
+		yref_sign[k * 17 + 10] = 0.0;	// wx
+		yref_sign[k * 17 + 11] = 0.0;	// wy
+		yref_sign[k * 17 + 12] = 0.0;	// wz
+		yref_sign[k * 17 + 13] = 0.0;	// w1
+		yref_sign[k * 17 + 14] = 0.0;	// w2
+		yref_sign[k * 17 + 15] = 0.0;	// w3
+		yref_sign[k * 17 + 16] = 0.0;	// w4
+		
 	    }
+	    
+	    cout << sizeof(yref_sign) << endl;
 	    
 	    // Inertial positions
 	    x0_sign[xq] = actual_x;
@@ -467,15 +475,26 @@ private:
 	      acados_in.x0[i] = x0_sign[i];
 	      //cout << "x0: " << acados_in.x0[i] << endl;
 	    }
+	    
+	    for (i = 0; i < N; i++) {
+		for (j = 0; j < NY; ++j) {
+			acados_in.yref[i*NY + j] = yref_sign[i*NY + j];
+			//cout <<  "yref: " << acados_in.yref[i] << endl;
+		}
+	    }
+	    
+	    for (i = 0; i < NYN; i++) {
+		acados_in.yref_e[i] = yref_sign[N*NY + i];
+	    }
 	        
-	    for (i = 0; i < ((NX+NU)*N); i++){
+	    /*for (i = 0; i < (17*N); i++){
 	      acados_in.yref[i] =  yref_sign[i];
 	      //cout <<  "yref: " << acados_in.yref[i] << endl;
 	    }
-	    for (i = 0; i < NYN; i++){
+	    for (i = 0; i < 17N; i++){
 	      acados_in.yref_e[i] =  yref_sign[i];
 	      //cout <<  "yref_e: " << acados_in.yref_e[i] << endl;
-	    }
+	    }*/
 	    
 	    // set initial condition
 	    ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "lbx", acados_in.x0);
@@ -483,7 +502,7 @@ private:
 
 	    // update reference
 	    for (ii = 0; ii < N; ii++) {
-		ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, ii, "yref", acados_in.yref + ii*(NX+NU));
+		ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, ii, "yref", acados_in.yref + ii*17);
 	    }
 
 	    ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "yref", acados_in.yref_e);
@@ -552,7 +571,7 @@ private:
     ros::Subscriber m_eRaptor_sub;
     ros::Subscriber m_euler_sub;
     
-    unsigned int k,i,ii;
+    unsigned int k,i,j,ii;
     
     double vx,vy,vz;
     std::vector<double> x_samples;
@@ -564,12 +583,16 @@ private:
     double t0;
 
     // Variables of the nmpc control process
-    float x0_sign[NX];
-    float yref_sign[NY];
+    double x0_sign[NX];
+    double yref_sign[(NY*N)+NY];
     
     // Rotation matrix 
     Matrix3d Sq;
     Vector3d vi,vb;
+    
+    // acados struct
+    solver_input acados_in;
+    solver_output acados_out;
     
     // Variables to be used in convertions
     float q[4];
