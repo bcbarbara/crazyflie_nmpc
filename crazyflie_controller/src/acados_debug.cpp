@@ -407,27 +407,25 @@ private:
 	
 	    // update reference	    
 	   for (k = 0; k < N+1; k++) {
-		yref_sign[k * 17 + 0] = 0.0; 	// xq
-		yref_sign[k * 17 + 1] = 0.0;	// yq
-		yref_sign[k * 17 + 2] = 0.0;	// zq
-		yref_sign[k * 17 + 3] = 1.0;	// q1
-		yref_sign[k * 17 + 4] = 0.0;	// q2
-		yref_sign[k * 17 + 5] = 0.0;	// q3
-		yref_sign[k * 17 + 6] = 0.0;	// q4
-		yref_sign[k * 17 + 7] = 0.0;	// vbx
-		yref_sign[k * 17 + 8] = 0.0;	// vby
-		yref_sign[k * 17 + 9] = 0.0;	// vbz
-		yref_sign[k * 17 + 10] = 0.0;	// wx
-		yref_sign[k * 17 + 11] = 0.0;	// wy
-		yref_sign[k * 17 + 12] = 0.0;	// wz
-		yref_sign[k * 17 + 13] = 0.0;	// w1
-		yref_sign[k * 17 + 14] = 0.0;	// w2
-		yref_sign[k * 17 + 15] = 0.0;	// w3
-		yref_sign[k * 17 + 16] = 0.0;	// w4
+		yref_sign[k * NY + 0] = 0.0; 	// xq
+		yref_sign[k * NY + 1] = 0.0;	// yq
+		yref_sign[k * NY + 2] = 0.0;	// zq
+		yref_sign[k * NY + 3] = 1.0;	// q1
+		yref_sign[k * NY + 4] = 0.0;	// q2
+		yref_sign[k * NY + 5] = 0.0;	// q3
+		yref_sign[k * NY + 6] = 0.0;	// q4
+		yref_sign[k * NY + 7] = 0.0;	// vbx
+		yref_sign[k * NY + 8] = 0.0;	// vby
+		yref_sign[k * NY + 9] = 0.0;	// vbz
+		yref_sign[k * NY + 10] = 0.0;	// wx
+		yref_sign[k * NY + 11] = 0.0;	// wy
+		yref_sign[k * NY + 12] = 0.0;	// wz
+		yref_sign[k * NY + 13] = 0.0;	// w1
+		yref_sign[k * NY + 14] = 0.0;	// w2
+		yref_sign[k * NY + 15] = 0.0;	// w3
+		yref_sign[k * NY + 16] = 0.0;	// w4
 		
 	    }
-	    
-	    cout << sizeof(yref_sign) << endl;
 	    
 	    // Inertial positions
 	    x0_sign[xq] = actual_x;
@@ -438,6 +436,11 @@ private:
 	    eu.phi   = actual_roll*pi/180;
 	    eu.theta = actual_pitch*pi/180;
 	    eu.psi   = actual_yaw*pi/180;
+	    
+	    /*ROS_INFO_STREAM(fixed << showpos << "BEFORE SOLVER" <<
+			    "roll: "   << eu.phi   << " " <<
+			    "pitch: "  << eu.theta << " " <<
+			    "yaw: "    << eu.psi   << std::endl);*/
 	    
 	    // Convert to quaternion
 	    acados_q = euler2quatern(eu);
@@ -464,11 +467,11 @@ private:
 	  
 	    
 	    // up to this point we already stored the 13 states required for the NMPC
-	    /*ROS_INFO_STREAM(fixed << showpos << "\nQuad flight data BEFORE solver at time [" << e.current_real.toSec() << "s "<< "]" << endl
+	    ROS_INFO_STREAM(fixed << showpos << "\nQuad flight data BEFORE solver at time [" << e.current_real.toSec() << "s "<< "]" << endl
 				  << "Position [xq,yq,zq] = [" << x0_sign[xq] << ", " << x0_sign[yq] << ", " << x0_sign[zq] << "]" << endl
 				  << "Quaternion [q1,q2,q3,q4] = [" << x0_sign[q1] << ", " << x0_sign[q2] << ", " << x0_sign[q3] <<  ", " << x0_sign[q4] << "]" << endl			    
 				  << "Linear velo body [vbx,vby,vbz] = [" << x0_sign[vbx] << ", " << x0_sign[vby] << ", " << x0_sign[vbz] << "]" << endl
-				  << "Angular velo body [wx,wy,wz] = [" << x0_sign[wx] << ", " << x0_sign[wy] << ", " << x0_sign[wz] << "]" << endl);*/
+				  << "Angular velo body [wx,wy,wz] = [" << x0_sign[wx] << ", " << x0_sign[wy] << ", " << x0_sign[wz] << "]" << endl);
 	    
 	    // copy signals into local buffers
 	    for (i = 0; i < NX; i++){
@@ -487,22 +490,13 @@ private:
 		acados_in.yref_e[i] = yref_sign[N*NY + i];
 	    }
 	        
-	    /*for (i = 0; i < (17*N); i++){
-	      acados_in.yref[i] =  yref_sign[i];
-	      //cout <<  "yref: " << acados_in.yref[i] << endl;
-	    }
-	    for (i = 0; i < 17N; i++){
-	      acados_in.yref_e[i] =  yref_sign[i];
-	      //cout <<  "yref_e: " << acados_in.yref_e[i] << endl;
-	    }*/
-	    
 	    // set initial condition
 	    ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "lbx", acados_in.x0);
 	    ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "ubx", acados_in.x0);
 
 	    // update reference
 	    for (ii = 0; ii < N; ii++) {
-		ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, ii, "yref", acados_in.yref + ii*17);
+		ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, ii, "yref", acados_in.yref + ii*NY);
 	    }
 
 	    ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "yref", acados_in.yref_e);
@@ -528,23 +522,21 @@ private:
 	    q[2] = acados_out.x1[q3];
 	    q[3] = acados_out.x1[q4];
 	    
-	     /*ROS_INFO_STREAM(fixed << showpos << "\nQuad flight data AFTER solver at time [" << e.current_real.toSec() << "s "<< "]" << endl
+	    ROS_INFO_STREAM(fixed << showpos << "\nQuad flight data AFTER solver at time [" << e.current_real.toSec() << "s "<< "]" << endl
 				  << "Position [xq,yq,zq] = [" << acados_out.x1[xq] << ", " << acados_out.x1[yq] << ", " << acados_out.x1[zq] << "]" << endl
 				  << "Quaternion [q1,q2,q3,q4] = [" << acados_out.x1[q1] << ", " <<acados_out.x1[q2] << ", " << acados_out.x1[q3] <<  ", " << acados_out.x1[q4] << "]" << endl			    
 				  << "Linear velo body [vbx,vby,vbz] = [" << acados_out.x1[vbx] << ", " << acados_out.x1[vby] << ", " << acados_out.x1[vbz] << "]" << endl
-				  << "Angular velo body [wx,wy,wz] = [" << acados_out.x1[wx] << ", " << acados_out.x1[wy] << ", " << acados_out.x1[wz] << "]" << endl);*/
+				  << "Angular velo body [wx,wy,wz] = [" << acados_out.x1[wx] << ", " << acados_out.x1[wy] << ", " << acados_out.x1[wz] << "]" << endl
+				  << "Motor speeds [w1,w2,w3,w4] = [" << acados_out.u0[w1] << ", " << acados_out.u0[w2] << ", " << acados_out.u0[w3]<< ", " << acados_out.u0[w4] << "]" << endl);
 	    
 	    // Convert quaternion into euler angles
 	    eu = quatern2euler(q);
-	    
-	    /*ROS_INFO_STREAM("roll: "   << eu.phi   << " " <<
-			    "pitch: "  << eu.theta << " " <<
-			    "yaw: "    << eu.psi   << std::endl);*/
-	    
+	    	    
 	    // assignment of cf control inputs
-	    cmd_vel.roll  = eu.phi;
-	    cmd_vel.pitch = eu.theta;
-	    cmd_vel.yawr  = eu.psi;
+	    // (angles in degrees)
+	    cmd_vel.roll  = eu.phi*180/pi;
+	    cmd_vel.pitch = eu.theta*180/pi;
+	    cmd_vel.yawr  = eu.psi*180/pi;
 	    cmd_vel.thrust = (acados_out.u0[w1]+acados_out.u0[w2]+acados_out.u0[w3]+acados_out.u0[w4])/4;
 	    
 	    // Populate the cmd_vel publisher with the correspondent struct
@@ -553,10 +545,10 @@ private:
 	    msg.linear.z  = cmd_vel.thrust; 	// thrust
 	    msg.angular.z = cmd_vel.yawr; 	// yaw rate
 	    
-	    /*ROS_INFO_STREAM("thrust: " << cmd_vel.thrust << " " <<
+	    ROS_INFO_STREAM("thrust: " << cmd_vel.thrust << " " <<
 			  "roll: "     << cmd_vel.roll   << " " <<
 			  "pitch: "    << cmd_vel.pitch  << " " <<
-			  "yaw rate: " << cmd_vel.yawr   << endl);*/
+			  "yaw rate: " << cmd_vel.yawr   << endl);
 	    
 	    m_pubNav.publish(msg);
       }

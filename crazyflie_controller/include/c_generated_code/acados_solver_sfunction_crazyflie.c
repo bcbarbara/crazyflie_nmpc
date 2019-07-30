@@ -50,9 +50,9 @@ static void mdlInitializeSizes (SimStruct *S)
     ssSetNumDiscStates(S, 0);
 
     // specify the number of input ports
-
+    
     if ( !ssSetNumInputPorts(S, 3) )
-
+    
         return;
 
     // specify the number of output ports
@@ -63,7 +63,7 @@ static void mdlInitializeSizes (SimStruct *S)
     ssSetInputPortVectorDimension(S, 0, 13);
     ssSetInputPortVectorDimension(S, 1, 850);
     ssSetInputPortVectorDimension(S, 2, 13);
-
+    
 
     // specify dimension information for the output ports
     ssSetOutputPortVectorDimension(S, 0, 4 ); // optimal input
@@ -76,7 +76,7 @@ static void mdlInitializeSizes (SimStruct *S)
     ssSetInputPortDirectFeedThrough(S, 0, 1); // current state x0
     ssSetInputPortDirectFeedThrough(S, 1, 1); // y_ref
     ssSetInputPortDirectFeedThrough(S, 2, 1); // y_ref__e
-
+    
 
     // one sample time
     ssSetNumSampleTimes(S, 1);
@@ -121,24 +121,24 @@ static void mdlOutputs(SimStruct *S, int_T tid)
     InputRealPtrsType in_x0_sign;
     InputRealPtrsType in_y_ref_sign;
     InputRealPtrsType in_y_ref_e_sign;
-
+    
 
     // local buffers
     real_t in_x0[13];
     real_t in_y_ref[850];
     real_t in_y_ref_e[13];
-
+    
 
     in_x0_sign = ssGetInputPortRealSignalPtrs(S, 0);
     in_y_ref_sign = ssGetInputPortRealSignalPtrs(S, 1);
     in_y_ref_e_sign = ssGetInputPortRealSignalPtrs(S, 2);
-
+    
 
     // copy signals into local buffers
     for (int i = 0; i < 13; i++) in_x0[i] = (double)(*in_x0_sign[i]);
     for (int i = 0; i < 850; i++) in_y_ref[i] = (double)(*in_y_ref_sign[i]);
     for (int i = 0; i < 13; i++) in_y_ref_e[i] = (double)(*in_y_ref_e_sign[i]);
-
+    
 
     // for (int i = 0; i < 4; i++) ssPrintf("x0[%d] = %f\n", i, in_x0[i]);
     // ssPrintf("\n");
@@ -152,11 +152,12 @@ static void mdlOutputs(SimStruct *S, int_T tid)
         ocp_nlp_cost_model_set(nlp_config, nlp_dims,
                 nlp_in, ii, "yref", (void *) (in_y_ref + ii*17));
     }
+
     ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in,
         50, "yref", (void *) in_y_ref_e);
 
     // update value of parameters
-
+    
 
     // assign pointers to output signals
     real_t *out_u0, *out_status, *out_KKT_res, *out_x1, *out_cpu_time;
