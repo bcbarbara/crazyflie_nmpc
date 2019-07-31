@@ -2,11 +2,7 @@
 
 import rospy
 from sensor_msgs.msg import Joy
-<<<<<<< HEAD
 from crazyflie_driver.srv import *
-=======
-from crazyflie_driver.srv import UpdateParams, Land, Takeoff
->>>>>>> 70c99228e077acc8ae5805ab759ada5f7b3c1f15
 from std_srvs.srv import Empty
 
 class Controller():
