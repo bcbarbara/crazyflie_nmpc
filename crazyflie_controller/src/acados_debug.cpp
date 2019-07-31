@@ -416,7 +416,7 @@ private:
 	   for (k = 0; k < N+1; k++) {
 		yref_sign[k * NY + 0] = 0.0; 	// xq
 		yref_sign[k * NY + 1] = 0.0;	// yq
-		yref_sign[k * NY + 2] = 0.0;	// zq
+		yref_sign[k * NY + 2] = 0.15;	// zq
 		yref_sign[k * NY + 3] = 1.0;	// q1
 		yref_sign[k * NY + 4] = 0.0;	// q2
 		yref_sign[k * NY + 5] = 0.0;	// q3
@@ -530,15 +530,17 @@ private:
 	    q[2] = acados_out.x1[q3];
 	    q[3] = acados_out.x1[q4];
 	    
-	    ROS_INFO_STREAM(fixed << showpos << "\nQuad flight data AFTER solver at time [" << e.current_real.toSec() << "s "<< "]" << endl
+	    // Convert quaternion into euler angles
+	    eu = quatern2euler(q);
+	    
+	     ROS_INFO_STREAM(fixed << showpos << "\nQuad flight data AFTER solver at time [" << e.current_real.toSec() << "s "<< "]" << endl
 				  << "Position [xq,yq,zq] = [" << acados_out.x1[xq] << ", " << acados_out.x1[yq] << ", " << acados_out.x1[zq] << "]" << endl
+				  << "Euler angles [phi,theta,psi] = [" << eu.phi << ", " << eu.theta << ", " << eu.psi << "]" << endl
 				  << "Quaternion [q1,q2,q3,q4] = [" << acados_out.x1[q1] << ", " <<acados_out.x1[q2] << ", " << acados_out.x1[q3] <<  ", " << acados_out.x1[q4] << "]" << endl			    
 				  << "Linear velo body [vbx,vby,vbz] = [" << acados_out.x1[vbx] << ", " << acados_out.x1[vby] << ", " << acados_out.x1[vbz] << "]" << endl
 				  << "Angular velo body [wx,wy,wz] = [" << acados_out.x1[wx] << ", " << acados_out.x1[wy] << ", " << acados_out.x1[wz] << "]" << endl
 				  << "Motor speeds [w1,w2,w3,w4] = [" << acados_out.u0[w1] << ", " << acados_out.u0[w2] << ", " << acados_out.u0[w3]<< ", " << acados_out.u0[w4] << "]" << endl);
 	    
-	    // Convert quaternion into euler angles
-	    eu = quatern2euler(q);
 	    	    
 	    // assignment of cf control inputs
 	    // (angles in degrees)
