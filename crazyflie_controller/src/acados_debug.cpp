@@ -304,6 +304,13 @@ private:
 	  x0_sign[vbz] = vb[2]; 
     }
     
+    double deg2Rad(double deg) {
+	  return deg / 180.0 * pi;
+    }
+
+    double rad2Deg(double rad) {
+	  return rad * 180.0 / pi;
+    }
     
     void eRaptorCallback(const geometry_msgs::PointStampedConstPtr& msg){
       
@@ -367,9 +374,9 @@ private:
 	  x0_sign[zq] = actual_z;
 	  
 	  // get the euler angles from the onboard stabilizer
-	  eu.phi   = actual_roll*pi/180;
-	  eu.theta = actual_pitch*pi/180;
-	  eu.psi   = actual_yaw*pi/180;
+	  eu.phi   = deg2Rad(actual_roll);
+	  eu.theta = deg2Rad(actual_pitch);
+	  eu.psi   = deg2Rad(actual_yaw);
 	  
 	  // Convert to quaternion
 	  acados_q = euler2quatern(eu);
@@ -433,9 +440,10 @@ private:
 	    x0_sign[zq] = actual_z;
 
 	    // get the euler angles from the onboard stabilizer
-	    eu.phi   = actual_roll*pi/180;
-	    eu.theta = actual_pitch*pi/180;
-	    eu.psi   = actual_yaw*pi/180;
+	    eu.phi   = deg2Rad(actual_roll);
+	    eu.theta = deg2Rad(actual_pitch);
+	    eu.psi   = deg2Rad(actual_yaw);
+	  
 	    
 	    /*ROS_INFO_STREAM(fixed << showpos << "BEFORE SOLVER" <<
 			    "roll: "   << eu.phi   << " " <<
@@ -467,12 +475,12 @@ private:
 	  
 	    
 	    // up to this point we already stored the 13 states required for the NMPC
-	    ROS_INFO_STREAM(fixed << showpos << "\nQuad flight data BEFORE solver at time [" << e.current_real.toSec() << "s "<< "]" << endl
+	    /*ROS_INFO_STREAM(fixed << showpos << "\nQuad flight data BEFORE solver at time [" << e.current_real.toSec() << "s "<< "]" << endl
 				  << "Position [xq,yq,zq] = [" << x0_sign[xq] << ", " << x0_sign[yq] << ", " << x0_sign[zq] << "]" << endl
 				  << "Quaternion [q1,q2,q3,q4] = [" << x0_sign[q1] << ", " << x0_sign[q2] << ", " << x0_sign[q3] <<  ", " << x0_sign[q4] << "]" << endl			    
 				  << "Linear velo body [vbx,vby,vbz] = [" << x0_sign[vbx] << ", " << x0_sign[vby] << ", " << x0_sign[vbz] << "]" << endl
 				  << "Angular velo body [wx,wy,wz] = [" << x0_sign[wx] << ", " << x0_sign[wy] << ", " << x0_sign[wz] << "]" << endl);
-	    
+	    */
 	    // copy signals into local buffers
 	    for (i = 0; i < NX; i++){
 	      acados_in.x0[i] = x0_sign[i];
@@ -516,7 +524,7 @@ private:
 	    // get next state
 	    ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 1, "x", (void *)acados_out.x1);
 	    
-	    // Select the optimal state to calculate the cf control inputs
+	    // Select the set of optimal state to calculate the cf control inputs
 	    q[0] = acados_out.x1[q1];
 	    q[1] = acados_out.x1[q2];
 	    q[2] = acados_out.x1[q3];
@@ -534,9 +542,9 @@ private:
 	    	    
 	    // assignment of cf control inputs
 	    // (angles in degrees)
-	    cmd_vel.roll  = eu.phi*180/pi;
-	    cmd_vel.pitch = eu.theta*180/pi;
-	    cmd_vel.yawr  = eu.psi*180/pi;
+	    cmd_vel.roll  = rad2Deg(eu.phi);
+	    cmd_vel.pitch = rad2Deg(eu.theta);
+	    cmd_vel.yawr  = rad2Deg(acados_out.x1[wz]);
 	    cmd_vel.thrust = (acados_out.u0[w1]+acados_out.u0[w2]+acados_out.u0[w3]+acados_out.u0[w4])/4;
 	    
 	    // Populate the cmd_vel publisher with the correspondent struct
