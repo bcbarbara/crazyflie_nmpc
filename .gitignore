@@ -9,3 +9,4 @@ crazyflie_controller/.kdev4
 *.so
 .devcontainer/devcontainer.json
 crazyflie_controller/include/c_generated_code/main_crazyflie_pos
+crazyflie_controller/include/c_generated_code/main_crazyflie
