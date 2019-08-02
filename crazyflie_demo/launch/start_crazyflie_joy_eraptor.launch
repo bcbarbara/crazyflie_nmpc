@@ -2,7 +2,6 @@
 <launch>
   <arg name="uri" default="radio://0/80/2M" />
   <arg name="frame" default="/mocap" />
-  <arg name="joy_dev" default="/dev/input/js0" />
 
   <include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
   </include>
@@ -23,18 +22,6 @@
       <param name="enable_logging_pressure" value="False" />
       <param name="enable_logging_temperature" value="False" />
     </node>
-
-    <!--node name="joy" pkg="joy" type="joy_node" output="screen" >
-      <param name="dev" value="$(arg joy_dev)" />
-      <param name="deadzone" value="0.05" />
-    </node>
-
-    <include file="$(find crazyflie_demo)/launch/logitech.launch">
-    </include>
-
-    <node name="crazyflie_demo_controller" pkg="crazyflie_demo" type="controller.py" output="screen">
-        <param name="use_crazyflie_controller" value="False" />
-    </node-->
 
     <node name="pose" pkg="crazyflie_demo" type="publish_external_position_eraptor.py" output="screen">
     </node>
