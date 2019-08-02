@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
-import tf
+#  import tf
 from geometry_msgs.msg import PointStamped, TransformStamped
 from visualization_msgs.msg import MarkerArray
 from crazyflie_driver.srv import UpdateParams, Takeoff, Land
