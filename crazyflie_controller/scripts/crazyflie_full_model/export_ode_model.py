@@ -4,7 +4,7 @@ def export_ode_model():
     model_name = 'crazyflie'
 
     # parameters
-    g0 = 9.8         # [m.s^2]
+    g0  = 9.8        # [m.s^2]
     mq  = 33e-3      # [Kg] with one marker
     Ixx = 1.395e-5   # [Kg.m^2]
     Iyy = 1.395e-5   # [Kg.m^2]
@@ -62,9 +62,9 @@ def export_ode_model():
     dq2 = (q1*wx)/2 - (q4*wy)/2 + (q3*wz)/2
     dq3 = (q4*wx)/2 + (q1*wy)/2 - (q2*wz)/2
     dq4 = (q2*wy)/2 - (q3*wx)/2 + (q1*wz)/2
-    dvbx = vby*wz - vbz*wy - g0*(2*q1*q3 - 2*q2*q4)
-    dvby = vbz*wx - vbx*wz + g0*(2*q1*q2 + 2*q3*q4)
-    dvbz = vbx*wy - vby*wx + g0*(2*q1**2 + 2*q4**2 - 1) - (Ct*(w1**2 + w2**2 + w3**2 + w4**2))/mq
+    dvbx = vby*wz - vbz*wy + g0*(2*q1*q3 - 2*q2*q4)
+    dvby = vbz*wx - vbx*wz - g0*(2*q1*q2 + 2*q3*q4)
+    dvbz = vbx*wy - vby*wx - g0*(2*q1**2 + 2*q4**2 - 1) + (Ct*(w1**2 + w2**2 + w3**2 + w4**2))/mq
     dwx = -(Ct*l*(w1**2 + w2**2 - w3**2 - w4**2) - Iyy*wy*wz + Izz*wy*wz)/Ixx
     dwy = -(Ct*l*(w1**2 - w2**2 - w3**2 + w4**2) + Ixx*wx*wz - Izz*wx*wz)/Iyy
     dwz = -(Cd*(w1**2 - w2**2 + w3**2 - w4**2) - Ixx*wx*wy + Iyy*wx*wy)/Izz
