@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<launch>
+
+	<node name="cf_height"
+				pkg="rqt_plot"
+				type="rqt_plot"
+				args="/crazyflie/acados_position/z /crazyflie/acados_position/y /crazyflie/external_position/point/z "
+	/>
+
+	<node name="acados_output_motorspeed"
+				pkg="rqt_plot"
+				type="rqt_plot"
+				args="/crazyflie/acados_motvel"
+	/>
+
+	<node name="cf_inertial_position"
+        pkg="rqt_plot"
+        type="rqt_plot"
+        args="/crazyflie/external_position"
+	/>
+
+	<node name="cf_quat"
+        pkg="rqt_plot"
+        type="rqt_plot"
+        args="/crazyflie/quat"
+	/>
+
+	<node name="cf_linear_velo"
+        pkg="rqt_plot"
+        type="rqt_plot"
+        args="/crazyflie/linear_velo"
+	/>
+
+	<node name="cf_angular_velo"
+				pkg="rqt_plot"
+				type="rqt_plot"
+				args="/crazyflie/angular_velo"
+	/>
+
+	<node name="recording"
+        pkg="rosbag"
+        type="play"
+        args="/home/barbara/crazyflie.bag"
+	/>
+
+</launch>
