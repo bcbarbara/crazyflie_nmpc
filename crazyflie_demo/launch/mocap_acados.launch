@@ -32,12 +32,18 @@
 		</node>
 	</group>
 
-  <node name="thrust_plot"
+  <node launch-prefix="run_tmux_swayv " name="thrust_plot"
         pkg="rqt_plot"
         type="rqt_plot"
         args="/crazyflie/cmd_vel/linear"
 	/>
-  <node name="pos_plot"
+  <node launch-prefix="run_tmux_swayv " name="pos_plot"
+        pkg="rqt_plot"
+        type="rqt_plot"
+        args="/crazyflie/external_position/point"
+	/>
+
+  <node launch-prefix="run_tmux_swayv " name="pos_plot"
         pkg="rqt_plot"
         type="rqt_plot"
         args="/crazyflie/external_position/point"
@@ -47,7 +53,7 @@
 	<!-- run eraptor bridge -->
 	<include file="$(find cortex_stream)/launch/cortex_stream.launch"/>
 
-	<include file="$(find crazyflie_demo)/launch/nmpc_debug.launch">
+	<include launch-prefix="run_tmux " file="$(find crazyflie_demo)/launch/nmpc_debug.launch">
 	</include>
 
 </launch>
