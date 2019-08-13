@@ -23,6 +23,7 @@ set(simple_model_build ${PROJECT_SOURCE_DIR}/scripts/crazyflie_simple_model/c_ge
 
 generate_dynamic_reconfigure_options(
 	config/crazyflie_params.cfg
+	config/WeightMatrices.cfg
 )
 
 add_message_files(
@@ -46,7 +47,9 @@ catkin_package(
 	CATKIN_DEPENDS message_runtime
 )
 
-## Build
+###########
+## Build ##
+###########
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
@@ -64,6 +67,14 @@ include_directories(
 link_directories(${full_model_build})
 link_directories(${simple_model_build})
 
+add_executable(acados_debug src/acados_debug.cpp)
+target_link_libraries(acados_debug
+	${full_model_build}libacados_solver_crazyflie.so
+	${acados_lib}/libacados.so
+	${catkin_LIBRARIES}
+)
+add_dependencies(acados_debug ${PROJECT_NAME}_gencfg)
+
 add_executable(acados_mpc src/acados_mpc.cpp)
 target_link_libraries(acados_mpc
 	${full_model_build}libacados_solver_crazyflie.so
@@ -79,24 +90,3 @@ target_link_libraries(acados_estimator
 	${catkin_LIBRARIES}
 )
 add_dependencies(acados_estimator ${PROJECT_NAME}_gencfg)
-
-# measurement vector node
-add_executable(measurements_vector src/measurements_vector.cpp)
-target_link_libraries(measurements_vector
-	${catkin_LIBRARIES}
-)
-add_dependencies(measurements_vector measurements_vector_generate_messages_cpp)
-
-# crazyflie imu node
-add_executable(crazyflie_imu src/crazyflie_imu.cpp)
-	# Specify libraries to link a library or executable target against
-target_link_libraries(crazyflie_imu
-	${catkin_LIBRARIES}
-)
-
-# linear velocity estimation
-add_executable(linvelo_estimation src/linvelo_estimation.cpp)
-	# Specify libraries to link a library or executable target against
-target_link_libraries(linvelo_estimation
-	${catkin_LIBRARIES}
-)

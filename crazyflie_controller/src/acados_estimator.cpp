@@ -30,7 +30,7 @@
 
 // dynamic reconfirgure
 #include <dynamic_reconfigure/server.h>
-#include <crazyflie_controller/crazyflie_paramsConfig.h>
+#include <crazyflie_controller/crazyflie_estimatorConfig.h>
 #include <boost/thread.hpp>
 #include "boost/thread/mutex.hpp"
 
@@ -259,15 +259,15 @@ class ESTIMATOR
 		ros::Timer timer = node.createTimer(ros::Duration(1.0/frequency), &ESTIMATOR::predictor, this);
 
 		ROS_DEBUG("Setting up the dynamic reconfigure panel and server");
-		dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsConfig> server;
-		dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsConfig>::CallbackType f;
+		dynamic_reconfigure::Server<crazyflie_controller::crazyflie_estimatorConfig> server;
+		dynamic_reconfigure::Server<crazyflie_controller::crazyflie_estimatorConfig>::CallbackType f;
 		f = boost::bind(&ESTIMATOR::callback_dynamic_reconfigure, this, _1, _2);
 		server.setCallback(f);
 
 		ros::spin();
 		}
 
-	void callback_dynamic_reconfigure(crazyflie_controller::crazyflie_paramsConfig &config, uint32_t level)
+	void callback_dynamic_reconfigure(crazyflie_controller::crazyflie_estimatorConfig &config, uint32_t level)
 		{
 
 		if (level)
