@@ -4,7 +4,7 @@
 	<arg name="frame" default="/mocap" />
 
 	<include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
-</include>
+	</include>
 
 	<group ns="crazyflie">
 		<node
@@ -29,43 +29,25 @@
 			<param name="enable_logging_pressure" value="False" />
 			<param name="enable_logging_temperature" value="False" />
 		</node>
-
 	</group>
 
-<<<<<<< HEAD
   <!--node name="thrust_plot"
-=======
-  <node launch-prefix="run_tmux_swayv " name="thrust_plot"
->>>>>>> tmmsartor/crazyflie_ros-weights_dynamcis_reconfigure
         pkg="rqt_plot"
         type="rqt_plot"
         args="/crazyflie/cmd_vel/linear"
 	/-->
 
-	<node name="cf_height"
+	<!--node name="cf_height"
 				pkg="rqt_plot"
 				type="rqt_plot"
 				args="/crazyflie/external_position/point/z /crazyflie/acados_position/z /crazyflie/acados_position/y"
 	/>
-<<<<<<< HEAD
 
 	<node name="acados_output_plot"
 				pkg="rqt_plot"
 				type="rqt_plot"
 				args="/crazyflie/acados_motvel"
-=======
-  <node launch-prefix="run_tmux_swayv " name="pos_plot"
-        pkg="rqt_plot"
-        type="rqt_plot"
-        args="/crazyflie/external_position/point"
-	/>
-
-  <node launch-prefix="run_tmux_swayv " name="pos_plot"
-        pkg="rqt_plot"
-        type="rqt_plot"
-        args="/crazyflie/external_position/point"
->>>>>>> tmmsartor/crazyflie_ros-weights_dynamcis_reconfigure
-	/>
+	/-->
 
 	<node name="acados_bag"
 				pkg="rosbag"
@@ -76,12 +58,10 @@
 	<!-- run eraptor bridge -->
 	<include file="$(find cortex_stream)/launch/cortex_stream.launch"/>
 
-<<<<<<< HEAD
 	<include file="$(find crazyflie_demo)/launch/nmpc_debug.launch">
-</include>
-=======
-	<include launch-prefix="run_tmux " file="$(find crazyflie_demo)/launch/nmpc_debug.launch">
 	</include>
->>>>>>> tmmsartor/crazyflie_ros-weights_dynamcis_reconfigure
+
+	<node pkg="rqt_reconfigure" name="crazyflie_reconf" type="rqt_reconfigure" output="screen">
+	</node>
 
 </launch>
