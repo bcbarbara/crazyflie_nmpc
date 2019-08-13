@@ -13,7 +13,7 @@
 
 // Dynamic reconfirgure
 #include <dynamic_reconfigure/server.h>
-#include <crazyflie_controller/WeightMatricesConfig.h>
+#include <crazyflie_controller/crazyflie_paramsConfig.h>
 #include <boost/thread.hpp>
 #include "boost/thread/mutex.hpp"
 
@@ -67,6 +67,7 @@ using std::showpos;
 #define pi      3.14159265358979323846
 #define g0	9.80665
 #define WEIGHT_MATRICES 1
+#define REGULATION_POINT 1
 
 
 class NMPC
@@ -143,17 +144,17 @@ public:
 	
 	
 	ROS_DEBUG("Setting up the dynamic reconfigure panel and server");
-	dynamic_reconfigure::Server<crazyflie_controller::WeightMatricesConfig> server;
-	dynamic_reconfigure::Server<crazyflie_controller::WeightMatricesConfig>::CallbackType f;
+	dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsConfig> server;
+	dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsConfig>::CallbackType f;
 	f = boost::bind(&NMPC::callback_dynamic_reconfigure, this, _1, _2);
 	server.setCallback(f);
   
         ros::spin();
     }
     
-    void callback_dynamic_reconfigure(crazyflie_controller::WeightMatricesConfig &config, uint32_t level){
+    void callback_dynamic_reconfigure(crazyflie_controller::crazyflie_paramsConfig &config, uint32_t level){
       
-      if (level & WEIGHT_MATRICES){
+      if (WEIGHT_MATRICES){
 	ROS_INFO("Changing the weight of NMPC matrices!");
 	Wdiag_xq 	= config.Wdiag_xq;
 	Wdiag_yq 	= config.Wdiag_yq;
@@ -172,10 +173,36 @@ public:
 	Wdiag_w2 	= config.Wdiag_w2;
 	Wdiag_w3 	= config.Wdiag_w3;
 	Wdiag_w4 	= config.Wdiag_w4;
+// 	ROS_INFO_STREAM("Current W matrix: "	<< endl
+// 						<< Wdiag_xq << endl
+// 						<< Wdiag_yq << endl
+// 						<< Wdiag_zq << endl
+// 						<< Wdiag_q1 << endl
+// 						<< Wdiag_q1 << endl
+// 						<< Wdiag_q2 << endl
+// 						<< Wdiag_q3 << endl
+// 						<< Wdiag_q4 << endl
+// 						<< Wdiag_vbx << endl
+// 						<< Wdiag_vby << endl
+// 						<< Wdiag_vbz << endl
+// 						<< Wdiag_wx << endl
+// 						<< Wdiag_wy << endl
+// 						<< Wdiag_wz << endl
+// 						<< Wdiag_w1 << endl
+// 						<< Wdiag_w2 << endl
+// 						<< Wdiag_w3 << endl
+// 						<< Wdiag_w4 << endl);
+      }
+      
+      if(REGULATION_POINT){
+	ROS_INFO("Changing the desired regulation point!");
+	xq_des 		= config.xq_des;
+	yq_des 		= config.yq_des;
+	zq_des 		= config.zq_des;
+	
+	//ROS_INFO_STREAM("Current regulation point: " << xq_des << ", " << yq_des << ", " << zq_des << endl);
       }
     }
-
-private:
 
     enum systemStates{
 	  xq = 0,
@@ -217,7 +244,7 @@ private:
       double x0[NX];
       double yref[(NY*N)+NY];
       double yref_e[NYN];
-      double W[(NX+NU)*(NX+NU)];
+      double W[NY*NY];
       double WN[NX*NX];
     };
 
@@ -440,165 +467,166 @@ private:
 
       double dt = e.current_real.toSec() - e.last_real.toSec();
       
+      // Update reference
+      for (k = 0; k < N+1; k++) {
+	    yref_sign[k * NY + 0] = xq_des; 	// xq
+	    yref_sign[k * NY + 1] = yq_des;	// yq
+	    yref_sign[k * NY + 2] = zq_des;	// zq
+	    yref_sign[k * NY + 3] = 1.0;	// q1
+	    yref_sign[k * NY + 4] = 0.0;	// q2
+	    yref_sign[k * NY + 5] = 0.0;	// q3
+	    yref_sign[k * NY + 6] = 0.0;	// q4
+	    yref_sign[k * NY + 7] = 0.0;	// vbx
+	    yref_sign[k * NY + 8] = 0.0;	// vby
+	    yref_sign[k * NY + 9] = 0.0;	// vbz
+	    yref_sign[k * NY + 10] = 0.0;	// wx
+	    yref_sign[k * NY + 11] = 0.0;	// wy
+	    yref_sign[k * NY + 12] = 0.0;	// wz
+	    yref_sign[k * NY + 13] = uss;	// w1
+	    yref_sign[k * NY + 14] = uss;	// w2
+	    yref_sign[k * NY + 15] = uss;	// w3
+	    yref_sign[k * NY + 16] = uss;	// w4
+      }
+      
+      //ROS_INFO_STREAM("Current acados regulation point: " << yref_sign[0] << ", "<< yref_sign[1] << ", " << yref_sign[2] << endl);
 
-		// Update reference
-	   	for (k = 0; k < N+1; k++) {
-		      yref_sign[k * NY + 0] = 0.0; 	// xq
-		      yref_sign[k * NY + 1] = 0.0;	// yq
-		      yref_sign[k * NY + 2] = 0.0;	// zq
-		      yref_sign[k * NY + 3] = 1.0;	// q1
-		      yref_sign[k * NY + 4] = 0.0;	// q2
-		      yref_sign[k * NY + 5] = 0.0;	// q3
-		      yref_sign[k * NY + 6] = 0.0;	// q4
-		      yref_sign[k * NY + 7] = 0.0;	// vbx
-		      yref_sign[k * NY + 8] = 0.0;	// vby
-		      yref_sign[k * NY + 9] = 0.0;	// vbz
-		      yref_sign[k * NY + 10] = 0.0;	// wx
-		      yref_sign[k * NY + 11] = 0.0;	// wy
-		      yref_sign[k * NY + 12] = 0.0;	// wz
-		      yref_sign[k * NY + 13] = uss;	// w1
-		      yref_sign[k * NY + 14] = uss;	// w2
-		      yref_sign[k * NY + 15] = uss;	// w3
-		      yref_sign[k * NY + 16] = uss;	// w4
-		}
+      for (ii = 0; ii < (NY*NY); ii++) {
+	    acados_in.W[ii] = 0.0;
+      }
+      for (ii = 0; ii < (NYN*NYN); ii++) {
+	    acados_in.WN[ii] = 0.0;
+      }
 
-// 		for (ii = 0; ii < ((NU+NX)*(NU*NX)); ii++) {
-// 		      acados_in.W[ii] = 0.0;
-// 		}
-// 		for (ii = 0; ii < ((NX)*(NX)); ii++) {
-// 		      acados_in.WN[ii] = 0.0;
-// 		}
-// 
-// 		acados_in.W[0+0*(NU+NX)]   = Wdiag_xq;
-// 		acados_in.W[1+1*(NU+NX)]   = Wdiag_yq;
-// 		acados_in.W[2+2*(NU+NX)]   = Wdiag_zq;
-// 		acados_in.W[3+3*(NU+NX)]   = Wdiag_q1;
-// 		acados_in.W[4+4*(NU+NX)]   = Wdiag_q2;
-// 		acados_in.W[5+5*(NU+NX)]   = Wdiag_q3;
-// 		acados_in.W[6+6*(NU+NX)]   = Wdiag_q4;
-// 		acados_in.W[7+7*(NU+NX)]   = Wdiag_vbx;
-// 		acados_in.W[8+8*(NU+NX)]   = Wdiag_vby;
-// 		acados_in.W[9+9*(NU+NX)]   = Wdiag_vbz;
-// 		acados_in.W[10+10*(NU+NX)] = Wdiag_wx;
-// 		acados_in.W[11+11*(NU+NX)] = Wdiag_wy;
-// 		acados_in.W[12+12*(NU+NX)] = Wdiag_wz;
-// 		acados_in.W[13+13*(NU+NX)] = Wdiag_w1;
-// 		acados_in.W[14+14*(NU+NX)] = Wdiag_w2;
-// 		acados_in.W[15+15*(NU+NX)] = Wdiag_w3;
-// 		acados_in.W[16+16*(NU+NX)] = Wdiag_w4;
-// 
-// 		acados_in.WN[0+0*(NX)]   = Wdiag_xq;
-// 		acados_in.WN[1+1*(NX)]   = Wdiag_yq;
-// 		acados_in.WN[2+2*(NX)]   = Wdiag_zq;
-// 		acados_in.WN[3+3*(NX)]   = Wdiag_q1;
-// 		acados_in.WN[4+4*(NX)]   = Wdiag_q2;
-// 		acados_in.WN[5+5*(NX)]   = Wdiag_q3;
-// 		acados_in.WN[6+6*(NX)]   = Wdiag_q4;
-// 		acados_in.WN[7+7*(NX)]   = Wdiag_vbx;
-// 		acados_in.WN[8+8*(NX)]   = Wdiag_vby;
-// 		acados_in.WN[9+9*(NX)]   = Wdiag_vbz;
-// 		acados_in.WN[10+10*(NX)] = Wdiag_wx;
-// 		acados_in.WN[11+11*(NX)] = Wdiag_wy;
-// 		acados_in.WN[12+12*(NX)] = Wdiag_wz;
+      acados_in.W[0+0*NY]   = Wdiag_xq;
+      acados_in.W[1+1*NY]   = Wdiag_yq;
+      acados_in.W[2+2*NY]   = Wdiag_zq;
+      acados_in.W[3+3*NY]   = Wdiag_q1;
+      acados_in.W[4+4*NY]   = Wdiag_q2;
+      acados_in.W[5+5*NY]   = Wdiag_q3;
+      acados_in.W[6+6*NY]   = Wdiag_q4;
+      acados_in.W[7+7*NY]   = Wdiag_vbx;
+      acados_in.W[8+8*NY]   = Wdiag_vby;
+      acados_in.W[9+9*NY]   = Wdiag_vbz;
+      acados_in.W[10+10*NY] = Wdiag_wx;
+      acados_in.W[11+11*NY] = Wdiag_wy;
+      acados_in.W[12+12*NY] = Wdiag_wz;
+      acados_in.W[13+13*NY] = Wdiag_w1;
+      acados_in.W[14+14*NY] = Wdiag_w2;
+      acados_in.W[15+15*NY] = Wdiag_w3;
+      acados_in.W[16+16*NY] = Wdiag_w4;
 
-		// Storing inertial positions in state vector
-		x0_sign[xq] = actual_x;
-		x0_sign[yq] = actual_y;
-		x0_sign[zq] = actual_z;
+      acados_in.WN[0+0*(NYN)]   = Wdiag_xq;
+      acados_in.WN[1+1*(NYN)]   = Wdiag_yq;
+      acados_in.WN[2+2*(NYN)]   = Wdiag_zq;
+      acados_in.WN[3+3*(NYN)]   = Wdiag_q1;
+      acados_in.WN[4+4*(NYN)]   = Wdiag_q2;
+      acados_in.WN[5+5*(NYN)]   = Wdiag_q3;
+      acados_in.WN[6+6*(NYN)]   = Wdiag_q4;
+      acados_in.WN[7+7*(NYN)]   = Wdiag_vbx;
+      acados_in.WN[8+8*(NYN)]   = Wdiag_vby;
+      acados_in.WN[9+9*(NYN)]   = Wdiag_vbz;
+      acados_in.WN[10+10*(NYN)] = Wdiag_wx;
+      acados_in.WN[11+11*(NYN)] = Wdiag_wy;
+      acados_in.WN[12+12*(NYN)] = Wdiag_wz;
 
-		// Get the euler angles from the onboard stabilizer
-		eu.phi   = deg2Rad(actual_roll);
-		eu.theta = deg2Rad(actual_pitch);
-		eu.psi   = deg2Rad(actual_yaw);
+      // Storing inertial positions in state vector
+      x0_sign[xq] = actual_x;
+      x0_sign[yq] = actual_y;
+      x0_sign[zq] = actual_z;
 
-		// Convert IMU euler angles to quaternion
-		Quaterniond q_imu = euler2quatern(eu);
+      // Get the euler angles from the onboard stabilizer
+      eu.phi   = deg2Rad(actual_roll);
+      eu.theta = deg2Rad(actual_pitch);
+      eu.psi   = deg2Rad(actual_yaw);
 
-		x0_sign[q1] = q_imu.w();
-		x0_sign[q2] = q_imu.x();
-		x0_sign[q3] = q_imu.y();
-		x0_sign[q4] = q_imu.z();
+      // Convert IMU euler angles to quaternion
+      Quaterniond q_imu = euler2quatern(eu);
 
-		estimateWordLinearVelocities(dt,t0);
+      x0_sign[q1] = q_imu.w();
+      x0_sign[q2] = q_imu.x();
+      x0_sign[q3] = q_imu.y();
+      x0_sign[q4] = q_imu.z();
 
-		Vector3d vb_mat;
-		vb_mat = rotateLinearVeloE2B(&q_imu);
+      estimateWordLinearVelocities(dt,t0);
 
-     	        // overwriting linear velocities in the body frame in state vector
-		x0_sign[vbx] = vb_mat[0];
-		x0_sign[vby] = vb_mat[1];
-		x0_sign[vbz] = vb_mat[2];
+      Vector3d vb_mat;
+      vb_mat = rotateLinearVeloE2B(&q_imu);
 
-		// Storing body angular velocities in state vector
-		x0_sign[wx] = actual_wx;
-		x0_sign[wy] = actual_wy;
-		x0_sign[wz] = actual_wz;
+      // overwriting linear velocities in the body frame in state vector
+      x0_sign[vbx] = vb_mat[0];
+      x0_sign[vby] = vb_mat[1];
+      x0_sign[vbz] = vb_mat[2];
 
-		// copy signals into local buffers
-		for (i = 0; i < NX; i++){
-		  acados_in.x0[i] = x0_sign[i];
-		  //cout << "x0: " << acados_in.x0[i] << endl;
-		}
+      // Storing body angular velocities in state vector
+      x0_sign[wx] = actual_wx;
+      x0_sign[wy] = actual_wy;
+      x0_sign[wz] = actual_wz;
 
-		for (i = 0; i < N; i++) {
-		    for (j = 0; j < NY; ++j) {
-			    acados_in.yref[i*NY + j] = yref_sign[i*NY + j];
-			    //cout <<  "yref: " << acados_in.yref[i] << endl;
-		    }
-		}
+      // copy signals into local buffers
+      for (i = 0; i < NX; i++){
+	acados_in.x0[i] = x0_sign[i];
+	//cout << "x0: " << acados_in.x0[i] << endl;
+      }
 
-		for (i = 0; i < NYN; i++) {
-		    acados_in.yref_e[i] = yref_sign[N*NY + i];
-		}
+      for (i = 0; i < N; i++) {
+	  for (j = 0; j < NY; ++j) {
+		  acados_in.yref[i*NY + j] = yref_sign[i*NY + j];
+		  //cout <<  "yref: " << acados_in.yref[i] << endl;
+	  }
+      }
 
-		// set initial condition
-		ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "lbx", acados_in.x0);
-		ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "ubx", acados_in.x0);
+      for (i = 0; i < NYN; i++) {
+	  acados_in.yref_e[i] = yref_sign[N*NY + i];
+      }
 
-		// update reference
-		for (ii = 0; ii < N; ii++) {
-			    ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, ii, "yref", acados_in.yref + ii*NY);
-			    // weights
-			    //ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, ii, "W", acados_in.W);
-		}
+      // set initial condition
+      ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "lbx", acados_in.x0);
+      ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "ubx", acados_in.x0);
 
-		//ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "WN", acados_in.WN);
+      // update reference
+      for (ii = 0; ii < N; ii++) {
+		  ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, ii, "yref", acados_in.yref + ii*NY);
+		  // weights
+		  ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, ii, "W", acados_in.W);
+      }
 
-		ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "yref", acados_in.yref_e);
+      ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "W", acados_in.WN);
 
-		// call solver
-		acados_status = acados_solve();
+      ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "yref", acados_in.yref_e);
 
-		// assign output signals
-		acados_out.status = acados_status;
-		acados_out.KKT_res = (double)nlp_out->inf_norm_res;
-		acados_out.cpu_time = (double)nlp_out->total_time;
+      // call solver
+      acados_status = acados_solve();
 
-
-		// get solution
-		ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 0, "u", (void *)acados_out.u0);
-
-		// get next state
-		ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 1, "x", (void *)acados_out.x1);
-
-		// Select the set of optimal state to calculate the cf control inputs
-		Quaterniond q_acados_out;
-		q_acados_out.w() = acados_out.x1[q1];
-		q_acados_out.x() = acados_out.x1[q2];
-		q_acados_out.y() = acados_out.x1[q3];
-		q_acados_out.z() = acados_out.x1[q4];
+      // assign output signals
+      acados_out.status = acados_status;
+      acados_out.KKT_res = (double)nlp_out->inf_norm_res;
+      acados_out.cpu_time = (double)nlp_out->total_time;
 
 
-		euler eu_imu;
-		eu_imu = quatern2euler(&q_acados_out);
+      // get solution
+      ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 0, "u", (void *)acados_out.u0);
 
-		geometry_msgs::Twist msg;
-		msg.linear.x  = rad2Deg(eu_imu.theta);
-		msg.linear.y  = rad2Deg(eu_imu.phi);
-		msg.linear.z  = krpm2pwm((acados_out.u0[w1]+acados_out.u0[w2]+acados_out.u0[w3]+acados_out.u0[w4])/4);
-		msg.angular.z  = rad2Deg(acados_out.x1[wz]);
+      // get next state
+      ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 1, "x", (void *)acados_out.x1);
 
-		m_pubNav.publish(msg);
+      // Select the set of optimal state to calculate the cf control inputs
+      Quaterniond q_acados_out;
+      q_acados_out.w() = acados_out.x1[q1];
+      q_acados_out.x() = acados_out.x1[q2];
+      q_acados_out.y() = acados_out.x1[q3];
+      q_acados_out.z() = acados_out.x1[q4];
+
+
+      euler eu_imu;
+      eu_imu = quatern2euler(&q_acados_out);
+
+      geometry_msgs::Twist msg;
+      msg.linear.x  = rad2Deg(eu_imu.theta);
+      msg.linear.y  = rad2Deg(eu_imu.phi);
+      msg.linear.z  = krpm2pwm((acados_out.u0[w1]+acados_out.u0[w2]+acados_out.u0[w3]+acados_out.u0[w4])/4);
+      msg.angular.z  = rad2Deg(acados_out.x1[wz]);
+
+      m_pubNav.publish(msg);
 
     }
 
@@ -641,6 +669,7 @@ private:
     double Wdiag_vbx,Wdiag_vby,Wdiag_vbz;
     double Wdiag_wx,Wdiag_wy,Wdiag_wz;
     double Wdiag_w1,Wdiag_w2,Wdiag_w3,Wdiag_w4;
+    double xq_des,yq_des,zq_des;
     
     // acados struct
     solver_input acados_in;

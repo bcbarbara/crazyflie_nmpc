@@ -16,7 +16,7 @@ find_package(Eigen3 REQUIRED)
 set(acados_include "/usr/local/include")
 
 generate_dynamic_reconfigure_options(
-  config/WeightMatrices.cfg
+  config/crazyflie_params.cfg
 )
 
 ###########

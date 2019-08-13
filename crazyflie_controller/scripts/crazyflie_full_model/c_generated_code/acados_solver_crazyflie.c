@@ -1008,7 +1008,7 @@ int acados_create() {
     
     yref[0] = 0.0;
     yref[1] = 0.0;
-    yref[2] = 1.0;
+    yref[2] = 0.5;
     yref[3] = 1.0;
     yref[4] = 0.0;
     yref[5] = 0.0;
@@ -1389,7 +1389,7 @@ int acados_create() {
     Vx_e[12 + (NYN) * 12] = 1.0;
     yref_e[0] = 0.0;
     yref_e[1] = 0.0;
-    yref_e[2] = 1.0;
+    yref_e[2] = 0.5;
     yref_e[3] = 1.0;
     yref_e[4] = 0.0;
     yref_e[5] = 0.0;
