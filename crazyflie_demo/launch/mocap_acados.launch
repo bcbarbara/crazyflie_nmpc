@@ -31,59 +31,10 @@
 			type="publish_external_position_eraptor.py"
 			output="screen">
 		</node>
+
 	</group>
 
-	<!-- run eraptor bridge -->
 	<include file="$(find cortex_stream)/launch/cortex_stream.launch"/>
-
-	<!--node name="acados_cmd"
-				pkg="rqt_plot"
-				type="rqt_plot"
-				args="/crazyflie/cmd_vel/linear"
-	/>
-
-	<node name="acados_traj"
-				pkg="rqt_plot"
-				type="rqt_plot"
-				args="/crazyflie/acados_traj/vector"
-	/-->
-
-	<!--node name="cf_position"
-				pkg="rqt_plot"
-				type="rqt_plot"
-				args="/crazyflie/external_position/point"
-	/>
-
-	<node name="cf_motors"
-				pkg="rqt_plot"
-				type="rqt_plot"
-				args="/crazyflie/acados_motvel"
-	/>
-
-	<node name="cf_euler_angles"
-				pkg="rqt_plot"
-				type="rqt_plot"
-				args="/crazyflie/euler_angles/vector"
-	/>
-
-	<node name="cf_quaternion"
-				pkg="rqt_plot"
-				type="rqt_plot"
-				args="/crazyflie/quat"
-	/>
-
-	<node name="cf_linear_velo"
-				pkg="rqt_plot"
-				type="rqt_plot"
-				args="/crazyflie/linear_velo"
-	/>
-
-	<node name="cf_angular_velo"
-				pkg="rqt_plot"
-				type="rqt_plot"
-				args="/crazyflie/angular_velo"
-	/>
-	/-->
 
 	<node name="acados_bag"
 				pkg="rosbag"
@@ -92,11 +43,8 @@
 				>
 	</node>
 
-	<node name="nmpc" pkg="crazyflie_controller" type="acados_debug" output="screen" ns="crazyflie">
-		<param name="ref_traj" value="$(find crazyflie_controller)/traj/helix_traj.txt"/>
-  	</node>
-
-	<node pkg="rqt_reconfigure" name="crazyflie_reconf" type="rqt_reconfigure" output="screen">
-	</node>
+<node name="nmpc" pkg="crazyflie_controller" type="acados_debug" output="screen" ns="crazyflie">
+<param name="ref_traj" value="$(find crazyflie_controller)/traj/helix_traj.txt"/>
+</node>
 
 </launch>
