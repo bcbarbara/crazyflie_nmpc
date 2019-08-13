@@ -16,7 +16,6 @@
 // standard
 #include <iostream>
 
-
 // node custom messages
 
 // acados
@@ -50,6 +49,27 @@ using std::cout;
 using std::endl;
 using std::fixed;
 using std::showpos;
+
+double Wdiag_xq  = 4.0   ; // xq
+double Wdiag_yq  = 4.0   ; // yq
+double Wdiag_zq  = 10.0  ; // zq
+double Wdiag_q1  = 1e-1  ; // q1
+double Wdiag_q2  = 1e-1  ; // q2
+double Wdiag_q3  = 1e-1  ; // q3
+double Wdiag_q4  = 1e-1  ; // q4
+double Wdiag_vbx = 1.0   ; // vbx
+double Wdiag_vby = 1.0   ; // vby
+double Wdiag_vbz = 2.0   ; // vbz
+double Wdiag_wx  = 1.5   ; // wx
+double Wdiag_wy  = 1.5   ; // wy
+double Wdiag_wz  = 1.5   ; // wz
+double Wdiag_w1  = 1.0e-3; // w1
+double Wdiag_w2  = 1.0e-3; // w2
+double Wdiag_w3  = 1.0e-3; // w3
+double Wdiag_w4  = 1.0e-3; // w4
+
+
+
 
 // acados dim defines
 #define N 	50 	/* Number of intervals in the horizon. */
@@ -96,7 +116,7 @@ public:
 	vx_filter_samples.resize(5);
 	vy_filter_samples.resize(5);
 	vz_filter_samples.resize(5);
-	
+
 	for (unsigned int i = 0; i <= 4; i++) vx_filter_samples[i] = 0.0;
 	for (unsigned int i = 0; i <= 4; i++) vy_filter_samples[i] = 0.0;
 	for (unsigned int i = 0; i <= 4; i++) vz_filter_samples[i] = 0.0;
@@ -167,6 +187,8 @@ private:
       double x0[NX];
       double yref[(NY*N)+NY];
       double yref_e[NYN];
+      double W[(NX+NU)*(NX+NU)];
+	  double WN[NX*NX];
     };
 
     struct cf_cmd_vel{
@@ -317,7 +339,7 @@ private:
 
     void eRaptorCallback(const geometry_msgs::PointStampedConstPtr& msg){
 
-        // Position of crazyflie marker
+      // Position of crazyflie marker
 	  actual_x = msg->point.x;
 	  actual_y = msg->point.y;
 	  actual_z = msg->point.z;
@@ -375,62 +397,100 @@ private:
 
 //       if (e.current_real.toSec() - t0 < 5.0){
 // 	    // Initialize states until having a good velocity estimation
-// 
+//
 // 	    // Storing inertial positions in state vector
 // 	    x0_sign[xq] = actual_x;
 // 	    x0_sign[yq] = actual_y;
 // 	    x0_sign[zq] = actual_z;
-// 
+//
 // 	    // Get the euler angles from the onboard stabilizer
 // 	    eu.phi   = deg2Rad(actual_roll);
 // 	    eu.theta = deg2Rad(actual_pitch);
 // 	    eu.psi   = deg2Rad(actual_yaw);
-// 
+//
 // 	    // Convert IMU euler angles to quaternion
 // 	    Quaterniond q_imu = euler2quatern(eu);
-// 
+//
 // 	    x0_sign[q1] = q_imu.w();
 //  	    x0_sign[q2] = q_imu.x();
 //  	    x0_sign[q3] = q_imu.y();
 //  	    x0_sign[q4] = q_imu.z();
-// 
+//
 // 	    estimateWordLinearVelocities(dt,t0);
-// 
+//
 // 	    Vector3d vb_mat;
 //  	    vb_mat = rotateLinearVeloE2B(&q_imu);
-// 
+//
 //  	    // overwriting linear velocities in the body frame in state vector
 // 	    x0_sign[vbx] = vb_mat[0];
 // 	    x0_sign[vby] = vb_mat[1];
 // 	    x0_sign[vbz] = vb_mat[2];
-// 
-// 
+//
+//
 // 	    ROS_INFO("Warm starting crazyflie states...");
-// 
+//
 //       }
 //       else{
 
 	    // update reference
-	   for (k = 0; k < N+1; k++) {
-		yref_sign[k * NY + 0] = 0.0; 	// xq
-		yref_sign[k * NY + 1] = 0.0;	// yq
-		yref_sign[k * NY + 2] = 0.0;	// zq
-		yref_sign[k * NY + 3] = 1.0;	// q1
-		yref_sign[k * NY + 4] = 0.0;	// q2
-		yref_sign[k * NY + 5] = 0.0;	// q3
-		yref_sign[k * NY + 6] = 0.0;	// q4
-		yref_sign[k * NY + 7] = 0.0;	// vbx
-		yref_sign[k * NY + 8] = 0.0;	// vby
-		yref_sign[k * NY + 9] = 0.0;	// vbz
-		yref_sign[k * NY + 10] = 0.0;	// wx
-		yref_sign[k * NY + 11] = 0.0;	// wy
-		yref_sign[k * NY + 12] = 0.0;	// wz
-		yref_sign[k * NY + 13] = uss;	// w1
-		yref_sign[k * NY + 14] = uss;	// w2
-		yref_sign[k * NY + 15] = uss;	// w3
-		yref_sign[k * NY + 16] = uss;	// w4
-
+	   	for (k = 0; k < N+1; k++) {
+			yref_sign[k * NY + 0] = 0.0; 	// xq
+			yref_sign[k * NY + 1] = 0.0;	// yq
+			yref_sign[k * NY + 2] = 0.0;	// zq
+			yref_sign[k * NY + 3] = 1.0;	// q1
+			yref_sign[k * NY + 4] = 0.0;	// q2
+			yref_sign[k * NY + 5] = 0.0;	// q3
+			yref_sign[k * NY + 6] = 0.0;	// q4
+			yref_sign[k * NY + 7] = 0.0;	// vbx
+			yref_sign[k * NY + 8] = 0.0;	// vby
+			yref_sign[k * NY + 9] = 0.0;	// vbz
+			yref_sign[k * NY + 10] = 0.0;	// wx
+			yref_sign[k * NY + 11] = 0.0;	// wy
+			yref_sign[k * NY + 12] = 0.0;	// wz
+			yref_sign[k * NY + 13] = uss;	// w1
+			yref_sign[k * NY + 14] = uss;	// w2
+			yref_sign[k * NY + 15] = uss;	// w3
+			yref_sign[k * NY + 16] = uss;	// w4
 	    }
+
+		for (ii = 0; ii < (NU+NX)*(NU*NX); ii++) {
+			acados_in.W[ii] = 0.0;
+		}
+		for (ii = 0; ii < (NX)*(NX); ii++) {
+			acados_in.WN[ii] = 0.0;
+		}
+
+		acados_in.W[0+0*(NU+NX)]   = Wdiag_xq;
+		acados_in.W[1+1*(NU+NX)]   = Wdiag_yq;
+		acados_in.W[2+2*(NU+NX)]   = Wdiag_zq;
+		acados_in.W[3+3*(NU+NX)]   = Wdiag_q1;
+		acados_in.W[4+4*(NU+NX)]   = Wdiag_q2;
+		acados_in.W[5+5*(NU+NX)]   = Wdiag_q3;
+		acados_in.W[6+6*(NU+NX)]   = Wdiag_q4;
+		acados_in.W[7+7*(NU+NX)]   = Wdiag_vbx;
+		acados_in.W[8+8*(NU+NX)]   = Wdiag_vby;
+		acados_in.W[9+9*(NU+NX)]   = Wdiag_vbz;
+		acados_in.W[10+10*(NU+NX)] = Wdiag_wx;
+		acados_in.W[11+11*(NU+NX)] = Wdiag_wy;
+		acados_in.W[12+12*(NU+NX)] = Wdiag_wz;
+		acados_in.W[13+13*(NU+NX)] = Wdiag_w1;
+		acados_in.W[14+14*(NU+NX)] = Wdiag_w2;
+		acados_in.W[15+15*(NU+NX)] = Wdiag_w3;
+		acados_in.W[16+16*(NU+NX)] = Wdiag_w4;
+
+		acados_in.WN[0+0*(NX)]   = Wdiag_xq;
+		acados_in.WN[1+1*(NX)]   = Wdiag_yq;
+		acados_in.WN[2+2*(NX)]   = Wdiag_zq;
+		acados_in.WN[3+3*(NX)]   = Wdiag_q1;
+		acados_in.WN[4+4*(NX)]   = Wdiag_q2;
+		acados_in.WN[5+5*(NX)]   = Wdiag_q3;
+		acados_in.WN[6+6*(NX)]   = Wdiag_q4;
+		acados_in.WN[7+7*(NX)]   = Wdiag_vbx;
+		acados_in.WN[8+8*(NX)]   = Wdiag_vby;
+		acados_in.WN[9+9*(NX)]   = Wdiag_vbz;
+		acados_in.WN[10+10*(NX)] = Wdiag_wx;
+		acados_in.WN[11+11*(NX)] = Wdiag_wy;
+		acados_in.WN[12+12*(NX)] = Wdiag_wz;
 
 	    // Storing inertial positions in state vector
 	    x0_sign[xq] = actual_x;
@@ -497,8 +557,12 @@ private:
 
 	    // update reference
 	    for (ii = 0; ii < N; ii++) {
-		ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, ii, "yref", acados_in.yref + ii*NY);
+			ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, ii, "yref", acados_in.yref + ii*NY);
+			// weights
+			ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, ii, "W", acados_in.W);
 	    }
+
+		ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "WN", acados_in.WN);
 
 	    ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "yref", acados_in.yref_e);
 
@@ -544,7 +608,7 @@ private:
 	    msg.angular.z  = rad2Deg(acados_out.x1[wz]);
 
 	    m_pubNav.publish(msg);
-	    
+
 	    ROS_INFO_STREAM(fixed << showpos << "\nQuad flight data AFTER solver at time [" << e.current_real.toSec() << "s "<< "]" << endl
 			  << "Thrust,roll,pitch,yaw = [" << msg.linear.z << ", " << msg.linear.y << ", " << msg.linear.x << ", "<< msg.angular.z << "]" << endl);
 //       }
