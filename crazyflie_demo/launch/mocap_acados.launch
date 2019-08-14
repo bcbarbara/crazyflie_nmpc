@@ -31,28 +31,28 @@
 		</node>
 	</group>
 
-  <!--node name="thrust_plot"
-        pkg="rqt_plot"
-        type="rqt_plot"
-        args="/crazyflie/cmd_vel/linear"
-	/-->
-
-	<!--node name="cf_height"
+	<node name="cf_height"
 				pkg="rqt_plot"
 				type="rqt_plot"
-				args="/crazyflie/external_position/point/z /crazyflie/acados_position/z /crazyflie/acados_position/y"
+				args="/crazyflie/acados_position/z /crazyflie/acados_position/y /crazyflie/external_position/point/z"
 	/>
 
 	<node name="acados_output_plot"
 				pkg="rqt_plot"
 				type="rqt_plot"
 				args="/crazyflie/acados_motvel"
-	/-->
+	/>
+
+	<node name="crt_inputs_ea"
+				pkg="rqt_plot"
+				type="rqt_plot"
+				args="/crazyflie/cmd_vel/linear/x /crazyflie/cmd_vel/linear/y /crazyflie/cmd_vel/angular/z"
+	/>
 
 	<node name="acados_bag"
 				pkg="rosbag"
 				type="record"
-				args="record -o /home/barbara/crazyflie.bag /crazyflie/external_position/point /crazyflie/acados_position /crazyflie/acados_position /crazyflie/acados_motvel"
+				args="record -o /home/barbara/crazyflie.bag /crazyflie/external_position/point/z /crazyflie/acados_position /crazyflie/acados_position /crazyflie/acados_motvel /crazyflie/cmd_vel"
 	/>
 
 	<!-- run eraptor bridge -->
@@ -60,6 +60,7 @@
 
 	<include file="$(find crazyflie_demo)/launch/nmpc_debug.launch">
 	</include>
+
 
 	<node pkg="rqt_reconfigure" name="crazyflie_reconf" type="rqt_reconfigure" output="screen">
 	</node>

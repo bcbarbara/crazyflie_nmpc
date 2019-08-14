@@ -13,28 +13,10 @@
 				args="/crazyflie/acados_motvel"
 	/>
 
-	<node name="cf_inertial_position"
-        pkg="rqt_plot"
-        type="rqt_plot"
-        args="/crazyflie/external_position"
-	/>
-
-	<node name="cf_quat"
-        pkg="rqt_plot"
-        type="rqt_plot"
-        args="/crazyflie/quat"
-	/>
-
-	<node name="cf_linear_velo"
-        pkg="rqt_plot"
-        type="rqt_plot"
-        args="/crazyflie/linear_velo"
-	/>
-
-	<node name="cf_angular_velo"
+	<node name="cf_cmd_vel"
 				pkg="rqt_plot"
 				type="rqt_plot"
-				args="/crazyflie/angular_velo"
+				args="/crazyflie/cmd_vel/linear/y /crazyflie/cmd_vel/linear/x"
 	/>
 
 	<node name="recording"
