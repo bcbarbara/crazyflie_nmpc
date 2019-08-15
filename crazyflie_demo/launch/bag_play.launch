@@ -1,6 +1,12 @@
 <?xml version="1.0"?>
 <launch>
 
+	<node name="acados_traj"
+				pkg="rqt_plot"
+				type="rqt_plot"
+				args="/crazyflie/acados_traj/vector"
+	/>
+
 	<node name="cf_position"
 				pkg="rqt_plot"
 				type="rqt_plot"

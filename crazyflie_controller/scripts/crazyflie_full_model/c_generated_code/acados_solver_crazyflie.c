@@ -54,7 +54,7 @@
 #define NGN_   0
 #define NY_    17
 #define NYN_   13
-#define N_     50
+#define N_     100
 #define NPD_   0
 #define NPDN_  0
 #define NH_    0
@@ -202,7 +202,7 @@ int acados_create() {
 
     int status = 0;
 
-    double Tf = 1;
+    double Tf = 2;
 
     // initial state x0
     int idxbx0[NX];
@@ -1642,7 +1642,7 @@ int acados_free() {
 
     // free external function 
     
-    for(int i = 0; i < 50; i++) {
+    for(int i = 0; i < 100; i++) {
         
         external_function_casadi_free(&forw_vde_casadi[i]);
         
