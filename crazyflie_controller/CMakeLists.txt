@@ -46,6 +46,12 @@ target_link_libraries(acados_debug
 )
 add_dependencies(acados_debug ${PROJECT_NAME}_gencfg)
 
+# measurement vector node
+add_executable(measurements_vector src/measurements_vector.cpp)
+target_link_libraries(measurements_vector
+  ${catkin_LIBRARIES}
+)
+
 # crazyflie imu node
 add_executable(crazyflie_imu src/crazyflie_imu.cpp)
   # Specify libraries to link a library or executable target against
