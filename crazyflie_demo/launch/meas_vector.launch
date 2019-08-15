@@ -8,7 +8,7 @@
 
 	<group ns="crazyflie">
 		<node
-			name="pose"
+			name="eraptor_position"
 			pkg="crazyflie_demo"
 			type="publish_external_position_eraptor.py"
 			output="screen">
@@ -29,6 +29,10 @@
 			<param name="enable_logging_pressure" value="False" />
 			<param name="enable_logging_temperature" value="False" />
 		</node>
+
+		<node name="meas_vector" pkg="crazyflie_controller" type="measurements_vector" output="screen">
+    </node>
+
 	</group>
 
 	<node name="cf_position"
@@ -69,12 +73,5 @@
 
 	<!-- run eraptor bridge -->
 	<include file="$(find cortex_stream)/launch/cortex_stream.launch"/>
-
-	<include file="$(find crazyflie_demo)/launch/nmpc_debug.launch">
-	</include>
-
-
-	<node pkg="rqt_reconfigure" name="crazyflie_reconf" type="rqt_reconfigure" output="screen">
-	</node>
 
 </launch>

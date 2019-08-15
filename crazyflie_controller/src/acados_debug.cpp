@@ -90,11 +90,11 @@ public:
 	ros::NodeHandle nh;
 	// publisher for the real robot inputs (thrust, roll, pitch, yaw rate)
 	m_pubNav		= nh.advertise<geometry_msgs::Twist>("/crazyflie/cmd_vel", 1);
-	// publisher for the motion capture system position
+	// subscriber for the motion capture system position
 	m_eRaptor_sub  	 	= nh.subscribe("/crazyflie/external_position", 5, &NMPC::eRaptorCallback, this);
-	// publisher for the IMU linear acceleration and angular velocities from acc and gyro
+	// subscriber for the IMU linear acceleration and angular velocities from acc and gyro
 	m_imu_sub		= nh.subscribe("/crazyflie/imu", 5, &NMPC::imuCallback, this);
-	// publisher for the IMU stabilizer euler angles
+	// subscriber for the IMU stabilizer euler angles
 	m_euler_sub		= nh.subscribe("/crazyflie/euler_angles", 5, &NMPC::eulerCallback, this);
 	// publisher for the control inputs of acados (motor speeds to be applied)
 	m_motvel_pub 		= nh.advertise<geometry_msgs::Quaternion>("/crazyflie/acados_motvel",1);
@@ -133,8 +133,6 @@ public:
 
 	// Set elapsed time to zero initially
 	t0 = 0.0;
-	
-	LOG_ONCE = 1;
 	
 	// Steady-state control input value
 	mq = 33e-3; 	  		// [Kg]
@@ -263,19 +261,7 @@ public:
 
     int acados_status;
 
-    // Estimate the velocity using Euler initially and after a low-pass filter
-    double linearVelocity(std::vector <double> q_samples, double Ts, double elapsed_time, std::vector <double> dq_samples) {
-
-	double dq = 0;
-// 	if (elapsed_time > 0.01) dq = 1.573*dq_samples[4] - 0.6188*dq_samples[3] + 22.65*q_samples[4] - 22.65*q_samples[3];
-// 	else dq = (q_samples[4] - q_samples[3]) / Ts;
-	if (elapsed_time > 0.01) dq = 1.573*dq_samples[4] - 0.6188*dq_samples[3] + 22.65*q_samples[4] - 22.65*q_samples[3];
-	else dq = (q_samples[4] - q_samples[3]) / Ts;
-
-	return dq;
-    }
-    
-
+   
     euler quatern2euler(Quaterniond* q){
 
 	euler angle;
@@ -326,7 +312,17 @@ public:
 	  return q;
     }
 
-    void estimateWordLinearVelocities(float dt, float delta){
+        double linearVelocity(std::vector <double> q_samples, std::vector <double> dq_samples, double Ts, double elapsed_time) {
+
+	double dq = 0;
+	if (elapsed_time > 1.0) dq = 0.1814*dq_samples[4] - 0.00823*dq_samples[3] + 26.13*q_samples[4] - 26.13*q_samples[3];
+	else dq = (q_samples[4] - q_samples[3]) / Ts;
+	return dq;
+    }
+
+    Vector3d estimateWordLinearVelocities(float dt, float delta){
+      
+	  Vector3d vearth;
       
 	  //estimte the velocity
 	  x_samples[0] = x_samples[1];
@@ -345,39 +341,36 @@ public:
 	  z_samples[3] = z_samples[4];
 	  z_samples[4] = actual_z;
 
-	  vx = linearVelocity(x_samples, dt, delta, vx_filter_samples);
-	  vy = linearVelocity(y_samples, dt, delta, vy_filter_samples);
-	  vz = linearVelocity(z_samples, dt, delta, vz_filter_samples);
-
-	  // passing to the state vector
-	  x0_sign[vbx] = vx;
-	  x0_sign[vby] = vy;
-	  x0_sign[vbz] = vz;
+	  vearth[0] = linearVelocity(x_samples, vx_filter_samples, dt, delta);
+	  vearth[1] = linearVelocity(y_samples, vy_filter_samples, dt, delta);
+	  vearth[2] = linearVelocity(z_samples, vz_filter_samples, dt, delta);
 
 	  vx_filter_samples[0] = vx_filter_samples[1];
 	  vx_filter_samples[1] = vx_filter_samples[2];
 	  vx_filter_samples[2] = vx_filter_samples[3];
 	  vx_filter_samples[3] = vx_filter_samples[4];
-	  vx_filter_samples[4] = vx;
+	  vx_filter_samples[4] = vearth[0];
 	  vy_filter_samples[0] = vy_filter_samples[1];
 	  vy_filter_samples[1] = vy_filter_samples[2];
 	  vy_filter_samples[2] = vy_filter_samples[3];
 	  vy_filter_samples[3] = vy_filter_samples[4];
-	  vy_filter_samples[4] = vy;
+	  vy_filter_samples[4] = vearth[1];
 	  vz_filter_samples[0] = vz_filter_samples[1];
 	  vz_filter_samples[1] = vz_filter_samples[2];
 	  vz_filter_samples[2] = vz_filter_samples[3];
 	  vz_filter_samples[3] = vz_filter_samples[4];
-	  vz_filter_samples[4] = vz;
+	  vz_filter_samples[4] = vearth[2];
+	  
+	  return vearth;
     }
 
-    Vector3d rotateLinearVeloE2B(Quaterniond* q){
+    Vector3d rotateLinearVeloE2B(Quaterniond* q, Vector3d v_inertial){
 
 	 // This is the convertion between
 	 // quaternion orientation to rotation matrix
 	 // from BODY to EARTH according the crazyflie firmware
 // 	 Matrix3d Sq;
-// 	 Vector3d vi,vb;
+// 	 Vector3d vb;
 // 
 // 	 double S11 = 2*(q->w()*q->w()+q->x()*q->x())-1;;
 // 	 double S12 = 2*(q->x()*q->y()-q->w()*q->z());
@@ -392,8 +385,8 @@ public:
          // This is the convertion between
 	 // quaternion orientation to rotation matrix
 	 // from EARTH to BODY (considering ZYX euler sequence)
-	 Matrix3d Sq;
-	 Vector3d vi,vb;
+ 	 Matrix3d Sq;
+ 	 Vector3d vb;
 
 	 double S11 = 2*(q->w()*q->w()+q->x()*q->x())-1;
 	 double S12 = 2*(q->x()*q->y()+q->w()*q->z());
@@ -410,9 +403,8 @@ public:
 	       S21,S22,S23,
 	       S31,S32,S33;
 
-	 vi << x0_sign[vbx],x0_sign[vby],x0_sign[vbz];
-
-	 vb = Sq*vi;
+	 vb = Sq*v_inertial;
+	 
 	 return vb;
     }
 
@@ -470,43 +462,6 @@ public:
 	
       double dt = e.current_real.toSec() - e.last_real.toSec();    
       
-//       if (e.current_real.toSec() - t0 < 5.0){
-// 	// Storing inertial positions in state vector
-// 	x0_sign[xq] = actual_x;
-// 	x0_sign[yq] = actual_y;
-// 	x0_sign[zq] = actual_z;
-// 
-// 	// Get the euler angles from the onboard stabilizer
-// 	eu.phi   = deg2Rad(actual_roll);
-// 	eu.theta = deg2Rad(actual_pitch);
-// 	eu.psi   = deg2Rad(actual_yaw);
-// 
-// 	// Convert IMU euler angles to quaternion
-// 	Quaterniond q_imu = euler2quatern(eu);
-// 
-// 	x0_sign[q1] = q_imu.w();
-// 	x0_sign[q2] = q_imu.x();
-// 	x0_sign[q3] = q_imu.y();
-// 	x0_sign[q4] = q_imu.z();
-// 
-// 	estimateWordLinearVelocities(dt,t0);
-// 
-// 	Vector3d vb_mat;
-// 	vb_mat = rotateLinearVeloE2B(&q_imu);
-// 
-// 	// overwriting linear velocities in the body frame in state vector
-// 	x0_sign[vbx] = vb_mat[0];
-// 	x0_sign[vby] = vb_mat[1];
-// 	x0_sign[vbz] = vb_mat[2];
-// 
-// 	// Storing body angular velocities in state vector
-// 	x0_sign[wx] = actual_wx;
-// 	x0_sign[wy] = actual_wy;
-// 	x0_sign[wz] = actual_wz;
-// 	
-//       }
-      
-//      if (e.current_real.toSec() - t0 > 5.0){
         if (1) {
 	// Update reference
 	for (k = 0; k < N+1; k++) {
@@ -574,22 +529,25 @@ public:
 	x0_sign[zq] = actual_z;
 
 	// Get the euler angles from the onboard stabilizer
+	euler eu;
 	eu.phi   = deg2Rad(actual_roll);
 	eu.theta = deg2Rad(actual_pitch);
 	eu.psi   = deg2Rad(actual_yaw);
-
+	
 	// Convert IMU euler angles to quaternion
 	Quaterniond q_imu = euler2quatern(eu);
+	q_imu.normalize();
 
 	x0_sign[q1] = q_imu.w();
 	x0_sign[q2] = q_imu.x();
 	x0_sign[q3] = q_imu.y();
 	x0_sign[q4] = q_imu.z();
 
-	estimateWordLinearVelocities(dt,t0);
+	Vector3d vi_mat;
+	vi_mat = estimateWordLinearVelocities(dt,t0);
 
 	Vector3d vb_mat;
-	vb_mat = rotateLinearVeloE2B(&q_imu);
+	vb_mat = rotateLinearVeloE2B(&q_imu,vi_mat);
 
 	// overwriting linear velocities in the body frame in state vector
 	x0_sign[vbx] = vb_mat[0];
@@ -600,7 +558,6 @@ public:
 	x0_sign[wx] = actual_wx;
 	x0_sign[wy] = actual_wy;
 	x0_sign[wz] = actual_wz;
-	
 	
 	// Up to this point we already stored the 13 states required for the NMPC. So advertise them!
 	geometry_msgs::Quaternion cf_st_quat; // publisher for quaternion
@@ -818,9 +775,6 @@ private:
     std::vector<double> vy_filter_samples;
     std::vector<double> vz_filter_samples;
     double t0;
-    
-    std::vector<double> _log;
-    int LOG_ONCE;
 
     // Variables of the nmpc control process
     double x0_sign[NX];
@@ -837,10 +791,6 @@ private:
     // acados struct
     solver_input acados_in;
     solver_output acados_out;
-
-    // Variables to be used in convertions
-    Quaterniond q,q_rot;
-    euler eu;
 
     // Variables for reading the IMU data
     float actual_wx;
