@@ -14,8 +14,8 @@ model = export_ode_model()
 # set model_name
 ra.model_name = model.name
 
-Tf = 1
-N = 50
+Tf = 2
+N = 100
 nx = model.x.size()[0]
 nu = model.u.size()[0]
 ny = nx + nu
@@ -151,41 +151,6 @@ acados_solver = generate_solver(model, ra, json_file = 'acados_ocp.json')
 
 print('>> NMPC exported')
 
-#def quatern2euler(q):
-#      R11 = 2*q[0]*q[0]-1+2*q[1]*q[1]
-#      R21 = 2*(q[1]*q[2]+q[0]*q[3])
-#      R31 = 2*(q[1]*q[3]-q[0]*q[2])
-#      R32 = 2*(q[2]*q[3]+q[0]*q[1])
-#      R33 = 2*q[0]*q[0]-1+2*q[3]*q[3]
-
-#      phi   = np.arctan2(R32, R33)
-#      theta = -np.arctan(R31/np.sqrt(1-R31*R31))
-#      psi   = np.arctan2(R21, R11)
-
-#      return phi,theta,psi
-
-#def euler2quatern(e):
-
-#      phi    = e[0]
-#      theta  = e[1]
-#      psi    = e[2]
-#      cosPhi = np.cos(phi*0.5)
-#      sinPhi = np.sin(phi*0.5)
-
-#      cosTheta = np.cos(theta*0.5)
-#      sinTheta = np.sin(theta*0.5)
-
-#      cosPsi = np.cos(psi*0.5)
-#      sinPsi = np.sin(psi*0.5)
-
-      # Convention according the firmware of the crazyflie
-#      w = cosPsi*cosTheta*cosPhi + sinPsi*sinTheta*sinPhi
-#      x = cosPsi*cosTheta*sinPhi - sinPsi*sinTheta*cosPhi
-#      y = cosPsi*sinTheta*cosPhi + sinPsi*cosTheta*sinPhi
-#      z = sinPsi*cosTheta*cosPhi - cosPsi*sinTheta*sinPhi
-
-#      return w,x,y,z
-
 #PI = 3.14159
 
 #Nsim = 400
@@ -198,6 +163,9 @@ print('>> NMPC exported')
 
 #for i in range(Nsim):
 #    status = acados_solver.solve()
+#    status = acados_solver.solve()
+#    status = acados_solver.solve()
+
     # get solution
 #    x0 = acados_solver.get(0, "x")
 #    u0 = acados_solver.get(0, "u")
@@ -210,20 +178,9 @@ print('>> NMPC exported')
 #    for j in range(nu):
 #        simU[i,j] = u0[j]
 
-#    for j in range(3):
-#        angles[i,j] = euler[j]
-
     # update initial condition
 #    x0 = acados_solver.get(1, "x")
 
-    #roll,pitch,yaw = quatern2euler(x0[3:7])
-    #euler = np.array([roll,pitch,yaw])
-    #w,x,y,z = euler2quatern(euler)
-    #x0[3] = w
-    #x0[4] = x
-    #x0[5] = y
-    #x0[6] = z
-    #print(euler*180/PI)
 #    acados_solver.set(0, "lbx", x0)
 #    acados_solver.set(0, "ubx", x0)
 
@@ -240,14 +197,14 @@ print('>> NMPC exported')
 #plt.xlabel('t')
 #plt.grid(True)
 #plt.subplot(4, 1, 2)
-#plt.step(t, simU[:, 1], 'r')
+##plt.step(t, simU[:, 1], 'r')
 #plt.ylabel('w2')
 #plt.xlabel('t')
 #plt.grid(True)
 #plt.subplot(4, 1, 3)
 #plt.step(t, simU[:, 2], 'r')
 #plt.ylabel('w3')
-#plt.xlabel('t')
+##plt.xlabel('t')
 #plt.grid(True)
 #plt.subplot(4, 1, 4)
 #plt.step(t, simU[:, 3], 'r')
@@ -268,12 +225,6 @@ print('>> NMPC exported')
 #q3.plot(t, simX[:, 5], 'r')
 #q4.plot(t, simX[:, 6], 'r')
 
-#fig, (r, p, y) = plt.subplots(3)
-#fig.suptitle('Euler angles')
-#r.plot(t, angles[:, 0], 'r')
-#p.plot(t, angles[:, 1], 'r')
-#y.plot(t, angles[:, 2], 'r')
-
 #fig, (h, v, w) = plt.subplots(3)
 #fig.suptitle('Body-frame linear velocities')
 #h.plot(t, simX[:, 7], 'r')
@@ -285,6 +236,5 @@ print('>> NMPC exported')
 #wx.plot(t, simX[:, 10], 'r')
 #wy.plot(t, simX[:, 11], 'r')
 #wz.plot(t, simX[:, 12], 'r')
-
 
 #plt.show()

@@ -3,7 +3,6 @@
 #include <std_msgs/String.h>
 #include <geometry_msgs/PointStamped.h>
 #include <geometry_msgs/Twist.h>
-#include <sensor_msgs/Joy.h>
 #include <std_msgs/String.h>
 #include <sensor_msgs/Imu.h>
 #include <geometry_msgs/Quaternion.h>
@@ -62,7 +61,7 @@ using std::showpos;
 
 
 // acados dim defines
-#define N 	50 	/* Number of intervals in the horizon. */
+#define N 	100 	/* Number of intervals in the horizon. */
 #define NX 	13 	/* Number of differential state variables.  */
 #define NU 	4	/* Number of control inputs. */
 #define NY 	17	/* Number of measurements/references on nodes 0..N-1. */
@@ -99,7 +98,7 @@ public:
 	// publisher for the control inputs of acados (motor speeds to be applied)
 	m_motvel_pub 		= nh.advertise<geometry_msgs::Quaternion>("/crazyflie/acados_motvel",1);
 	// publisher for acados z output for the 1st & N shooting node + z from the mocap
-	m_acados_position       = nh.advertise<geometry_msgs::Vector3>("/crazyflie/acados_position",1);
+	m_acados_position       = nh.advertise<geometry_msgs::Vector3>("/crazyflie/acados_traj",1);
 	// publisher for the current value of the quaternion
 	m_cf_quat 		= nh.advertise<geometry_msgs::Quaternion>("/crazyflie/quat",1);
 	// publisher for the current value of the linear velocities
@@ -305,9 +304,9 @@ public:
 
 	  // Convention according the firmware of the crazyflie
 	  q.w() = cosPsi*cosTheta*cosPhi + sinPsi*sinTheta*sinPhi;
-	  q.x() = cosPsi*cosTheta*sinPhi - sinPsi*sinTheta*cosPhi;
-	  q.y() = cosPsi*sinTheta*cosPhi + sinPsi*cosTheta*sinPhi;
-	  q.z() = sinPsi*cosTheta*cosPhi - cosPsi*sinTheta*sinPhi;
+	  q.x() = -(cosPsi*cosTheta*sinPhi - sinPsi*sinTheta*cosPhi);
+	  q.y() = -(cosPsi*sinTheta*cosPhi + sinPsi*cosTheta*sinPhi);
+	  q.z() = -(sinPsi*cosTheta*cosPhi - cosPsi*sinTheta*sinPhi);
 
 	  return q;
     }
@@ -467,7 +466,7 @@ public:
 	for (k = 0; k < N+1; k++) {
 	      yref_sign[k * NY + 0] = xq_des; 	// xq
 	      yref_sign[k * NY + 1] = yq_des;	// yq
-	      yref_sign[k * NY + 2] = zq_des;	// zq
+	      yref_sign[k * NY + 2] = 0.15;	// zq
 	      yref_sign[k * NY + 3] = 1.0;	// q1
 	      yref_sign[k * NY + 4] = 0.0;	// q2
 	      yref_sign[k * NY + 5] = 0.0;	// q3
@@ -581,9 +580,9 @@ public:
 	m_cf_avb.publish(cf_st_avb);
 	
 	//---------------------------------------//
-	//				       //
-	//		acados NMPC 	       //
-	//				       //
+	//				         //
+	//		acados NMPC 	         //
+	//				         //
 	//---------------------------------------//
 
 
@@ -718,7 +717,7 @@ public:
 
 	// Publish real control inputs
 	geometry_msgs::Twist msg;
-	msg.linear.x  = -rad2Deg(eu_imu.theta);
+	msg.linear.x  = rad2Deg(eu_imu.theta);
 	msg.linear.y  = rad2Deg(eu_imu.phi);
 	msg.linear.z  = krpm2pwm((acados_out.u0[w1]+acados_out.u0[w2]+acados_out.u0[w3]+acados_out.u0[w4])/4);
 	msg.angular.z  = rad2Deg(acados_out.x1[wz]);

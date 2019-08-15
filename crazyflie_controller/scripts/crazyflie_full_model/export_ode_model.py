@@ -51,7 +51,7 @@ def export_ode_model():
     wx_dot = SX.sym('wx_dot')
     wy_dot = SX.sym('wy_dot')
     wz_dot = SX.sym('wz_dot')
-    xdot = vertcat(xq_dot, yq_dot, zq_dot, q1_dot, q2_dot, q3_dot, q4_dot, vbx_dot, vby_dot, vbx_dot, wx_dot, wy_dot, wz_dot)
+    xdot = vertcat(xq_dot, yq_dot, zq_dot, q1_dot, q2_dot, q3_dot, q4_dot, vbx_dot, vby_dot, vbz_dot, wx_dot, wy_dot, wz_dot)
 
 
     # Model equations

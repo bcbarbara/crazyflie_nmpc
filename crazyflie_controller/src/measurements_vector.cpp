@@ -344,16 +344,16 @@ private:
       m_avb_pub.publish(cf_st_avb);
       
       
-      ofstream dataLog("meas_vector.txt", std::ios_base::app | std::ios_base::out);
+      ofstream dataLog("measurements.txt", std::ios_base::app | std::ios_base::out);
 
       if (dataLog.is_open()){
 
-	dataLog << eu.phi      << " ";
-	dataLog << eu.theta    << " ";
-	dataLog << eu.psi      << " ";
-	dataLog << vi_mat[0]   << " ";
-	dataLog << vi_mat[1]   << " ";
-	dataLog << vi_mat[2]   << " ";
+// 	dataLog << eu.phi      << " ";
+// 	dataLog << eu.theta    << " ";
+// 	dataLog << eu.psi      << " ";
+// 	dataLog << vi_mat[0]   << " ";
+// 	dataLog << vi_mat[1]   << " ";
+// 	dataLog << vi_mat[2]   << " ";
 	dataLog << x0_sign[xq] << " ";
 	dataLog << x0_sign[yq] << " ";
 	dataLog << x0_sign[zq] << " ";
