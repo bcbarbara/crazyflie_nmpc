@@ -19,15 +19,21 @@
 			<param name="tf_prefix" value="crazyflie" />
 			<param name="enable_logging" value="True" />
 			<param name="enable_logging_battery" value="False" />
-			<param name="enable_logging_euler_angles" value="True" />
+			<param name="enable_logging_motors" value="True" />
+			<param name="enable_logging_euler_angles" value="False" />
 			<param name="enable_logging_kf_quaternion" value="False" />
 			<param name="enable_logging_onboard_position" value="False" />
-			<param name="enable_logging_imu" value="True" />
+			<param name="enable_logging_imu" value="False" />
 			<param name="enable_logging_magnetic_field" value="False" />
 			<param name="enable_logging_packets" value="False" />
 			<param name="enable_logging_pose" value="False" />
 			<param name="enable_logging_pressure" value="False" />
 			<param name="enable_logging_temperature" value="False" />
+			<rosparam>
+      genericLogTopics: ["log1"]
+      genericLogTopicFrequencies: [100]
+      genericLogTopic_log1_Variables: ["motor.m1", "motor.m2", "motor.m3", "motor.m4"]
+    </rosparam>
 		</node>
 
 		<node name="meas_vector" pkg="crazyflie_controller" type="measurements_vector" output="screen">
@@ -35,7 +41,7 @@
 
 	</group>
 
-	<node name="cf_position"
+	<!--node name="cf_position"
 				pkg="rqt_plot"
 				type="rqt_plot"
 				args="/crazyflie/external_position/point"
@@ -63,7 +69,7 @@
 				pkg="rqt_plot"
 				type="rqt_plot"
 				args="/crazyflie/angular_velo"
-	/>
+	/-->
 
 	<node name="acados_bag"
 				pkg="rosbag"

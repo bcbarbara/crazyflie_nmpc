@@ -15,6 +15,7 @@ int main(int argc, char **argv)
   bool enable_logging;
   bool enable_parameters;
   bool use_ros_time;
+  bool enable_logging_motors;
   bool enable_logging_euler_angles;
   bool enable_logging_kf_quaternion;
   bool enable_logging_onboard_position;
@@ -33,6 +34,7 @@ int main(int argc, char **argv)
   n.param("enable_logging", enable_logging, true);
   n.param("enable_parameters", enable_parameters, true);
   n.param("use_ros_time", use_ros_time, true);
+  n.param("enable_logging_motors", enable_logging_euler_angles, true);
   n.param("enable_logging_euler_angles", enable_logging_euler_angles, true);
   n.param("enable_logging_kf_quaternion", enable_logging_kf_quaternion, true);
   n.param("enable_logging_onboard_position", enable_logging_onboard_position, true);
@@ -57,6 +59,7 @@ int main(int argc, char **argv)
   addCrazyflie.request.enable_logging = enable_logging;
   addCrazyflie.request.enable_parameters = enable_parameters;
   addCrazyflie.request.use_ros_time = use_ros_time;
+  addCrazyflie.request.enable_logging_motors = enable_logging_motors;
   addCrazyflie.request.enable_logging_euler_angles = enable_logging_euler_angles;
   addCrazyflie.request.enable_logging_kf_quaternion = enable_logging_kf_quaternion;
   addCrazyflie.request.enable_logging_onboard_position = enable_logging_onboard_position;
