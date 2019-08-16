@@ -94,6 +94,7 @@ public:
     bool enable_parameters,
     std::vector<crazyflie_driver::LogBlock>& log_blocks,
     bool use_ros_time,
+    bool enable_logging_motors,
     bool enable_logging_euler_angles,
     bool enable_logging_kf_quaternion,
     bool enable_logging_onboard_position,
@@ -116,6 +117,7 @@ public:
     , m_enableParameters(enable_parameters)
     , m_logBlocks(log_blocks)
     , m_use_ros_time(use_ros_time)
+    , m_enable_logging_motors(enable_logging_motors)
     , m_enable_logging_euler_angles(enable_logging_euler_angles)
     , m_enable_logging_kf_quaternion(enable_logging_kf_quaternion)
     , m_enable_logging_onboard_position(enable_logging_onboard_position)
@@ -182,6 +184,15 @@ public:
   }
 
 private:
+
+  struct logMotors{
+    int32_t m1;
+    int32_t m2;
+    int32_t m3;
+    int32_t m4;
+
+  }__attribute__((packed));
+
   struct logEulerAngles{
     float roll;
     float pitch;
@@ -417,6 +428,9 @@ void cmdPositionSetpoint(
     m_serviceUploadTrajectory = n.advertiseService(m_tf_prefix + "/upload_trajectory", &CrazyflieROS::uploadTrajectory, this);
     m_serviceStartTrajectory = n.advertiseService(m_tf_prefix + "/start_trajectory", &CrazyflieROS::startTrajectory, this);
 
+    if (m_enable_logging_motors) {
+      m_pubMotors = n.advertise<geometry_msgs::QuaternionStamped>(m_tf_prefix + "/motors", 10);
+    }
     if (m_enable_logging_euler_angles) {
       m_pubEuler = n.advertise<geometry_msgs::Vector3Stamped>(m_tf_prefix + "/euler_angles", 10);
     }
@@ -501,6 +515,7 @@ void cmdPositionSetpoint(
       m_serviceUpdateParams = n.advertiseService(m_tf_prefix + "/update_params", &CrazyflieROS::updateParams, this);
     }
 
+    std::unique_ptr<LogBlock<logMotors> > logBlockMotors;
     std::unique_ptr<LogBlock<logEulerAngles> > logBlockEuler;
     std::unique_ptr<LogBlock<logKFquaternion> > logBlockKFquaternion;
     std::unique_ptr<LogBlock<logOnboardPosition> > logBlockOnboardPosition;
@@ -515,6 +530,19 @@ void cmdPositionSetpoint(
 
       ROS_INFO_NAMED(m_tf_prefix, "Requesting Logging variables...");
       m_cf.requestLogToc();
+
+      if (m_enable_logging_motors) {
+        std::function<void(uint32_t, logMotors*)> cb = std::bind(&CrazyflieROS::onMotorsData, this, std::placeholders::_1, std::placeholders::_2);
+
+        logBlockMotors.reset(new LogBlock<logMotors>(
+          &m_cf,{
+            {"motor", "m1"},
+            {"motor", "m2"},
+            {"motor", "m3"},
+            {"motor", "m4"},
+          }, cb));
+        logBlockMotors->start(1); // 10ms
+      }
 
       if (m_enable_logging_euler_angles) {
         std::function<void(uint32_t, logEulerAngles*)> cb = std::bind(&CrazyflieROS::onStabilizerData, this, std::placeholders::_1, std::placeholders::_2);
@@ -656,6 +684,26 @@ void cmdPositionSetpoint(
        m_cf.sendSetpoint(0, 0, 0, 0);
     }
 
+  }
+
+  // Get motors RPM
+  void onMotorsData(uint32_t time_in_ms, logMotors* data){
+    if (m_enable_logging_kf_quaternion) {
+      geometry_msgs::QuaternionStamped msg;
+      if (m_use_ros_time) {
+        msg.header.stamp = ros::Time::now();
+      } else {
+        msg.header.stamp = ros::Time(time_in_ms / 1000.0);
+      }
+      msg.header.frame_id = m_tf_prefix + "/base_link";
+
+      msg.quaternion.w = data->m1;
+      msg.quaternion.x = data->m2;
+      msg.quaternion.y = data->m3;
+      msg.quaternion.z = data->m4;
+
+      m_pubMotors.publish(msg);
+    }
   }
 
   // Get the euler angles from the STABILIZER
@@ -952,6 +1000,7 @@ private:
   bool m_enableParameters;
   std::vector<crazyflie_driver::LogBlock> m_logBlocks;
   bool m_use_ros_time;
+  bool m_enable_logging_motors;
   bool m_enable_logging_euler_angles;
   bool m_enable_logging_kf_quaternion;
   bool m_enable_logging_onboard_position;
@@ -983,6 +1032,7 @@ private:
   ros::Subscriber m_subscribeCmdPosition;
   ros::Subscriber m_subscribeExternalPosition;
   ros::Subscriber m_subscribeExternalPose;
+  ros::Publisher m_pubMotors;
   ros::Publisher m_pubEuler;
   ros::Publisher m_pubImu;
   ros::Publisher m_pubKFquaternion;
@@ -1063,6 +1113,7 @@ private:
       req.enable_parameters,
       req.log_blocks,
       req.use_ros_time,
+      req.enable_logging_motors,
       req.enable_logging_euler_angles,
       req.enable_logging_kf_quaternion,
       req.enable_logging_onboard_position,

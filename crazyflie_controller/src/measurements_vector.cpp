@@ -4,7 +4,11 @@
 #include <std_msgs/String.h>
 #include <sensor_msgs/Imu.h>
 #include <geometry_msgs/Quaternion.h>
+#include <geometry_msgs/QuaternionStamped.h>
 #include <geometry_msgs/Vector3Stamped.h>
+
+
+#include "crazyflie_controller/GenericLogData.h"
 
 // standard
 #include <iostream>
@@ -47,7 +51,7 @@ public:
 	m_eRaptor_sub  	 	= nh.subscribe("/crazyflie/external_position", 5, &meas_vec::eRaptorCallback, this);
 	// publisher for the IMU stabilizer euler angles
 	m_euler_sub		= nh.subscribe("/crazyflie/euler_angles", 5, &meas_vec::eulerCallback, this);
-		// subscriber for the IMU linear acceleration and angular velocities from acc and gyro
+	// subscriber for the IMU linear acceleration and angular velocities from acc and gyro
 	m_imu_sub		= nh.subscribe("/crazyflie/imu", 5, &meas_vec::imuCallback, this);
 	// publisher for the current value of the quaternion
 	m_quat_pub 		= nh.advertise<geometry_msgs::Quaternion>("/crazyflie/quat",1);
@@ -55,6 +59,8 @@ public:
 	m_lvb_pub 		= nh.advertise<geometry_msgs::Vector3>("/crazyflie/linear_velo",1);
 	// publisher for the current value of the angular velocities
 	m_avb_pub 		= nh.advertise<geometry_msgs::Vector3>("/crazyflie/angular_velo",1);
+	// subscriber fro the motors rpm
+	m_motors 		= nh.subscribe("/crazyflie/log1", 5, &meas_vec::motorsCallback, this);
 	
 	
 	// Set initial value of the linear velocities to zero
@@ -133,6 +139,14 @@ private:
 	return rad * 180.0 / pi;
   }
 
+  void motorsCallback(const crazyflie_controller::GenericLogDataConstPtr& msg){
+    
+	// motors rpm
+	actual_m1 = msg->values[0];
+	actual_m2 = msg->values[1];
+	actual_m3 = msg->values[2];
+	actual_m4 = msg->values[3];
+  }
   
   void eRaptorCallback(const geometry_msgs::PointStampedConstPtr& msg){
 
@@ -344,34 +358,37 @@ private:
       m_avb_pub.publish(cf_st_avb);
       
       
-      ofstream dataLog("measurements.txt", std::ios_base::app | std::ios_base::out);
+      ofstream statesLog("states_controls.txt", std::ios_base::app | std::ios_base::out);
 
-      if (dataLog.is_open()){
+      if (statesLog.is_open()){
 
-// 	dataLog << eu.phi      << " ";
-// 	dataLog << eu.theta    << " ";
-// 	dataLog << eu.psi      << " ";
-// 	dataLog << vi_mat[0]   << " ";
-// 	dataLog << vi_mat[1]   << " ";
-// 	dataLog << vi_mat[2]   << " ";
-	dataLog << x0_sign[xq] << " ";
-	dataLog << x0_sign[yq] << " ";
-	dataLog << x0_sign[zq] << " ";
-	dataLog << x0_sign[q1] << " ";
-	dataLog << x0_sign[q2] << " ";
-	dataLog << x0_sign[q3] << " ";
-	dataLog << x0_sign[q4] << " ";
-	dataLog << x0_sign[vbx] << " ";
-	dataLog << x0_sign[vby] << " ";
-	dataLog << x0_sign[vbz] << " ";
-	dataLog << x0_sign[wx] << " ";
-	dataLog << x0_sign[wy] << " ";
-	dataLog << x0_sign[wz] << " ";
-	dataLog << endl;
+// 	statesLog << eu.phi      << " ";
+// 	statesLog << eu.theta    << " ";
+// 	statesLog << eu.psi      << " ";
+// 	statesLog << vi_mat[0]   << " ";
+// 	statesLog << vi_mat[1]   << " ";
+// 	statesLog << vi_mat[2]   << " ";
+	statesLog << x0_sign[xq] << " ";
+	statesLog << x0_sign[yq] << " ";
+	statesLog << x0_sign[zq] << " ";
+	statesLog << x0_sign[q1] << " ";
+	statesLog << x0_sign[q2] << " ";
+	statesLog << x0_sign[q3] << " ";
+	statesLog << x0_sign[q4] << " ";
+	statesLog << x0_sign[vbx] << " ";
+	statesLog << x0_sign[vby] << " ";
+	statesLog << x0_sign[vbz] << " ";
+	statesLog << x0_sign[wx] << " ";
+	statesLog << x0_sign[wy] << " ";
+	statesLog << x0_sign[wz] << " ";
+	statesLog << actual_m1 << " ";
+	statesLog << actual_m2 << " ";
+	statesLog << actual_m3 << " ";
+	statesLog << actual_m4 << " ";	
+	statesLog << endl;
 	
-	dataLog.close();
-      }
-	
+	statesLog.close();
+      }	
     }
 
 private:
@@ -379,6 +396,7 @@ private:
     ros::Subscriber m_imu_sub;
     ros::Subscriber m_euler_sub;
     ros::Subscriber m_eRaptor_sub;
+    ros::Subscriber m_motors;
     
     ros::Publisher m_quat_pub;
     ros::Publisher m_lvb_pub;
@@ -387,6 +405,9 @@ private:
     // Variables for reading the IMU data
     double actual_wx,actual_wy,actual_wz;
     double actual_roll,actual_pitch,actual_yaw;
+    int32_t actual_m1,actual_m2,actual_m3,actual_m4;
+    
+    // Variables for the mocap callback
     double actual_x,actual_y,actual_z;
     
     double vx,vy,vz;

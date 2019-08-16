@@ -8,15 +8,33 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   tf
   dynamic_reconfigure
+  message_generation
  # pybind11_catkin
 )
 
 find_package(Eigen3 REQUIRED)
 
+#find_package(crazyflie_driver)
+
 set(acados_include "/usr/local/include")
 
 generate_dynamic_reconfigure_options(
   config/crazyflie_params.cfg
+)
+
+add_message_files(
+  FILES
+  GenericLogData.msg
+)
+
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+  geometry_msgs
+)
+
+catkin_package(
+    CATKIN_DEPENDS message_runtime
 )
 
 ###########
@@ -51,6 +69,7 @@ add_executable(measurements_vector src/measurements_vector.cpp)
 target_link_libraries(measurements_vector
   ${catkin_LIBRARIES}
 )
+add_dependencies(measurements_vector measurements_vector_generate_messages_cpp)
 
 # crazyflie imu node
 add_executable(crazyflie_imu src/crazyflie_imu.cpp)
