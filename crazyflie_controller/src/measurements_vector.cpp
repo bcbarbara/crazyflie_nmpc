@@ -358,36 +358,37 @@ private:
       m_avb_pub.publish(cf_st_avb);
       
       
-      ofstream statesLog("states_controls.txt", std::ios_base::app | std::ios_base::out);
+//       ofstream statesLog("states_controls.txt", std::ios_base::app | std::ios_base::out);
+      ofstream motorsLog("motors.txt", std::ios_base::app | std::ios_base::out);
 
-      if (statesLog.is_open()){
+      if (motorsLog.is_open()){
 
-// 	statesLog << eu.phi      << " ";
-// 	statesLog << eu.theta    << " ";
-// 	statesLog << eu.psi      << " ";
-// 	statesLog << vi_mat[0]   << " ";
-// 	statesLog << vi_mat[1]   << " ";
-// 	statesLog << vi_mat[2]   << " ";
-	statesLog << x0_sign[xq] << " ";
-	statesLog << x0_sign[yq] << " ";
-	statesLog << x0_sign[zq] << " ";
-	statesLog << x0_sign[q1] << " ";
-	statesLog << x0_sign[q2] << " ";
-	statesLog << x0_sign[q3] << " ";
-	statesLog << x0_sign[q4] << " ";
-	statesLog << x0_sign[vbx] << " ";
-	statesLog << x0_sign[vby] << " ";
-	statesLog << x0_sign[vbz] << " ";
-	statesLog << x0_sign[wx] << " ";
-	statesLog << x0_sign[wy] << " ";
-	statesLog << x0_sign[wz] << " ";
-	statesLog << actual_m1 << " ";
-	statesLog << actual_m2 << " ";
-	statesLog << actual_m3 << " ";
-	statesLog << actual_m4 << " ";	
-	statesLog << endl;
+// 	motorsLog << eu.phi      << " ";
+// 	motorsLog << eu.theta    << " ";
+// 	motorsLog << eu.psi      << " ";
+// 	motorsLog << vi_mat[0]   << " ";
+// 	motorsLog << vi_mat[1]   << " ";
+// 	motorsLog << vi_mat[2]   << " ";
+// 	motorsLog << x0_sign[xq] << " ";
+// 	motorsLog << x0_sign[yq] << " ";
+// 	motorsLog << x0_sign[zq] << " ";
+// 	motorsLog << x0_sign[q1] << " ";
+// 	motorsLog << x0_sign[q2] << " ";
+// 	motorsLog << x0_sign[q3] << " ";
+// 	motorsLog << x0_sign[q4] << " ";
+// 	motorsLog << x0_sign[vbx] << " ";
+// 	motorsLog << x0_sign[vby] << " ";
+// 	motorsLog << x0_sign[vbz] << " ";
+// 	motorsLog << x0_sign[wx] << " ";
+// 	motorsLog << x0_sign[wy] << " ";
+// 	motorsLog << x0_sign[wz] << " ";
+	motorsLog << actual_m1 << " ";
+	motorsLog << actual_m2 << " ";
+	motorsLog << actual_m3 << " ";
+	motorsLog << actual_m4 << " ";	
+	motorsLog << endl;
 	
-	statesLog.close();
+	motorsLog.close();
       }	
     }
 

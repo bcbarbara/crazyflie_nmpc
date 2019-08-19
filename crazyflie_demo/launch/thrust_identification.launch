@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<launch>
+	<arg name="uri" default="radio://0/80/2M" />
+	<arg name="frame" default="/mocap" />
+
+	<include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
+	</include>
+
+	<group ns="crazyflie">
+		<node pkg="crazyflie_driver" type="crazyflie_add" name="crazyflie_add" output="screen">
+			<param name="uri" value="$(arg uri)" />
+			<param name="tf_prefix" value="crazyflie" />
+			<param name="enable_logging" value="True" />
+			<param name="enable_logging_battery" value="False" />
+			<param name="enable_logging_motors" value="True" />
+			<param name="enable_logging_euler_angles" value="False" />
+			<param name="enable_logging_kf_quaternion" value="False" />
+			<param name="enable_logging_onboard_position" value="False" />
+			<param name="enable_logging_imu" value="False" />
+			<param name="enable_logging_magnetic_field" value="False" />
+			<param name="enable_logging_packets" value="False" />
+			<param name="enable_logging_pose" value="False" />
+			<param name="enable_logging_pressure" value="False" />
+			<param name="enable_logging_temperature" value="False" />
+			<rosparam>
+      genericLogTopics: ["log1"]
+      genericLogTopicFrequencies: [100]
+      genericLogTopic_log1_Variables: ["motor.m1", "motor.m2", "motor.m3", "motor.m4"]
+    </rosparam>
+		</node>
+
+		<node name="pose" pkg="crazyflie_demo" type="publish_external_position_eraptor.py" output="screen">
+		</node>
+
+		<node name="meas_vector" pkg="crazyflie_controller" type="measurements_vector" output="screen">
+    </node>
+	</group>
+	<!-- run eraptor bridge -->
+	<include file="$(find cortex_stream)/launch/cortex_stream.launch"/>
+
+</launch>

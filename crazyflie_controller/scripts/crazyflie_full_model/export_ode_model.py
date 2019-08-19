@@ -4,13 +4,13 @@ def export_ode_model():
     model_name = 'crazyflie'
 
     # parameters
-    g0  = 9.8        # [m.s^2]
+    g0  =  9.8066    # [m.s^2]
     mq  = 33e-3      # [Kg] with one marker
     Ixx = 1.395e-5   # [Kg.m^2]
     Iyy = 1.395e-5   # [Kg.m^2]
     Izz = 2.173e-5   # [Kg.m^2]
     Cd  = 1e+6*7.9379e-12 # [N/Krpm^2]
-    Ct  = 1e+6*3.1582e-10 # [N/Krpm^2]
+    Ct  = 3.25e-4       # [N/Krpm^2]
     dq  = 65e-3      # [m] distance between motors center
     l   = dq/2       # [m] distance between motor center and the axis of rotation
 

@@ -61,7 +61,7 @@ using std::showpos;
 
 
 // acados dim defines
-#define N 	100 	/* Number of intervals in the horizon. */
+#define N 	50 	/* Number of intervals in the horizon. */
 #define NX 	13 	/* Number of differential state variables.  */
 #define NU 	4	/* Number of control inputs. */
 #define NY 	17	/* Number of measurements/references on nodes 0..N-1. */
@@ -135,8 +135,9 @@ public:
 	
 	// Steady-state control input value
 	mq = 33e-3; 	  		// [Kg]
-	Ct = 1e+6*3.1582e-10;  		// [N/Krpm^2]
-	uss = sqrt((mq*g0)/(4*Ct)); 	// 16000
+	Ct = 3.25e-4;
+	//Ct = 3.5205e-4;  		// [N/Krpm^2]
+	uss = sqrt((mq*g0)/(4*Ct)); 	
     }
 
     void run(double frequency)
@@ -264,7 +265,11 @@ public:
     euler quatern2euler(Quaterniond* q){
 
 	euler angle;
-
+	
+	if(q->w() < 0){
+	    q->w() = -q->w();
+	    q->vec() = -q->vec();
+	}
 // 	double R11 = 2*q->w()*q->w()-1+2*q->x()*q->x();
 // 	double R21 = 2*(q->x()*q->y()-q->w()*q->z());
 // 	double R31 = 2*(q->x()*q->z()+q->w()*q->y());
@@ -272,14 +277,21 @@ public:
 // 	double R33 = 2*q->w()*q->w()-1+2*q->z()*q->z();
 	
 	// According to the rotation matrix found in the firmware of the crazyflie
-	double R11 = 2*q->w()*q->w()-1+2*q->x()*q->x();
+// 	double R11 = 2*q->w()*q->w()-1+2*q->x()*q->x();
+// 	double R21 = 2*(q->x()*q->y()+q->w()*q->z());
+// 	double R31 = 2*(q->x()*q->z()-q->w()*q->y());
+// 	double R32 = 2*(q->y()*q->z()+q->w()*q->x());
+// 	double R33 = 2*q->w()*q->w()-1+2*q->z()*q->z();
+	
+	double R11 = q->w()*q->w()+q->x()*q->x()-q->y()*q->y()-q->z()*q->z();
 	double R21 = 2*(q->x()*q->y()+q->w()*q->z());
 	double R31 = 2*(q->x()*q->z()-q->w()*q->y());
 	double R32 = 2*(q->y()*q->z()+q->w()*q->x());
-	double R33 = 2*q->w()*q->w()-1+2*q->z()*q->z();
+	double R33 = q->w()*q->w()-q->x()*q->x()-q->y()*q->y()+q->z()*q->z();
 
 	double phi   = atan2(R32, R33);
-	double theta = -atan(R31/sqrt(1-R31*R31));
+	//double theta = -asin(R31/sqrt(1-R31*R31));
+	double theta = asin(-R31);
 	double psi   = atan2(R21, R11);
 
 	angle.phi   = phi;
@@ -307,6 +319,11 @@ public:
 	  q.x() = -(cosPsi*cosTheta*sinPhi - sinPsi*sinTheta*cosPhi);
 	  q.y() = -(cosPsi*sinTheta*cosPhi + sinPsi*cosTheta*sinPhi);
 	  q.z() = -(sinPsi*cosTheta*cosPhi - cosPsi*sinTheta*sinPhi);
+	  
+	  if(q.w() < 0){
+	    q.w() = -q.w();
+	    q.vec() = -q.vec();
+	  }
 
 	  return q;
     }
@@ -364,22 +381,6 @@ public:
     }
 
     Vector3d rotateLinearVeloE2B(Quaterniond* q, Vector3d v_inertial){
-
-	 // This is the convertion between
-	 // quaternion orientation to rotation matrix
-	 // from BODY to EARTH according the crazyflie firmware
-// 	 Matrix3d Sq;
-// 	 Vector3d vb;
-// 
-// 	 double S11 = 2*(q->w()*q->w()+q->x()*q->x())-1;;
-// 	 double S12 = 2*(q->x()*q->y()-q->w()*q->z());
-// 	 double S13 = 2*(q->x()*q->z()+q->w()*q->y());
-// 	 double S21 = 2*(q->x()*q->y()+q->w()*q->z());
-// 	 double S22 = 2*(q->w()*q->w()+q->y()*q->y())-1;
-// 	 double S23 = 2*(q->y()*q->z()-q->w()*q->x());
-// 	 double S31 = 2*(q->x()*q->z()-q->w()*q->y());
-// 	 double S32 = 2*(q->y()*q->z()+q->w()*q->x());
-// 	 double S33 = 2*(q->w()*q->w()+q->z()*q->z())-1;
       
          // This is the convertion between
 	 // quaternion orientation to rotation matrix
@@ -458,25 +459,26 @@ public:
 	t0 = e.current_real.toSec();
 	//return;
       }
+      
 	
       double dt = e.current_real.toSec() - e.last_real.toSec();    
       
         if (1) {
 	// Update reference
 	for (k = 0; k < N+1; k++) {
-	      yref_sign[k * NY + 0] = xq_des; 	// xq
-	      yref_sign[k * NY + 1] = yq_des;	// yq
-	      yref_sign[k * NY + 2] = 0.15;	// zq
-	      yref_sign[k * NY + 3] = 1.0;	// q1
-	      yref_sign[k * NY + 4] = 0.0;	// q2
-	      yref_sign[k * NY + 5] = 0.0;	// q3
-	      yref_sign[k * NY + 6] = 0.0;	// q4
-	      yref_sign[k * NY + 7] = 0.0;	// vbx
-	      yref_sign[k * NY + 8] = 0.0;	// vby
-	      yref_sign[k * NY + 9] = 0.0;	// vbz
-	      yref_sign[k * NY + 10] = 0.0;	// wx
-	      yref_sign[k * NY + 11] = 0.0;	// wy
-	      yref_sign[k * NY + 12] = 0.0;	// wz
+	      yref_sign[k * NY + 0] = 0.00; 	// xq
+	      yref_sign[k * NY + 1] = 0.00;	// yq
+	      yref_sign[k * NY + 2] = 0.20;	// zq
+	      yref_sign[k * NY + 3] = 1.00;	// q1
+	      yref_sign[k * NY + 4] = 0.00;	// q2
+	      yref_sign[k * NY + 5] = 0.00;	// q3
+	      yref_sign[k * NY + 6] = 0.00;	// q4
+	      yref_sign[k * NY + 7] = 0.00;	// vbx
+	      yref_sign[k * NY + 8] = 0.00;	// vby
+	      yref_sign[k * NY + 9] = 0.00;	// vbz
+	      yref_sign[k * NY + 10] = 0.00;	// wx
+	      yref_sign[k * NY + 11] = 0.00;	// wy
+	      yref_sign[k * NY + 12] = 0.00;	// wz
 	      yref_sign[k * NY + 13] = uss;	// w1
 	      yref_sign[k * NY + 14] = uss;	// w2
 	      yref_sign[k * NY + 15] = uss;	// w3
@@ -611,15 +613,25 @@ public:
 	for (ii = 0; ii < N; ii++) {
 	    ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, ii, "yref", acados_in.yref + ii*NY);
 	    // weights
-	    ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, ii, "W", acados_in.W);
+	    //ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, ii, "W", acados_in.W);
 	}
 
-	ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "W", acados_in.WN);
+	//ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "W", acados_in.WN);
 
 	ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "yref", acados_in.yref_e);
 
 	// call solver
 	acados_status = acados_solve();
+	
+	geometry_msgs::Twist msg;
+	if(acados_status){
+	  msg.linear.x  = 0;
+	  msg.linear.y  = 0;
+	  msg.linear.z  = 0;
+	  msg.angular.z  = 0;
+	  ROS_INFO_STREAM("Solver failed. Setting all cf inputs to zero.");
+	  
+	}
 
 	// assign output signals
 	acados_out.status = acados_status;
@@ -709,42 +721,21 @@ public:
 	q_acados_out.x() = acados_out.x1[q2];
 	q_acados_out.y() = acados_out.x1[q3];
 	q_acados_out.z() = acados_out.x1[q4];
-
-
+	q_acados_out.normalize();
+	
 	// Convert acados output quaternion to desired euler angles
 	euler eu_imu;
 	eu_imu = quatern2euler(&q_acados_out);
 
-	// Publish real control inputs
-	geometry_msgs::Twist msg;
+	// Publish real control inputs	
 	msg.linear.x  = rad2Deg(eu_imu.theta);
 	msg.linear.y  = rad2Deg(eu_imu.phi);
 	msg.linear.z  = krpm2pwm((acados_out.u0[w1]+acados_out.u0[w2]+acados_out.u0[w3]+acados_out.u0[w4])/4);
 	msg.angular.z  = rad2Deg(acados_out.x1[wz]);
 
+	//ROS_INFO_STREAM("roll: " << msg.linear.y << " " << "pitch: " << msg.linear.x << " " << "yaw rate: " << msg.angular.z);
 	m_pubNav.publish(msg);
 		
-// 	ofstream dataLog("data_log.txt", std::ios_base::app | std::ios_base::out);
-// 
-// 	if (dataLog.is_open()){
-// 
-// 	  dataLog << x0_sign[xq] << " ";
-// 	  dataLog << x0_sign[yq] << " ";
-// 	  dataLog << x0_sign[zq] << " ";
-// 	  dataLog << x0_sign[q1] << " ";
-// 	  dataLog << x0_sign[q2] << " ";
-// 	  dataLog << x0_sign[q3] << " ";
-// 	  dataLog << x0_sign[q4] << " ";
-// 	  dataLog << x0_sign[vbx] << " ";
-// 	  dataLog << x0_sign[vby] << " ";
-// 	  dataLog << x0_sign[vbz] << " ";
-// 	  dataLog << x0_sign[wx] << " ";
-// 	  dataLog << x0_sign[wy] << " ";
-// 	  dataLog << x0_sign[wz] << " ";
-// 	  dataLog << endl;
-// 	  
-// 	  dataLog.close();
-// 	}
       }
    }
 

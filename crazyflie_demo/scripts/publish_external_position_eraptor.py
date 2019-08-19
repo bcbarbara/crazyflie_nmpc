@@ -18,7 +18,7 @@ def onNewMarkerArray(marker_array):
     if len(marker_array.markers) > 1:
         rospy.logwarn("We expect just one marker but got {}!".format(len(marker_array.markers)))
         return
-        
+
     marker = marker_array.markers[0]
 
     if marker.ns != "unidentified":
@@ -28,7 +28,7 @@ def onNewMarkerArray(marker_array):
     if len(marker.points) == 0:
         rospy.logwarn("Received empty marker!")
         return
-    
+
     if len(marker.points) > 1:
         rospy.logwarn("We received a marker with {} points but expected just one!".format(len(marker.points)))
         return
@@ -36,6 +36,8 @@ def onNewMarkerArray(marker_array):
     point = marker.points[0]
 
     if firstTransform:
+        rospy.set_param("stabilizer/estimator", 2) # Use EKF
+        update_params(["stabilizer/estimator"])
         # initialize kalman filter
         rospy.set_param("kalman/initialX", point.x)
         rospy.set_param("kalman/initialY", point.y)
@@ -43,7 +45,6 @@ def onNewMarkerArray(marker_array):
         update_params(["kalman/initialX", "kalman/initialY", "kalman/initialZ"])
 
         rospy.set_param("kalman/resetEstimation", 1)
-        # rospy.set_param("locSrv/extPosStdDev", 1e-4)
         update_params(["kalman/resetEstimation"]) #, "locSrv/extPosStdDev"])
         firstTransform = False
         rospy.loginfo("Reset the estimation to {}".format(point))
@@ -73,4 +74,3 @@ if __name__ == '__main__':
     pub = rospy.Publisher("external_position", PointStamped, queue_size=1)
     rospy.Subscriber("/cortex_marker_array", MarkerArray, onNewMarkerArray)
     rospy.spin()
-
