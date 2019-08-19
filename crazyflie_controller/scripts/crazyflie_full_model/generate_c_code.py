@@ -14,8 +14,8 @@ model = export_ode_model()
 # set model_name
 ra.model_name = model.name
 
-Tf = 2
-N = 100
+Tf = 1
+N = 50
 nx = model.x.size()[0]
 nu = model.u.size()[0]
 ny = nx + nu
@@ -33,9 +33,9 @@ nlp_dims.nu  = model.u.size()[0]
 nlp_dims.N   = N
 
 # parameters
-g0  = 9.8066            # [m.s^2]
-mq  = 33e-3             # [Kg] with one marker
-Ct  = 1e+6*3.1582e-10   # [N/Krpm^2]
+g0  = 9.8066    # [m.s^2]
+mq  = 33e-3     # [Kg] with one marker
+Ct  = 3.25e-4   # [N/Krpm^2]
 
 # bounds
 max_lv_body = 1.0
@@ -47,18 +47,18 @@ max_thrust = 22
 # set weighting matrices
 nlp_cost = ra.cost
 Q = np.eye(nx)
-Q[0,0] = 5.0    # x
-Q[1,1] = 5.0    # y
-Q[2,2] = 10.0   # z
-Q[3,3] = 1e-1   # q1
-Q[4,4] = 1e-1   # q2
-Q[5,5] = 1e-1   # q3
-Q[6,6] = 1e-1   # q4
+Q[0,0] = 100.0    # x
+Q[1,1] = 100.0    # y
+Q[2,2] = 200.0   # z
+Q[3,3] = 10.0   # q1
+Q[4,4] = 10.0   # q2
+Q[5,5] = 10.0   # q3
+Q[6,6] = 10.0   # q4
 Q[7,7] = 1.0    # vbx
 Q[8,8] = 1.0    # vby
 Q[9,9] = 2.0    # vbz
-Q[10,10] = 1.5  # wx
-Q[11,11] = 1.5  # wy
+Q[10,10] = 1.0  # wx
+Q[11,11] = 1.0  # wy
 Q[12,12] = 5.0  # wz
 
 R = np.eye(nu)
@@ -92,7 +92,7 @@ Vu[15,2] = 1.0
 Vu[16,3] = 1.0
 nlp_cost.Vu = Vu
 
-nlp_cost.W_e = Q
+nlp_cost.W_e = 10*Q
 
 Vx_e = np.zeros((ny_e, nx))
 Vx_e[0,0] = 1.0

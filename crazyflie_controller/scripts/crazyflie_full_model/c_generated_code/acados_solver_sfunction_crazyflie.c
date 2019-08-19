@@ -61,7 +61,7 @@ static void mdlInitializeSizes (SimStruct *S)
 
     // specify dimension information for the input ports 
     ssSetInputPortVectorDimension(S, 0, 13);
-    ssSetInputPortVectorDimension(S, 1, 1700);
+    ssSetInputPortVectorDimension(S, 1, 850);
     ssSetInputPortVectorDimension(S, 2, 13);
     
 
@@ -125,7 +125,7 @@ static void mdlOutputs(SimStruct *S, int_T tid)
     
     // local buffers
     real_t in_x0[13];
-    real_t in_y_ref[1700];
+    real_t in_y_ref[850];
     real_t in_y_ref_e[13];
     
 
@@ -136,7 +136,7 @@ static void mdlOutputs(SimStruct *S, int_T tid)
 
     // copy signals into local buffers
     for (int i = 0; i < 13; i++) in_x0[i] = (double)(*in_x0_sign[i]);
-    for (int i = 0; i < 1700; i++) in_y_ref[i] = (double)(*in_y_ref_sign[i]);
+    for (int i = 0; i < 850; i++) in_y_ref[i] = (double)(*in_y_ref_sign[i]);
     for (int i = 0; i < 13; i++) in_y_ref_e[i] = (double)(*in_y_ref_e_sign[i]);
     
 
@@ -148,12 +148,12 @@ static void mdlOutputs(SimStruct *S, int_T tid)
     ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "ubx", in_x0);
 
     // update reference
-    for (int ii = 0; ii < 100; ii++) {
+    for (int ii = 0; ii < 50; ii++) {
         ocp_nlp_cost_model_set(nlp_config, nlp_dims, 
                 nlp_in, ii, "yref", (void *) (in_y_ref + ii*17);
 
     ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, 
-        100, "yref", (void *) in_y_ref_e);
+        50, "yref", (void *) in_y_ref_e);
 
     // update value of parameters
     
