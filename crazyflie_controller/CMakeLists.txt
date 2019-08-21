@@ -14,8 +14,6 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(Eigen3 REQUIRED)
 
-#find_package(crazyflie_driver)
-
 set(acados_include "/usr/local/include")
 
 generate_dynamic_reconfigure_options(
@@ -54,6 +52,8 @@ include_directories(
   ${acados_include}/qpOASES_e/
   ${crazyflie_driver_INCLUDE_DIRS}
 )
+
+link_directories(${PROJECT_SOURCE_DIR}/include/c_generated_code)
 
 # acados DEBUG
 add_executable(acados_debug src/acados_debug.cpp)

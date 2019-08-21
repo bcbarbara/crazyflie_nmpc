@@ -17,10 +17,14 @@
               7   | cross key up/down
   ?>
   <node name="quadrotor_teleop" pkg="crazyflie_demo" type="quadrotor_teleop">
-    <param name="x_axis" value="5"/>
+    <!--param name="x_axis" value="5"/>
     <param name="y_axis" value="4"/>
     <param name="z_axis" value="2"/>
-    <param name="yaw_axis" value="1"/>
+    <param name="yaw_axis" value="1"/-->
+    <param name="x_axis" value="2"/>
+    <param name="y_axis" value="1"/>
+    <param name="z_axis" value="5"/>
+    <param name="yaw_axis" value="4"/>
     <param name="x_velocity_max" value="30"/>
     <param name="y_velocity_max" value="-30"/>
     <param name="z_velocity_max" value="60000"/>

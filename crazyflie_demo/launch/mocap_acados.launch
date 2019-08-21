@@ -30,7 +30,7 @@
 			type="publish_external_position_eraptor.py"
 			output="screen">
 		</node>
-		
+
 	</group>
 
 	<!--node name="acados_traj"
@@ -88,7 +88,7 @@
 	</include>
 
 
-	<!--node pkg="rqt_reconfigure" name="crazyflie_reconf" type="rqt_reconfigure" output="screen">
-</node-->
+	<node pkg="rqt_reconfigure" name="crazyflie_reconf" type="rqt_reconfigure" output="screen">
+</node>
 
 </launch>
