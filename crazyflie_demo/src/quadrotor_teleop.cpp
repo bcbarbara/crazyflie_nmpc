@@ -94,7 +94,6 @@ public:
     ros::Rate loop_rate(frequency_);
     while (ros::ok()) {
       velocity_publisher_.publish(velocity_);
-
       ros::spinOnce();
       loop_rate.sleep();
     }

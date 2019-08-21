@@ -2,6 +2,7 @@
 <launch>
 	<arg name="uri" default="radio://0/80/2M" />
 	<arg name="frame" default="/mocap" />
+    <arg name="joy_dev" default="/dev/input/js0" />
 
 	<include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
 	</include>
@@ -36,46 +37,21 @@
     </rosparam>
 		</node>
 
-		<node name="meas_vector" pkg="crazyflie_controller" type="measurements_vector" output="screen">
+    <node name="joy" pkg="joy" type="joy_node" output="screen" >
+      <param name="dev" value="$(arg joy_dev)" />
+      <param name="deadzone" value="0.05" />
     </node>
 
+    <include file="$(find crazyflie_demo)/launch/logitech.launch">
+    </include>
+
+    <node name="crazyflie_demo_controller" pkg="crazyflie_demo" type="controller.py" output="screen">
+      <param name="use_crazyflie_controller" value="False" />
+    </node>
+
+		<include file="$(find crazyflie_demo)/launch/nmpc_debug.launch">
+		</include>
 	</group>
-
-	<node name="cf_position"
-				pkg="rqt_plot"
-				type="rqt_plot"
-				args="/crazyflie/external_position/point"
-	/>
-
-	<node name="cf_euler_angles"
-				pkg="rqt_plot"
-				type="rqt_plot"
-				args="/crazyflie/euler_angles/vector"
-	/>
-
-	<node name="cf_quaternion"
-				pkg="rqt_plot"
-				type="rqt_plot"
-				args="/crazyflie/quat"
-	/>
-
-	<node name="cf_linear_velo"
-				pkg="rqt_plot"
-				type="rqt_plot"
-				args="/crazyflie/linear_velo"
-	/>
-
-	<node name="cf_angular_velo"
-				pkg="rqt_plot"
-				type="rqt_plot"
-				args="/crazyflie/angular_velo"
-	/>
-
-	<node name="acados_bag"
-				pkg="rosbag"
-				type="record"
-				args="record -o /home/barbara/crazyflie.bag /crazyflie/external_position/point /crazyflie/euler_angles/vector /crazyflie/quat /crazyflie/linear_velo /crazyflie/angular_velo"
-	/>
 
 	<!-- run eraptor bridge -->
 	<include file="$(find cortex_stream)/launch/cortex_stream.launch"/>
