@@ -14,7 +14,7 @@ model = export_ode_model()
 # set model_name
 ra.model_name = model.name
 
-Tf = 1
+Tf = 1*0.75
 N = 50
 nx = model.x.size()[0]
 nu = model.u.size()[0]
@@ -50,10 +50,10 @@ Q = np.eye(nx)
 Q[0,0] = 50.0      # x
 Q[1,1] = 50.0      # y
 Q[2,2] = 70.0      # z
-Q[3,3] = 1.0e-5     # q1
-Q[4,4] = 1.0e-5     # q2
-Q[5,5] = 1.0e-5     # q3
-Q[6,6] = 1.0e-5     # q4
+Q[3,3] = 1.0e-3     # q1
+Q[4,4] = 1.0e-3     # q2
+Q[5,5] = 1.0e-3     # q3
+Q[6,6] = 1.0e-3     # q4
 Q[7,7] = 2.0        # vbx
 Q[8,8] = 2.0        # vby
 Q[9,9] = 4.0        # vbz
@@ -62,10 +62,10 @@ Q[11,11] = 1.0e-5      # wy
 Q[12,12] = 10.0      # wz
 
 R = np.eye(nu)
-R[0,0] = 3.0    # w1
-R[1,1] = 3.0    # w2
-R[2,2] = 3.0    # w3
-R[3,3] = 3.0    # w4
+R[0,0] = 0.06    # w1
+R[1,1] = 0.06    # w2
+R[2,2] = 0.06    # w3
+R[3,3] = 0.06    # w4
 
 nlp_cost.W = scipy.linalg.block_diag(Q, R)
 
@@ -92,7 +92,7 @@ Vu[15,2] = 1.0
 Vu[16,3] = 1.0
 nlp_cost.Vu = Vu
 
-nlp_cost.W_e = 10*Q
+nlp_cost.W_e = Q
 
 Vx_e = np.zeros((ny_e, nx))
 Vx_e[0,0] = 1.0

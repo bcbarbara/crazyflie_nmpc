@@ -74,6 +74,9 @@ using std::showpos;
 #define WEIGHT_MATRICES 1
 #define REGULATION_POINT 1
 
+// delay compensation
+#define FIXED_U0 1 // possible values 0, 1
+
 class NMPC{
 public:
 
@@ -134,6 +137,10 @@ public:
 	for (unsigned int i = 0; i <= 4; i++) vy_filter_samples[i] = 0.0;
 	for (unsigned int i = 0; i <= 4; i++) vz_filter_samples[i] = 0.0;
 
+	// Initializing control inputs
+	for(unsigned int i=0; i < NU; i++) acados_out.u1[i] = 0.0;
+	
+	
 	// Set elapsed time to zero initially
 	t0 = 0.0;
 	
@@ -241,6 +248,7 @@ public:
     struct solver_output{
       double status, KKT_res, cpu_time;
       double u0[NU];
+      double u1[NU];
       double x1[NX];
       double xN[NX];
       double xAllStages[NX];
@@ -609,6 +617,11 @@ public:
 	// set initial condition
 	ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "lbx", acados_in.x0);
 	ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "ubx", acados_in.x0);
+	
+	if (FIXED_U0 == 1) {
+	  ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "lbu", acados_out.u1);
+	  ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "ubu", acados_out.u1);
+	}
 
 	// update reference
 	for (ii = 0; ii < N; ii++) {
@@ -631,9 +644,11 @@ public:
 
 	// Get solution
 	ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 0, "u", (void *)acados_out.u0);
-
+	
+	ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 1, "u", (void *)acados_out.u1);
+	  
 	// Get next state
-	ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 1, "x", (void *)acados_out.x1);
+	ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 2, "x", (void *)acados_out.x1);
 	
 	// Get last state
 	ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, N, "x", (void *)acados_out.xN);
@@ -647,11 +662,18 @@ public:
 // 	m_acados_position.publish(_acadosState);
 		
 	// Publish acados output
-	geometry_msgs::Quaternion _acadosOut; 
-	_acadosOut.w =  acados_out.u0[w1];
-	_acadosOut.x =  acados_out.u0[w2];
-	_acadosOut.y =  acados_out.u0[w3];
-	_acadosOut.z =  acados_out.u0[w4];	 	  
+	geometry_msgs::Quaternion _acadosOut;
+	if (FIXED_U0 == 1) {
+	  _acadosOut.w =  acados_out.u1[w1];
+	  _acadosOut.x =  acados_out.u1[w2];
+	  _acadosOut.y =  acados_out.u1[w3];
+	  _acadosOut.z =  acados_out.u1[w4];
+	} else {
+	  _acadosOut.w =  acados_out.u0[w1];
+	  _acadosOut.x =  acados_out.u0[w2];
+	  _acadosOut.y =  acados_out.u0[w3];
+	  _acadosOut.z =  acados_out.u0[w4];
+	}
 	m_motvel_pub.publish(_acadosOut);	
 
 
@@ -681,42 +703,42 @@ public:
 // 	double linear_z  = krpm2pwm((acados_out.u0[w1]+acados_out.u0[w2]+acados_out.u0[w3]+acados_out.u0[w4])/4);
 // 	double angular_z  = rad2Deg(acados_out.x1[wz]);
 
-// 	for(ii=0; ii< N; ii++){
-// 	  
-// 	   ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, ii, "x", (void *)(acados_out.xAllStages));
-// 		  
+	for(ii=0; ii< N; ii++){
+	  
+	   ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, ii, "x", (void *)(acados_out.xAllStages));
+		  
 // 	  // Log open-loop trajectory
-// 	  ofstream trajLog("traj_openloop.txt", std::ios_base::app | std::ios_base::out);
-// 
-// 	  if (trajLog.is_open()){
-// 	    trajLog << acados_out.xAllStages[xq] << " ";
-// 	    trajLog << acados_out.xAllStages[yq] << " ";
-// 	    trajLog << acados_out.xAllStages[zq] << " ";
-// 	    trajLog << acados_out.xAllStages[q1] << " ";
-// 	    trajLog << acados_out.xAllStages[q2] << " ";
-// 	    trajLog << acados_out.xAllStages[q3] << " ";
-// 	    trajLog << acados_out.xAllStages[q4] << " ";
-// 	    trajLog << acados_out.xAllStages[vbx] << " ";
-// 	    trajLog << acados_out.xAllStages[vby] << " ";
-// 	    trajLog << acados_out.xAllStages[vbz] << " ";
-// 	    trajLog << acados_out.xAllStages[wx] << " ";
-// 	    trajLog << acados_out.xAllStages[wy] << " ";
-// 	    trajLog << acados_out.xAllStages[wz] << " ";
-// 	    trajLog << eu_imu.phi << " ";
-// 	    trajLog << eu_imu.theta << " ";
-// 	    trajLog << endl;
-// 	    
-// 	    trajLog.close();
-// 	  }      
-// 	}
+	  ofstream trajLog("traj_openloop.txt", std::ios_base::app | std::ios_base::out);
+
+	  if (trajLog.is_open()){
+	    trajLog << acados_out.xAllStages[xq] << " ";
+	    trajLog << acados_out.xAllStages[yq] << " ";
+	    trajLog << acados_out.xAllStages[zq] << " ";
+	    trajLog << acados_out.xAllStages[q1] << " ";
+	    trajLog << acados_out.xAllStages[q2] << " ";
+	    trajLog << acados_out.xAllStages[q3] << " ";
+	    trajLog << acados_out.xAllStages[q4] << " ";
+	    trajLog << acados_out.xAllStages[vbx] << " ";
+	    trajLog << acados_out.xAllStages[vby] << " ";
+	    trajLog << acados_out.xAllStages[vbz] << " ";
+	    trajLog << acados_out.xAllStages[wx] << " ";
+	    trajLog << acados_out.xAllStages[wy] << " ";
+	    trajLog << acados_out.xAllStages[wz] << " ";
+	    trajLog << eu_imu.phi << " ";
+	    trajLog << eu_imu.theta << " ";
+	    trajLog << endl;
+	    
+	    trajLog.close();
+	  }      
+	}
 // 	
 	ofstream motorsLog("full_log.txt", std::ios_base::app | std::ios_base::out);
 
 	if (motorsLog.is_open()){
 	  
-	  motorsLog << eu.phi      << " ";
-	  motorsLog << -eu.theta   << " ";
-	  motorsLog << eu.psi      << " ";
+	  motorsLog << actual_roll << " ";
+	  motorsLog << -actual_pitch << " ";
+	  motorsLog << actual_yaw  << " ";
 	  motorsLog << msg.linear.y    << " ";
 	  motorsLog << msg.linear.x   << " ";
 	  motorsLog << msg.angular.z   << " ";
