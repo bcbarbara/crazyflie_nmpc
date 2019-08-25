@@ -40,11 +40,11 @@ $ cd crazyflie_ros
 $ git submodule init
 $ git submodule update
 ```
+
 6. Compile the shared library for the NMPC solver and place it in the system's path:
 ```
 $ cd ~/catkin_ws/src/crazyflie_ros/crazyflie_controller/include/c_generated_code
 $ make shared_lib
-$ cp acados_solver_crazyflie_pos.so /usr/local/lib
 ```
 
 7. Use `catkin build` on your workspace to compile.
@@ -82,23 +82,22 @@ This package contains an efficient and modular implementation of a Nonlinear Mod
 The package also contains a simple PID controller for hovering or waypoint navigation, which has been develop by Wolfgang Honig, and can be used with external motion capture systems, such as VICON.
 
 
-
 ### Crazyflie_demo
 
 For teleoperation using a joystick, use:
 ```
-roslaunch crazyflie_demo teleop_logitech.launch uri:=radio://0/80/2M
+roslaunch crazyflie_demo teleop_logitech.launch
 ```
 where the uri specifies the uri of your Crazyflie. You can find valid uris using the scan command in the `crazyflie_tools` package.
 > **Note** By default the services for take off and landing in teleoperation mode are disable, while the emergency service is always enable in any type of mode. The button mapping for each service can be found in `scripts/controller.py`
 
 
-For launching the node of the NMPC together with a motion capture system (MOCAP), use:
+For launching the node of the NMPC together with a motion capture system (MOCAP) use:
 ```
-roslaunch crazyflie_demo nmpc.launch uri:=radio://0/80/2M frame:=/cortex/crazyflie/crazyflie
+roslaunch crazyflie_demo mocap_acados.launch
 ```
 
-For retrieving the data from the IMU, use:
+For retrieving the data from the IMU use:
 ```
 roslaunch crazyflie_demo imu_feedback.launch uri:=radio://0/80/2M/E7E7E7E7E7
 ```
@@ -107,6 +106,10 @@ roslaunch crazyflie_demo imu_feedback.launch uri:=radio://0/80/2M/E7E7E7E7E7
   > *  If the sensor is rolled +90 degrees (left side up), the acceleration should be -9.81 meters per second squared for the Y axis.
   > *  If the sensor is pitched +90 degrees (front side down), it should read -9.81 meters per second squared for the X axis.
 
+For checking the status of the 13 states which composes the NMPC state vector use:
+```
+roslaunch crazyflie_demo meas_vector.launch
+```
 
 ## ROS Features
 
@@ -134,29 +137,39 @@ The following fields are used:
 
 ### Publishers
 
+#### euler angles
+* geometry_msgs/Vector3Stamped
+* contains the euler angles from the onboard stabilizer
+* update: 100 ms (time between crazyflie and ROS not synchronized!)
+
+#### motor speeds
+* crazyflie_driver/GenericLogData
+* contains the individual motor speeds (PWM value)
+* update: 100 ms (time between crazyflie and ROS not synchronized!)
+
 #### imu
 * sensor_msgs/IMU
 * contains the sensor readings of gyroscope and accelerometer
 * The covariance matrices are set to unknown
 * orientation is not set (this could be done by the magnetometer readings in the future.)
-* update: 10ms (time between crazyflie and ROS not synchronized!)
+* update: 10 ms (time between crazyflie and ROS not synchronized!)
 * can be viewed in rviz
 
 #### temperature
 * sensor_msgs/Temperature
 * From Barometer (10DOF version only) in degree Celcius (Sensor readings might be higher than expected because the PCB warms up; see http://www.bitcraze.se/2014/02/logging-and-parameter-frameworks-turtorial/)
-* update: 100ms (time between crazyflie and ROS not synchronized!)
+* update: 100 ms (time between crazyflie and ROS not synchronized!)
 
 #### magnetic_field
 * sensor_msgs/MagneticField
-* update: 100ms (time between crazyflie and ROS not synchronized!)
+* update: 100 ms (time between crazyflie and ROS not synchronized!)
 
 #### pressure
 * Float32
 * hPa (or mbar)
-* update: 100ms (time between crazyflie and ROS not synchronized!)
+* update: 100 ms (time between crazyflie and ROS not synchronized!)
 
 #### battery
 * Float32
 * Volts
-* update: 100ms (time between crazyflie and ROS not synchronized!)
+* update: 100 ms (time between crazyflie and ROS not synchronized!)
