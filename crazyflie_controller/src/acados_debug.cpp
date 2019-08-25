@@ -583,7 +583,7 @@ public:
 	geometry_msgs::Twist msg;
 	msg.linear.x  = -rad2Deg(eu_imu.theta); //linear_x -> pitch
 	msg.linear.y  = rad2Deg(eu_imu.phi);  // linear_y -> roll
-	msg.linear.z  = krpm2pwm((acados_out.u0[w1]+acados_out.u0[w2]+acados_out.u0[w3]+acados_out.u0[w4])/4);
+	msg.linear.z  = krpm2pwm((acados_out.u1[w1]+acados_out.u1[w2]+acados_out.u1[w3]+acados_out.u1[w4])/4);
 	msg.angular.z  = rad2Deg(acados_out.x1[wz]);
 
 	m_pubNav.publish(msg);
