@@ -1,7 +1,5 @@
 __pycache__
-c_generated_code/
 .*.sw[a-z]
-*.json
 *.mexmaci64
 slprj/
 *.slxc
