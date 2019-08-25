@@ -109,9 +109,6 @@ public:
 	m_cf_lvb 		= nh.advertise<geometry_msgs::Vector3>("/crazyflie/linear_velo",1);
 	// publisher for the current value of the angular velocities
 	m_cf_avb 		= nh.advertise<geometry_msgs::Vector3>("/crazyflie/angular_velo",1);
-	m_motors 		= nh.subscribe("/crazyflie/log1", 5, &NMPC::motorsCallback, this);
-	// subscriber for joystick
-	//m_joy 			= nh.subscribe("/crazyflie/cmd_vel", 5,  &NMPC::joystickCallback, this);
 
 	// Set initial value of the linear velocities to zero
 	vx = 0.0;
@@ -166,53 +163,13 @@ public:
     
     void callback_dynamic_reconfigure(crazyflie_controller::crazyflie_paramsConfig &config, uint32_t level){
       
-//       if (WEIGHT_MATRICES){
-// 	ROS_INFO("Changing the weight of NMPC matrices!");
-// 	Wdiag_xq 	= config.Wdiag_xq;
-// 	Wdiag_yq 	= config.Wdiag_yq;
-// 	Wdiag_zq 	= config.Wdiag_zq;
-// 	Wdiag_q1 	= config.Wdiag_q1;
-// 	Wdiag_q2 	= config.Wdiag_q2;
-// 	Wdiag_q3 	= config.Wdiag_q3;
-// 	Wdiag_q4 	= config.Wdiag_q4;
-// 	Wdiag_vbx 	= config.Wdiag_vbx;
-// 	Wdiag_vby 	= config.Wdiag_vby;
-// 	Wdiag_vbz 	= config.Wdiag_vbz;
-// 	Wdiag_wx 	= config.Wdiag_wx;
-// 	Wdiag_wy 	= config.Wdiag_wy;
-// 	Wdiag_wz 	= config.Wdiag_wz;
-// 	Wdiag_w1 	= config.Wdiag_w1;
-// 	Wdiag_w2 	= config.Wdiag_w2;
-// 	Wdiag_w3 	= config.Wdiag_w3;
-// 	Wdiag_w4 	= config.Wdiag_w4;
-// // 	ROS_INFO_STREAM("Current W matrix: "	<< endl
-// // 						<< Wdiag_xq << endl
-// // 						<< Wdiag_yq << endl
-// // 						<< Wdiag_zq << endl
-// // 						<< Wdiag_q1 << endl
-// // 						<< Wdiag_q1 << endl
-// // 						<< Wdiag_q2 << endl
-// // 						<< Wdiag_q3 << endl
-// // 						<< Wdiag_q4 << endl
-// // 						<< Wdiag_vbx << endl
-// // 						<< Wdiag_vby << endl
-// // 						<< Wdiag_vbz << endl
-// // 						<< Wdiag_wx << endl
-// // 						<< Wdiag_wy << endl
-// // 						<< Wdiag_wz << endl
-// // 						<< Wdiag_w1 << endl
-// // 						<< Wdiag_w2 << endl
-// // 						<< Wdiag_w3 << endl
-// // 						<< Wdiag_w4 << endl);
-//       }
-      
       if(REGULATION_POINT){
 	ROS_INFO("Changing the desired regulation point!");
 	xq_des 		= config.xq_des;
 	yq_des 		= config.yq_des;
 	zq_des 		= config.zq_des;
 	
-	//ROS_INFO_STREAM("Current regulation point: " << xq_des << ", " << yq_des << ", " << zq_des << endl);
+	ROS_INFO_STREAM("Current regulation point: " << xq_des << ", " << yq_des << ", " << zq_des << endl);
       }
     }
 
@@ -250,7 +207,7 @@ public:
       double u0[NU];
       double u1[NU];
       double x1[NX];
-      double xN[NX];
+      double x2[NX];
       double xAllStages[NX];
     };
 
@@ -272,11 +229,6 @@ public:
     euler quatern2euler(Quaterniond* q){
 
 	euler angle;
-	
-// 	if(q->w() < 0){
-// 	    q->w() = -q->w();
-// 	    q->vec() = -q->vec();
-// 	}
 	
 	double R11 = q->w()*q->w()+q->x()*q->x()-q->y()*q->y()-q->z()*q->z();
 	double R21 = 2*(q->x()*q->y()+q->w()*q->z());
@@ -427,23 +379,6 @@ public:
 	actual_yaw   = msg->vector.z;
     }
 
-    void joystickCallback(const geometry_msgs::Twist::ConstPtr& msg){
-      
-      joy_roll 		= msg->linear.y;
-      joy_pitch 	= msg->linear.x;
-      joy_yaw 		= msg->angular.z;
-      joy_thrust 	= msg->linear.z;   
-    }
-    
-    void motorsCallback(const crazyflie_controller::GenericLogDataConstPtr& msg){
-      
-	  // motors rpm
-	  actual_m1 = msg->values[0];
-	  actual_m2 = msg->values[1];
-	  actual_m3 = msg->values[2];
-	  actual_m4 = msg->values[3];
-    }
-    
     void imuCallback(const sensor_msgs::Imu::ConstPtr& msg){
 
         // Angular rates w.r.t. body frame in rad/s
@@ -500,39 +435,6 @@ public:
 	for (ii = 0; ii < (NYN*NYN); ii++) {
 	      acados_in.WN[ii] = 0.0;
 	}
-	cout << xq_des << " " << yq_des << " " << zq_des << endl;
-
-// 	acados_in.W[0+0*NY]   = Wdiag_xq;
-// 	acados_in.W[1+1*NY]   = Wdiag_yq;
-// 	acados_in.W[2+2*NY]   = Wdiag_zq;
-// 	acados_in.W[3+3*NY]   = Wdiag_q1;
-// 	acados_in.W[4+4*NY]   = Wdiag_q2;
-// 	acados_in.W[5+5*NY]   = Wdiag_q3;
-// 	acados_in.W[6+6*NY]   = Wdiag_q4;
-// 	acados_in.W[7+7*NY]   = Wdiag_vbx;
-// 	acados_in.W[8+8*NY]   = Wdiag_vby;
-// 	acados_in.W[9+9*NY]   = Wdiag_vbz;
-// 	acados_in.W[10+10*NY] = Wdiag_wx;
-// 	acados_in.W[11+11*NY] = Wdiag_wy;
-// 	acados_in.W[12+12*NY] = Wdiag_wz;
-// 	acados_in.W[13+13*NY] = Wdiag_w1;
-// 	acados_in.W[14+14*NY] = Wdiag_w2;
-// 	acados_in.W[15+15*NY] = Wdiag_w3;
-// 	acados_in.W[16+16*NY] = Wdiag_w4;
-// 
-// 	acados_in.WN[0+0*(NYN)]   = 10*Wdiag_xq;
-// 	acados_in.WN[1+1*(NYN)]   = 10*Wdiag_yq;
-// 	acados_in.WN[2+2*(NYN)]   = 10*Wdiag_zq;
-// 	acados_in.WN[3+3*(NYN)]   = 10*Wdiag_q1;
-// 	acados_in.WN[4+4*(NYN)]   = 10*Wdiag_q2;
-// 	acados_in.WN[5+5*(NYN)]   = 10*Wdiag_q3;
-// 	acados_in.WN[6+6*(NYN)]   = 10*Wdiag_q4;
-// 	acados_in.WN[7+7*(NYN)]   = 10*Wdiag_vbx;
-// 	acados_in.WN[8+8*(NYN)]   = 10*Wdiag_vby;
-// 	acados_in.WN[9+9*(NYN)]   = 10*Wdiag_vbz;
-// 	acados_in.WN[10+10*(NYN)] = 10*Wdiag_wx;
-// 	acados_in.WN[11+11*(NYN)] = 10*Wdiag_wy;
-// 	acados_in.WN[12+12*(NYN)] = 10*Wdiag_wz;
 
 	// Storing inertial positions in state vector
 	x0_sign[xq] = actual_x;
@@ -626,11 +528,7 @@ public:
 	// update reference
 	for (ii = 0; ii < N; ii++) {
 	    ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, ii, "yref", acados_in.yref + ii*NY);
-	    // weights
-	    //ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, ii, "W", acados_in.W);
 	}
-
-	//ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "W", acados_in.WN);
 
 	ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "yref", acados_in.yref_e);
 
@@ -645,21 +543,14 @@ public:
 	// Get solution
 	ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 0, "u", (void *)acados_out.u0);
 	
+	// Get solution at stage 1
 	ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 1, "u", (void *)acados_out.u1);
+	
+	// Get next stage
+	ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 1, "x", (void *)acados_out.x1);
 	  
-	// Get next state
-	ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 2, "x", (void *)acados_out.x1);
-	
-	// Get last state
-	ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, N, "x", (void *)acados_out.xN);
-	
-	
-	// Publish acados position
-// 	geometry_msgs::Vector3 _acadosState;
-// 	_acadosState.x = acados_out.x1[xq];
-// 	_acadosState.y = acados_out.xN[zq];
-// 	_acadosState.z = acados_out.x1[zq];  
-// 	m_acados_position.publish(_acadosState);
+	// Get stage 2 which compensates 15 ms for the delay
+	ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 2, "x", (void *)acados_out.x2);	
 		
 	// Publish acados output
 	geometry_msgs::Quaternion _acadosOut;
@@ -676,15 +567,14 @@ public:
 	}
 	m_motvel_pub.publish(_acadosOut);	
 
-
 	// Select the set of optimal states to calculate the real cf control inputs
 	Quaterniond q_acados_out;
-	q_acados_out.w() = acados_out.x1[q1];
-	q_acados_out.x() = acados_out.x1[q2];
-	q_acados_out.y() = acados_out.x1[q3];
-	q_acados_out.z() = acados_out.x1[q4];
+	q_acados_out.w() = acados_out.x2[q1];
+	q_acados_out.x() = acados_out.x2[q2];
+	q_acados_out.y() = acados_out.x2[q3];
+	q_acados_out.z() = acados_out.x2[q4];
 	q_acados_out.normalize();
-	
+		
 	// Convert acados output quaternion to desired euler angles
 	euler eu_imu;
 	eu_imu = quatern2euler(&q_acados_out);
@@ -697,17 +587,12 @@ public:
 	msg.angular.z  = rad2Deg(acados_out.x1[wz]);
 
 	m_pubNav.publish(msg);
-	
-// 	double linear_x  = rad2Deg(eu_imu.theta);
-// 	double linear_y  = rad2Deg(eu_imu.phi);
-// 	double linear_z  = krpm2pwm((acados_out.u0[w1]+acados_out.u0[w2]+acados_out.u0[w3]+acados_out.u0[w4])/4);
-// 	double angular_z  = rad2Deg(acados_out.x1[wz]);
 
 	for(ii=0; ii< N; ii++){
 	  
 	   ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, ii, "x", (void *)(acados_out.xAllStages));
 		  
-// 	  // Log open-loop trajectory
+ 	  // Log open-loop trajectory
 	  ofstream trajLog("traj_openloop.txt", std::ios_base::app | std::ios_base::out);
 
 	  if (trajLog.is_open()){
@@ -731,7 +616,8 @@ public:
 	    trajLog.close();
 	  }      
 	}
-// 	
+ 	
+ 	// Log current state x0 and acados next state
 	ofstream motorsLog("full_log.txt", std::ios_base::app | std::ios_base::out);
 
 	if (motorsLog.is_open()){
@@ -772,14 +658,6 @@ public:
 	  motorsLog << acados_out.u0[w2] << " ";
 	  motorsLog << acados_out.u0[w3] << " ";
 	  motorsLog << acados_out.u0[w4] << " ";
-	  motorsLog << actual_m1 << " ";
-	  motorsLog << actual_m2 << " ";
-	  motorsLog << actual_m3 << " ";
-	  motorsLog << actual_m4 << " ";
-	  motorsLog << joy_roll  << " ";
-	  motorsLog << joy_pitch << " ";
-	  motorsLog << joy_yaw   << " ";
-	  motorsLog << joy_thrust<< " ";
 	  motorsLog << msg.linear.z<< " ";
 	  motorsLog << endl;
 	  
@@ -798,12 +676,6 @@ private:
     ros::Publisher m_acados_position;
     ros::Publisher m_motvel_pub;
     ros::Publisher m_pubNav;
-    ros::Publisher m_cfStates_pub;
-    ros::Publisher m_acadosOut_pub;
-    
-    
-    ros::Subscriber m_motors;
-    ros::Subscriber m_joy;
     
     // Variables for joy callback
     double joy_roll,joy_pitch,joy_yaw;
@@ -833,11 +705,6 @@ private:
     double yref_sign[(NY*N)+NY];
 
     // Variables for dynamic reconfigure
-    double Wdiag_xq,Wdiag_yq,Wdiag_zq;
-    double Wdiag_q1,Wdiag_q2,Wdiag_q3,Wdiag_q4;
-    double Wdiag_vbx,Wdiag_vby,Wdiag_vbz;
-    double Wdiag_wx,Wdiag_wy,Wdiag_wz;
-    double Wdiag_w1,Wdiag_w2,Wdiag_w3,Wdiag_w4;
     double xq_des,yq_des,zq_des;
     
     // acados struct
