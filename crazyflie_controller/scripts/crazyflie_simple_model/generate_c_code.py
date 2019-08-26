@@ -35,37 +35,32 @@ nlp_dims.N   = N
 # parameters
 g0  = 9.8066    # [m.s^2]
 mq  = 33e-3     # [Kg] with one marker
-Ct  = 3.25e-4   # [N/Krpm^2]
 
 # bounds
-max_lv_body = 1.0
-max_av_body = 1.0
-box_bounds = 0.5
-hov_w = np.sqrt((mq*g0)/(4*Ct))
-max_thrust = 22
+max_thrust   = 1.5*mq*g0;
+max_droll    = 3.0
+max_dpitch   = 3.0
+max_dyaw     = 3.0
 
 # set weighting matrices
 nlp_cost = ra.cost
 Q = np.eye(nx)
-Q[0,0] = 70.0      # x
-Q[1,1] = 60.0      # y
-Q[2,2] = 90.0      # z
-Q[3,3] = 1.0e-3     # q1
-Q[4,4] = 1.0e-3     # q2
-Q[5,5] = 1.0e-3     # q3
-Q[6,6] = 1.0e-3     # q4
-Q[7,7] = 2.0        # vbx
-Q[8,8] = 2.0        # vby
-Q[9,9] = 4.0        # vbz
-Q[10,10] = 1.0e-5     # wx
-Q[11,11] = 1.0e-5      # wy
-Q[12,12] = 10.0      # wz
+Q[0,0] = 30.0     # x
+Q[1,1] = 30.0     # y
+Q[2,2] = 70.0     # z
+Q[3,3] = 15.0     # dx
+Q[4,4] = 15.0     # dy
+Q[5,5] = 30.0     # dz
+Q[6,6] = 1.0e-1     # roll
+Q[7,7] = 1.0e-1     # pitch
+Q[8,8] = 8.0     # yaw
+
 
 R = np.eye(nu)
-R[0,0] = 0.06    # w1
-R[1,1] = 0.06    # w2
-R[2,2] = 0.06    # w3
-R[3,3] = 0.06    # w4
+R[0,0] = 40.0    # u1
+R[1,1] = 5.0     # droll
+R[2,2] = 5.0     # dpitch
+R[3,3] = 10.0    # dyaw
 
 nlp_cost.W = scipy.linalg.block_diag(Q, R)
 
@@ -79,17 +74,15 @@ Vx[5,5] = 1.0
 Vx[6,6] = 1.0
 Vx[7,7] = 1.0
 Vx[8,8] = 1.0
-Vx[9,9] = 1.0
-Vx[10,10] = 1.0
-Vx[11,11] = 1.0
-Vx[12,12] = 1.0
+
 nlp_cost.Vx = Vx
 
 Vu = np.zeros((ny, nu))
-Vu[13,0] = 1.0
-Vu[14,1] = 1.0
-Vu[15,2] = 1.0
-Vu[16,3] = 1.0
+Vu[9,0] = 1.0
+Vu[10,1] = 1.0
+Vu[11,2] = 1.0
+Vu[12,3] = 1.0
+
 nlp_cost.Vu = Vu
 
 nlp_cost.W_e = Q
@@ -104,32 +97,17 @@ Vx_e[5,5] = 1.0
 Vx_e[6,6] = 1.0
 Vx_e[7,7] = 1.0
 Vx_e[8,8] = 1.0
-Vx_e[9,9] = 1.0
-Vx_e[10,10] = 1.0
-Vx_e[11,11] = 1.0
-Vx_e[12,12] = 1.0
 
 nlp_cost.Vx_e = Vx_e
 
-nlp_cost.yref   = np.array([0, 0, 0.5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, hov_w, hov_w, hov_w, hov_w])
-nlp_cost.yref_e = np.array([0, 0, 0.5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+nlp_cost.yref   = np.array([0, 0, 0.3, 0, 0, 0, 0, 0, 0, mq*g0, 0, 0, 0])
+nlp_cost.yref_e = np.array([0, 0, 0.3, 0, 0, 0, 0, 0, 0])
 
 nlp_con = ra.constraints
-#nlp_con.lbx = np.array([-dxq,-dzq])
-#nlp_con.ubx = np.array([+dxq,+dzq])
-#nlp_con.idxbx = np.array([4,5])
-#nlp_con.lbx_e = np.array([-dxq,-dzq])
-#nlp_con.ubx_e= np.array([+dxq,+dzq])
-#nlp_con.idxbx_e = np.array([4,5])
-#nlp_con.lbx = np.array([-xq,-zq,-pitch,-alpha,-dxq,-dzq,-dpitch,-dalpha])
-#nlp_con.ubx = np.array([+xq,+zq,+pitch,+alpha,+dxq,+dzq,+dpitch,+dalpha])
-#nlp_con.idxbx = np.array([0,1,2,3,4,5,6,7])
-#nlp_con.lbx_e = np.array([-xq,-zq,-pitch,-alpha,-dxq,-dzq,-dpitch,-dalpha])
-#nlp_con.ubx_e = np.array([+xq,+zq,+pitch,+alpha,+dxq,+dzq,+dpitch,+dalpha])
-#nlp_con.idxbx_e = np.array([0,1,2,3,4,5,6,7])
-nlp_con.lbu = np.array([0,0,0,0])
-nlp_con.ubu = np.array([+max_thrust,+max_thrust,+max_thrust,+max_thrust])
-nlp_con.x0  = np.array([0,0,0,1,0,0,0,0,0,0,0,0,0])
+
+nlp_con.lbu = np.array([0,-max_droll,-max_dpitch,-max_dyaw])
+nlp_con.ubu = np.array([+max_thrust,+max_droll,+max_dpitch,+max_dyaw])
+nlp_con.x0  = np.array([0.1,0.1,0.0,0.0,0.0,0.0,0.0,0.0,0.0])
 nlp_con.idxbu = np.array([0, 1, 2, 3])
 
 ## set QP solver
@@ -151,26 +129,18 @@ acados_solver = generate_solver(model, ra, json_file = 'acados_ocp.json')
 
 print('>> NMPC exported')
 
-#PI = 3.14159
-
 #Nsim = 400
 
 #simX = np.ndarray((Nsim, nx))
 #simU = np.ndarray((Nsim, nu))
-#angles = np.ndarray((Nsim,3))
 
-#euler = np.array([0,0,0])
 
 #for i in range(Nsim):
-#    status = acados_solver.solve()
-#    status = acados_solver.solve()
 #    status = acados_solver.solve()
 
     # get solution
 #    x0 = acados_solver.get(0, "x")
 #    u0 = acados_solver.get(0, "u")
-
-    #print(u0)
 
 #    for j in range(nx):
 #        simX[i,j] = x0[j]
@@ -193,22 +163,22 @@ print('>> NMPC exported')
 #plt.figure(1)
 #plt.subplot(4, 1, 1)
 #plt.step(t, simU[:, 0], 'r')
-#plt.ylabel('w1')
+#plt.ylabel('u1')
 #plt.xlabel('t')
 #plt.grid(True)
 #plt.subplot(4, 1, 2)
-##plt.step(t, simU[:, 1], 'r')
-#plt.ylabel('w2')
+#plt.step(t, simU[:, 1], 'r')
+#lt.ylabel('droll')
 #plt.xlabel('t')
 #plt.grid(True)
 #plt.subplot(4, 1, 3)
 #plt.step(t, simU[:, 2], 'r')
-#plt.ylabel('w3')
-##plt.xlabel('t')
+#plt.ylabel('dpitch')
+#plt.xlabel('t')
 #plt.grid(True)
 #plt.subplot(4, 1, 4)
 #plt.step(t, simU[:, 3], 'r')
-#plt.ylabel('w4')
+#plt.ylabel('dyaw')
 #plt.xlabel('t')
 #plt.grid(True)
 
@@ -218,23 +188,16 @@ print('>> NMPC exported')
 #y.plot(t, simX[:, 1], 'r')
 #z.plot(t, simX[:, 2], 'r')
 
-#fig, (q1, q2, q3, q4) = plt.subplots(4)
-#fig.suptitle('Quaternion')
-#q1.plot(t, simX[:, 3], 'r')
-#q2.plot(t, simX[:, 4], 'r')
-#q3.plot(t, simX[:, 5], 'r')
-#q4.plot(t, simX[:, 6], 'r')
+#fig, (vix, viy, viz) = plt.subplots(3)
+#fig.suptitle('Linear velocities')
+#vix.plot(t, simX[:, 3], 'r')
+#viy.plot(t, simX[:, 4], 'r')
+#viz.plot(t, simX[:, 5], 'r')
 
-#fig, (h, v, w) = plt.subplots(3)
-#fig.suptitle('Body-frame linear velocities')
-#h.plot(t, simX[:, 7], 'r')
-#v.plot(t, simX[:, 8], 'r')
-#w.plot(t, simX[:, 9], 'r')
-
-#fig, (wx, wy, wz) = plt.subplots(3)
-#fig.suptitle('Body-frame angular rates')
-#wx.plot(t, simX[:, 10], 'r')
-#wy.plot(t, simX[:, 11], 'r')
-#wz.plot(t, simX[:, 12], 'r')
+#fig, (roll, pitch, yaw) = plt.subplots(3)
+#fig.suptitle('Euler angles')
+#roll.plot(t, simX[:, 6], 'r')
+#pitch.plot(t, simX[:, 7], 'r')
+#yaw.plot(t, simX[:, 8], 'r')
 
 #plt.show()
