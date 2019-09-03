@@ -36,7 +36,7 @@
 #include "acados/ocp_nlp/ocp_nlp_cost_ls.h"
 
 // blasfeo
-#include "blasfeo/include/blasfeo_d_aux.h" 
+#include "blasfeo/include/blasfeo_d_aux.h"
 #include "blasfeo/include/blasfeo_d_aux_ext_dep.h"
 
 // crazyflie specific
@@ -121,7 +121,7 @@ public:
 	x_samples.resize(5);
 	y_samples.resize(5);
 	z_samples.resize(5);
-	
+
 	// Set initial value of the buffer to zero
 	for (unsigned int i = 0; i <= 4; i++) x_samples[i] = 0.0;
 	for (unsigned int i = 0; i <= 4; i++) y_samples[i] = 0.0;
@@ -138,39 +138,39 @@ public:
 
 	// Initializing control inputs
 	for(unsigned int i=0; i < NU; i++) acados_out.u1[i] = 0.0;
-	
-	
+
+
 	// Set elapsed time to zero initially
 	t0 = 0.0;
-	
+
 	// Steady-state control input value
 	mq = 33e-3; 	  		// [Kg]
 	Ct = 3.25e-4;			// [N/Krpm^2]
-	uss = sqrt((mq*g0)/(4*Ct)); 	
+	uss = sqrt((mq*g0)/(4*Ct));
     }
 
     void run(double frequency){
         ros::NodeHandle node;
         ros::Timer timer = node.createTimer(ros::Duration(1.0/frequency), &NMPC::iteration, this);
-	
-	
+
+
 	ROS_DEBUG("Setting up the dynamic reconfigure panel and server");
 	dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsConfig> server;
 	dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsConfig>::CallbackType f;
 	f = boost::bind(&NMPC::callback_dynamic_reconfigure, this, _1, _2);
 	server.setCallback(f);
-  
+
         ros::spin();
     }
-    
+
     void callback_dynamic_reconfigure(crazyflie_controller::crazyflie_paramsConfig &config, uint32_t level){
-      
+
       if(REGULATION_POINT){
 	ROS_INFO("Changing the desired regulation point!");
 	xq_des 		= config.xq_des;
 	yq_des 		= config.yq_des;
 	zq_des 		= config.zq_des;
-	
+
 	ROS_INFO_STREAM("Current regulation point: " << xq_des << ", " << yq_des << ", " << zq_des << endl);
       }
     }
@@ -227,11 +227,11 @@ public:
 	double pitch;
  	double yawr;
     };
-   
+
     euler quatern2euler(Quaterniond* q){
 
 	euler angle;
-	
+
 	double R11 = q->w()*q->w()+q->x()*q->x()-q->y()*q->y()-q->z()*q->z();
 	double R21 = 2*(q->x()*q->y()+q->w()*q->z());
 	double R31 = 2*(q->x()*q->z()-q->w()*q->y());
@@ -268,7 +268,7 @@ public:
 	  q.x() = -(cosPsi*cosTheta*sinPhi - sinPsi*sinTheta*cosPhi);
 	  q.y() = -(cosPsi*sinTheta*cosPhi + sinPsi*cosTheta*sinPhi);
 	  q.z() = -(sinPsi*cosTheta*cosPhi - cosPsi*sinTheta*sinPhi);
-	  
+
 	  if(q.w() < 0){
 	    q.w() = -q.w();
 	    q.vec() = -q.vec();
@@ -278,17 +278,17 @@ public:
     }
 
     double linearVelocity(std::vector <double> q_samples, std::vector <double> dq_samples, double Ts, double elapsed_time) {
-
+      // digital low-pass filter considering Ts = 15 ms
       double dq = 0;
-      if (elapsed_time > 1.0) dq = 0.1814*dq_samples[4] - 0.00823*dq_samples[3] + 26.13*q_samples[4] - 26.13*q_samples[3];
+      if (elapsed_time > 1.0) dq = 0.3306*dq_samples[4] - 0.02732*dq_samples[3] + 35.7*q_samples[4] - 35.7*q_samples[3];
       else dq = (q_samples[4] - q_samples[3]) / Ts;
       return dq;
     }
 
     Vector3d estimateWordLinearVelocities(float dt, float delta){
-      
+
 	  Vector3d vearth;
-      
+
 	  //estimte the velocity
 	  x_samples[0] = x_samples[1];
 	  x_samples[1] = x_samples[2];
@@ -325,12 +325,12 @@ public:
 	  vz_filter_samples[2] = vz_filter_samples[3];
 	  vz_filter_samples[3] = vz_filter_samples[4];
 	  vz_filter_samples[4] = vearth[2];
-	  
+
 	  return vearth;
     }
 
     Vector3d rotateLinearVeloE2B(Quaterniond* q, Vector3d v_inertial){
-      
+
          // This is the convertion between
 	 // quaternion orientation to rotation matrix
 	 // from EARTH to BODY (considering ZYX euler sequence)
@@ -353,7 +353,7 @@ public:
 	       S31,S32,S33;
 
 	 vb = Sq*v_inertial;
-	 
+
 	 return vb;
     }
 
@@ -376,7 +376,7 @@ public:
     void eulerCallback(const geometry_msgs::Vector3StampedPtr& msg){
 
       	// Euler angles
-	actual_roll  = msg->vector.x; 
+	actual_roll  = msg->vector.x;
 	actual_pitch = -msg->vector.y; // the pitch coming from the IMU seems to have an inverted sign (for no reason)
 	actual_yaw   = msg->vector.z;
     }
@@ -390,7 +390,7 @@ public:
     }
 
     void nmpcReset(){
-      
+
         acados_free();
     }
 
@@ -402,13 +402,13 @@ public:
 
 
     void iteration(const ros::TimerEvent& e){
-	
+
       if(e.last_real.isZero()) {
 	t0 = e.current_real.toSec();
       }
-      
-      double dt = e.current_real.toSec() - e.last_real.toSec();    
-          
+
+      double dt = e.current_real.toSec() - e.last_real.toSec();
+
       try{
 	// Update reference
 	for (k = 0; k < N+1; k++) {
@@ -448,7 +448,7 @@ public:
 	eu.phi   = deg2Rad(actual_roll);
 	eu.theta = deg2Rad(actual_pitch);
 	eu.psi   = deg2Rad(actual_yaw);
-	
+
 	// Convert IMU euler angles to quaternion
 	Quaterniond q_imu = euler2quatern(eu);
 	q_imu.normalize();
@@ -473,12 +473,12 @@ public:
 	x0_sign[wx] = actual_wx;
 	x0_sign[wy] = actual_wy;
 	x0_sign[wz] = actual_wz;
-	
+
 	// Up to this point we already stored the 13 states required for the NMPC. So advertise them!
 	geometry_msgs::Quaternion cf_st_quat; // publisher for quaternion
 	geometry_msgs::Vector3    cf_st_lvb;  // publisher for the linear velocities w.r.t. the body frame
 	geometry_msgs::Vector3    cf_st_avb;  // publisher for the angular velocities w.r.t. the body frame
-		
+
 	cf_st_quat.w = x0_sign[q1];
 	cf_st_quat.x = x0_sign[q2];
 	cf_st_quat.y = x0_sign[q3];
@@ -489,11 +489,11 @@ public:
 	cf_st_avb.x  = x0_sign[wx];
 	cf_st_avb.y  = x0_sign[wy];
 	cf_st_avb.z  = x0_sign[wz];
-	
+
 	m_cf_quat.publish(cf_st_quat);
 	m_cf_lvb.publish(cf_st_lvb);
 	m_cf_avb.publish(cf_st_avb);
-	
+
 	//---------------------------------------//
 	//				         //
 	//		acados NMPC 	         //
@@ -521,7 +521,7 @@ public:
 	// set initial condition
 	ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "lbx", acados_in.x0);
 	ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "ubx", acados_in.x0);
-	
+
 	if (FIXED_U0 == 1) {
 	  ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "lbu", acados_out.u1);
 	  ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "ubu", acados_out.u1);
@@ -536,7 +536,7 @@ public:
 
 	// call solver
 	acados_status = acados_solve();
-	
+
 	// assign output signals
 	acados_out.status = acados_status;
 	acados_out.KKT_res = (double)nlp_out->inf_norm_res;
@@ -544,16 +544,16 @@ public:
 
 	// Get solution
 	ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 0, "u", (void *)acados_out.u0);
-	
+
 	// Get solution at stage 1
 	ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 1, "u", (void *)acados_out.u1);
-	
+
 	// Get next stage
 	ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 1, "x", (void *)acados_out.x1);
-	  
+
 	// Get stage 2 which compensates 15 ms for the delay
-	ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 2, "x", (void *)acados_out.x2);	
-		
+	ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 2, "x", (void *)acados_out.x2);
+
 	// Publish acados output
 	geometry_msgs::Quaternion _acadosOut;
 	if (FIXED_U0 == 1) {
@@ -567,7 +567,7 @@ public:
 	  _acadosOut.y =  acados_out.u0[w3];
 	  _acadosOut.z =  acados_out.u0[w4];
 	}
-	m_motvel_pub.publish(_acadosOut);	
+	m_motvel_pub.publish(_acadosOut);
 
 	// Select the set of optimal states to calculate the real cf control inputs
 	Quaterniond q_acados_out;
@@ -576,12 +576,12 @@ public:
 	q_acados_out.y() = acados_out.x2[q3];
 	q_acados_out.z() = acados_out.x2[q4];
 	q_acados_out.normalize();
-		
+
 	// Convert acados output quaternion to desired euler angles
 	euler eu_imu;
 	eu_imu = quatern2euler(&q_acados_out);
-  
-	// Publish real control inputs	
+
+	// Publish real control inputs
 	geometry_msgs::Twist msg;
 	msg.linear.x  = -rad2Deg(eu_imu.theta); //linear_x -> pitch
 	msg.linear.y  = rad2Deg(eu_imu.phi);  // linear_y -> roll
@@ -591,9 +591,9 @@ public:
 	m_pubNav.publish(msg);
 
 	for(ii=0; ii< N; ii++){
-	  
+
 	   ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, ii, "x", (void *)(acados_out.xAllStages));
-		  
+
  	  // Log open-loop trajectory
 	  ofstream trajLog("traj_openloop.txt", std::ios_base::app | std::ios_base::out);
 
@@ -612,11 +612,11 @@ public:
 	    trajLog << acados_out.xAllStages[wy] << " ";
 	    trajLog << acados_out.xAllStages[wz] << " ";
 	    trajLog << endl;
-	    
+
 	    trajLog.close();
-	  }      
+	  }
 	}
- 	
+
  	// Log current state x0 and acados next state
 	ofstream motorsLog("full_log.txt", std::ios_base::app | std::ios_base::out);
 
@@ -662,7 +662,7 @@ public:
 	  motorsLog << acados_out.u1[w4] << " ";
 	  motorsLog << msg.linear.z<< " ";
 	  motorsLog << endl;
-	  
+
 	  motorsLog.close();
 	}
       }
@@ -678,13 +678,13 @@ private:
     ros::Publisher m_acados_position;
     ros::Publisher m_motvel_pub;
     ros::Publisher m_pubNav;
-    
+
     // Variables for joy callback
     double joy_roll,joy_pitch,joy_yaw;
     double joy_thrust;
-    
+
     int32_t actual_m1,actual_m2,actual_m3,actual_m4;
-    
+
     ros::Subscriber m_imu_sub;
     ros::Subscriber m_eRaptor_sub;
     ros::Subscriber m_euler_sub;
@@ -708,11 +708,11 @@ private:
 
     // Variables for dynamic reconfigure
     double xq_des,yq_des,zq_des;
-    
+
     // acados struct
     solver_input acados_in;
     solver_output acados_out;
-    
+
     int acados_status;
 
     // Variables for reading the IMU data
@@ -726,7 +726,7 @@ private:
     // Variables for eRaptor data
     float actual_x;
     float actual_y;
-    float actual_z;  
+    float actual_z;
 };
 
 int main(int argc, char **argv)
