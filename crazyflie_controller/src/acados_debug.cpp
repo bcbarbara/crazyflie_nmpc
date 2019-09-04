@@ -73,8 +73,8 @@ using std::showpos;
 
 #define pi      3.14159265358979323846
 #define g0	9.80665
-#define WEIGHT_MATRICES 1
-#define REGULATION_POINT 1
+
+#define CONTROLLER 1
 
 // delay compensation
 #define FIXED_U0 1 // possible values 0, 1
@@ -147,12 +147,23 @@ public:
 	mq = 33e-3; 	  		// [Kg]
 	Ct = 3.25e-4;			// [N/Krpm^2]
 	uss = sqrt((mq*g0)/(4*Ct));
+	
+	// Pre-load the trajectory
+	N_STEPS = readDataFromFile("/home/barbara/catkin_ws/src/crazyflie_ros/crazyflie_controller/src/optimal_trajectory.txt", casadi_optimal_traj);
+	if (N_STEPS == 0){
+		ROS_WARN("Cannot load CasADi optimal trajectory!");
+	}
+	else{
+		ROS_INFO_STREAM("Number of steps: " << N_STEPS << endl);
+	}
+	
+	// Set number of trajectory iterations to zero initially
+	iter = 0;
     }
 
     void run(double frequency){
         ros::NodeHandle node;
         ros::Timer timer = node.createTimer(ros::Duration(1.0/frequency), &NMPC::iteration, this);
-
 
 	ROS_DEBUG("Setting up the dynamic reconfigure panel and server");
 	dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsConfig> server;
@@ -165,14 +176,24 @@ public:
 
     void callback_dynamic_reconfigure(crazyflie_controller::crazyflie_paramsConfig &config, uint32_t level){
 
-      if(REGULATION_POINT){
-	ROS_INFO("Changing the desired regulation point!");
-	xq_des 		= config.xq_des;
-	yq_des 		= config.yq_des;
-	zq_des 		= config.zq_des;
-
-	ROS_INFO_STREAM("Current regulation point: " << xq_des << ", " << yq_des << ", " << zq_des << endl);
+      if (level && CONTROLLER){
+	if(config.enable_traj_tracking){
+	  config.enable_regulation = false;
+	  crazyflie_state = Tracking;
+	}
+	if(config.enable_regulation){
+	  config.enable_traj_tracking = false;
+	  xq_des = config.xq_des;
+	  yq_des = config.yq_des;
+	  zq_des = config.zq_des;
+	  crazyflie_state = Regulation;
+	}	
       }
+
+      ROS_INFO_STREAM(fixed << showpos << "Quad status" << endl
+				       << "NMPC for regulation: " <<  (config.enable_regulation?"ON":"off") << endl
+				       << "NMPC trajectory tracker: " <<  (config.enable_traj_tracking?"ON":"off") << endl
+				       << "Current regulation point: " << xq_des << ", " << yq_des << ", " << zq_des << endl);
     }
 
     enum systemStates{
@@ -197,6 +218,12 @@ public:
 	  w3 = 2,
 	  w4 = 3
     };
+    
+    enum cf_state{
+        Regulation = 0,
+        Tracking = 1,
+	Position_Hold = 2
+    };
 
     struct euler{
       double phi;
@@ -220,13 +247,33 @@ public:
       double W[NY*NY];
       double WN[NX*NX];
     };
+  
+    int readDataFromFile(const char* fileName, std::vector<std::vector<double>> &data){
+	std::ifstream file(fileName);
+	std::string line;
+	int num_of_steps = 0;
 
-    struct cf_cmd_vel{
-	int thrust;
-	double roll;
-	double pitch;
- 	double yawr;
-    };
+	if (file.is_open()){
+		while(getline(file, line)){
+			++num_of_steps;
+			std::istringstream linestream( line );
+			std::vector<double> linedata;
+			double number;
+
+			while( linestream >> number ){
+				linedata.push_back( number );
+			}
+			data.push_back( linedata );
+		}
+
+		file.close();
+		cout << num_of_steps << endl;
+	}
+	else
+		return 0;
+
+	return num_of_steps;
+}
 
     euler quatern2euler(Quaterniond* q){
 
@@ -239,7 +286,6 @@ public:
 	double R33 = q->w()*q->w()-q->x()*q->x()-q->y()*q->y()+q->z()*q->z();
 
 	double phi   = atan2(R32, R33);
-	//double theta = -asin(R31/sqrt(1-R31*R31));
 	double theta = asin(-R31);
 	double psi   = atan2(R21, R11);
 
@@ -278,6 +324,7 @@ public:
     }
 
     double linearVelocity(std::vector <double> q_samples, std::vector <double> dq_samples, double Ts, double elapsed_time) {
+      
       // digital low-pass filter considering Ts = 15 ms
       double dq = 0;
       if (elapsed_time > 1.0) dq = 0.3306*dq_samples[4] - 0.02732*dq_samples[3] + 35.7*q_samples[4] - 35.7*q_samples[3];
@@ -410,34 +457,91 @@ public:
       double dt = e.current_real.toSec() - e.last_real.toSec();
 
       try{
-	// Update reference
-	for (k = 0; k < N+1; k++) {
-	      yref_sign[k * NY + 0] = xq_des; 	// xq
-	      yref_sign[k * NY + 1] = yq_des;	// yq
-	      yref_sign[k * NY + 2] = zq_des;	// zq
-	      yref_sign[k * NY + 3] = 1.00;	// q1
-	      yref_sign[k * NY + 4] = 0.00;	// q2
-	      yref_sign[k * NY + 5] = 0.00;	// q3
-	      yref_sign[k * NY + 6] = 0.00;	// q4
-	      yref_sign[k * NY + 7] = 0.00;	// vbx
-	      yref_sign[k * NY + 8] = 0.00;	// vby
-	      yref_sign[k * NY + 9] = 0.00;	// vbz
-	      yref_sign[k * NY + 10] = 0.00;	// wx
-	      yref_sign[k * NY + 11] = 0.00;	// wy
-	      yref_sign[k * NY + 12] = 0.00;	// wz
-	      yref_sign[k * NY + 13] = uss;	// w1
-	      yref_sign[k * NY + 14] = uss;	// w2
-	      yref_sign[k * NY + 15] = uss;	// w3
-	      yref_sign[k * NY + 16] = uss;	// w4
+	switch(crazyflie_state){
+	
+	  case Regulation: 
+	  {
+	    // Update regulation point
+	    for (k = 0; k < N+1; k++){
+		  yref_sign[k * NY + 0] = xq_des; 	// xq
+		  yref_sign[k * NY + 1] = yq_des;	// yq
+		  yref_sign[k * NY + 2] = zq_des;	// zq
+		  yref_sign[k * NY + 3] = 1.00;		// q1
+		  yref_sign[k * NY + 4] = 0.00;		// q2
+		  yref_sign[k * NY + 5] = 0.00;		// q3
+		  yref_sign[k * NY + 6] = 0.00;		// q4
+		  yref_sign[k * NY + 7] = 0.00;		// vbx
+		  yref_sign[k * NY + 8] = 0.00;		// vby
+		  yref_sign[k * NY + 9] = 0.00;		// vbz
+		  yref_sign[k * NY + 10] = 0.00;	// wx
+		  yref_sign[k * NY + 11] = 0.00;	// wy
+		  yref_sign[k * NY + 12] = 0.00;	// wz
+		  yref_sign[k * NY + 13] = uss;		// w1
+		  yref_sign[k * NY + 14] = uss;		// w2
+		  yref_sign[k * NY + 15] = uss;		// w3
+		  yref_sign[k * NY + 16] = uss;		// w4
+	    }
+	    break;	    
+	  }
+	  
+	  case Tracking:
+	  {
+	    if(iter < N_STEPS-N){
+		// Update reference
+ 		for (k = 0; k < N+1; k++) {
+ 		      yref_sign[k * NY + 0] = casadi_optimal_traj[iter + k][xq];
+		      yref_sign[k * NY + 1] = casadi_optimal_traj[iter + k][yq];
+		      yref_sign[k * NY + 2] = casadi_optimal_traj[iter + k][zq];
+		      yref_sign[k * NY + 3] = casadi_optimal_traj[iter + k][q1];
+		      yref_sign[k * NY + 4] = casadi_optimal_traj[iter + k][q2];
+		      yref_sign[k * NY + 5] = casadi_optimal_traj[iter + k][q3];
+		      yref_sign[k * NY + 6] = casadi_optimal_traj[iter + k][q4];
+		      yref_sign[k * NY + 7] = casadi_optimal_traj[iter + k][vbx];
+		      yref_sign[k * NY + 8] = casadi_optimal_traj[iter + k][vby];
+		      yref_sign[k * NY + 9] = casadi_optimal_traj[iter + k][vbz];
+		      yref_sign[k * NY + 10] = casadi_optimal_traj[iter + k][wx];
+		      yref_sign[k * NY + 11] = casadi_optimal_traj[iter + k][wy];
+		      yref_sign[k * NY + 12] = casadi_optimal_traj[iter + k][wz];
+		      yref_sign[k * NY + 13] = casadi_optimal_traj[iter + k][13];
+		      yref_sign[k * NY + 14] = casadi_optimal_traj[iter + k][14];
+		      yref_sign[k * NY + 15] = casadi_optimal_traj[iter + k][15];
+		      yref_sign[k * NY + 16] = casadi_optimal_traj[iter + k][16];
+ 		}
+		++iter;
+		//cout << iter << endl;
+	    }
+ 	    else crazyflie_state = Position_Hold;
+	    break;
+	  }
+	  
+	  case Position_Hold:
+	  {
+	    ROS_INFO("Holding last position of the trajectory.");
+	    // Get last point of tracketory and hold 
+	    for (k = 0; k < N+1; k++){
+		    yref_sign[k * NY + 0] = casadi_optimal_traj[N_STEPS-1][xq]; 
+		    yref_sign[k * NY + 1] = casadi_optimal_traj[N_STEPS-1][yq]; 
+		    yref_sign[k * NY + 2] = casadi_optimal_traj[N_STEPS-1][zq]; 
+		    yref_sign[k * NY + 3] = 1.00;
+		    yref_sign[k * NY + 4] = 0.00;
+		    yref_sign[k * NY + 5] = 0.00;
+		    yref_sign[k * NY + 6] = 0.00;
+		    yref_sign[k * NY + 7] = 0.00;
+		    yref_sign[k * NY + 8] = 0.00;
+		    yref_sign[k * NY + 9] = 0.00;
+		    yref_sign[k * NY + 10] = 0.00;
+		    yref_sign[k * NY + 11] = 0.00;
+		    yref_sign[k * NY + 12] = 0.00;
+		    yref_sign[k * NY + 13] = uss;
+		    yref_sign[k * NY + 14] = uss;
+		    yref_sign[k * NY + 15] = uss;
+		    yref_sign[k * NY + 16] = uss;
+	      }
+	  }
+	  break;
 	}
-
-	for (ii = 0; ii < (NY*NY); ii++) {
-	      acados_in.W[ii] = 0.0;
-	}
-	for (ii = 0; ii < (NYN*NYN); ii++) {
-	      acados_in.WN[ii] = 0.0;
-	}
-
+	
+	//ROS_INFO_STREAM(crazyflie_state << endl);
 	// Storing inertial positions in state vector
 	x0_sign[xq] = actual_x;
 	x0_sign[yq] = actual_y;
@@ -590,34 +694,61 @@ public:
 
 	m_pubNav.publish(msg);
 
+// 	for(ii=0; ii< N; ii++){
+// 
+// 	   ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, ii, "x", (void *)(acados_out.xAllStages));
+// 
+//  	  // Log open-loop trajectory
+// 	  ofstream trajLog("traj_openloop.txt", std::ios_base::app | std::ios_base::out);
+// 
+// 	  if (trajLog.is_open()){
+// 	    trajLog << acados_out.xAllStages[xq] << " ";
+// 	    trajLog << acados_out.xAllStages[yq] << " ";
+// 	    trajLog << acados_out.xAllStages[zq] << " ";
+// 	    trajLog << acados_out.xAllStages[q1] << " ";
+// 	    trajLog << acados_out.xAllStages[q2] << " ";
+// 	    trajLog << acados_out.xAllStages[q3] << " ";
+// 	    trajLog << acados_out.xAllStages[q4] << " ";
+// 	    trajLog << acados_out.xAllStages[vbx] << " ";
+// 	    trajLog << acados_out.xAllStages[vby] << " ";
+// 	    trajLog << acados_out.xAllStages[vbz] << " ";
+// 	    trajLog << acados_out.xAllStages[wx] << " ";
+// 	    trajLog << acados_out.xAllStages[wy] << " ";
+// 	    trajLog << acados_out.xAllStages[wz] << " ";
+// 	    trajLog << endl;
+// 
+// 	    trajLog.close();
+// 	  }
+// 	}
+	
+	// Log for the trajectory
 	for(ii=0; ii< N; ii++){
-
-	   ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, ii, "x", (void *)(acados_out.xAllStages));
-
- 	  // Log open-loop trajectory
-	  ofstream trajLog("traj_openloop.txt", std::ios_base::app | std::ios_base::out);
-
-	  if (trajLog.is_open()){
-	    trajLog << acados_out.xAllStages[xq] << " ";
-	    trajLog << acados_out.xAllStages[yq] << " ";
-	    trajLog << acados_out.xAllStages[zq] << " ";
-	    trajLog << acados_out.xAllStages[q1] << " ";
-	    trajLog << acados_out.xAllStages[q2] << " ";
-	    trajLog << acados_out.xAllStages[q3] << " ";
-	    trajLog << acados_out.xAllStages[q4] << " ";
-	    trajLog << acados_out.xAllStages[vbx] << " ";
-	    trajLog << acados_out.xAllStages[vby] << " ";
-	    trajLog << acados_out.xAllStages[vbz] << " ";
-	    trajLog << acados_out.xAllStages[wx] << " ";
-	    trajLog << acados_out.xAllStages[wy] << " ";
-	    trajLog << acados_out.xAllStages[wz] << " ";
-	    trajLog << endl;
-
-	    trajLog.close();
-	  }
+	  
+	    ofstream inputTraj("casadi_traj.txt", std::ios_base::app | std::ios_base::out);
+	    if (inputTraj.is_open()){
+		inputTraj << casadi_optimal_traj[iter + ii][xq] << " ";
+		inputTraj << casadi_optimal_traj[iter + ii][yq] << " ";
+		inputTraj << casadi_optimal_traj[iter + ii][zq] << " ";
+		inputTraj << casadi_optimal_traj[iter + ii][q1] << " ";
+		inputTraj << casadi_optimal_traj[iter + ii][q2] << " ";
+		inputTraj << casadi_optimal_traj[iter + ii][q3] << " ";
+		inputTraj << casadi_optimal_traj[iter + ii][q4] << " ";
+		inputTraj << casadi_optimal_traj[iter + ii][vbx] << " ";
+		inputTraj << casadi_optimal_traj[iter + ii][vby] << " ";
+		inputTraj << casadi_optimal_traj[iter + ii][vbz] << " ";
+		inputTraj << casadi_optimal_traj[iter + ii][wx] << " ";
+		inputTraj << casadi_optimal_traj[iter + ii][wy] << " ";
+		inputTraj << casadi_optimal_traj[iter + ii][wz] << " ";
+		inputTraj << casadi_optimal_traj[iter + ii][13] << " ";
+		inputTraj << casadi_optimal_traj[iter + ii][14] << " ";
+		inputTraj << casadi_optimal_traj[iter + ii][15] << " ";
+		inputTraj << casadi_optimal_traj[iter + ii][16] << " ";
+		inputTraj << endl;
+		
+	    }
 	}
-
- 	// Log current state x0 and acados next state
+ 
+ 	// Log current state x0 and acados output x1 and x2
 	ofstream motorsLog("full_log.txt", std::ios_base::app | std::ios_base::out);
 
 	if (motorsLog.is_open()){
@@ -727,6 +858,14 @@ private:
     float actual_x;
     float actual_y;
     float actual_z;
+    
+    // For dynamic reconfigure
+    cf_state crazyflie_state;
+    
+    // Variable for storing he optimal trajectory
+    std::vector<std::vector<double>> casadi_optimal_traj;
+    int N_STEPS,iter;
+
 };
 
 int main(int argc, char **argv)
@@ -736,7 +875,7 @@ int main(int argc, char **argv)
   // Read parameters
   ros::NodeHandle n("~");
   double frequency;
-  n.param("frequency", frequency, 50.0);
+  n.param("frequency", frequency, 65.0);
 
   NMPC nmpc(n);
   nmpc.run(frequency);
