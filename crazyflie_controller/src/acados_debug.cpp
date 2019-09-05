@@ -111,6 +111,8 @@ public:
 	m_cf_lvb 		= nh.advertise<geometry_msgs::Vector3>("/crazyflie/linear_velo",1);
 	// publisher for the current value of the angular velocities
 	m_cf_avb 		= nh.advertise<geometry_msgs::Vector3>("/crazyflie/angular_velo",1);
+	// subscriber fro the motors rpm
+	m_motors 		= nh.subscribe("/crazyflie/log1", 5, &NMPC::motorsCallback, this);
 
 	// Set initial value of the linear velocities to zero
 	vx = 0.0;
@@ -410,6 +412,15 @@ public:
 
     double rad2Deg(double rad) {
 	  return rad * 180.0 / pi;
+    }
+    
+    void motorsCallback(const crazyflie_controller::GenericLogDataConstPtr& msg){
+    
+	// motors rpm
+	actual_m1 = msg->values[0];
+	actual_m2 = msg->values[1];
+	actual_m3 = msg->values[2];
+	actual_m4 = msg->values[3];
     }
 
     void eRaptorCallback(const geometry_msgs::PointStampedConstPtr& msg){
@@ -722,45 +733,49 @@ public:
 // 	}
 	
 	// Log for the trajectory
-	for(ii=0; ii< N; ii++){
-	  
-	    ofstream inputTraj("casadi_traj.txt", std::ios_base::app | std::ios_base::out);
-	    if (inputTraj.is_open()){
-		inputTraj << casadi_optimal_traj[iter + ii][xq] << " ";
-		inputTraj << casadi_optimal_traj[iter + ii][yq] << " ";
-		inputTraj << casadi_optimal_traj[iter + ii][zq] << " ";
-		inputTraj << casadi_optimal_traj[iter + ii][q1] << " ";
-		inputTraj << casadi_optimal_traj[iter + ii][q2] << " ";
-		inputTraj << casadi_optimal_traj[iter + ii][q3] << " ";
-		inputTraj << casadi_optimal_traj[iter + ii][q4] << " ";
-		inputTraj << casadi_optimal_traj[iter + ii][vbx] << " ";
-		inputTraj << casadi_optimal_traj[iter + ii][vby] << " ";
-		inputTraj << casadi_optimal_traj[iter + ii][vbz] << " ";
-		inputTraj << casadi_optimal_traj[iter + ii][wx] << " ";
-		inputTraj << casadi_optimal_traj[iter + ii][wy] << " ";
-		inputTraj << casadi_optimal_traj[iter + ii][wz] << " ";
-		inputTraj << casadi_optimal_traj[iter + ii][13] << " ";
-		inputTraj << casadi_optimal_traj[iter + ii][14] << " ";
-		inputTraj << casadi_optimal_traj[iter + ii][15] << " ";
-		inputTraj << casadi_optimal_traj[iter + ii][16] << " ";
-		inputTraj << endl;
-		
-	    }
-	}
+// 	for(ii=0; ii< N; ii++){
+// 	  
+// 	    ofstream inputTraj("casadi_traj.txt", std::ios_base::app | std::ios_base::out);
+// 	    if (inputTraj.is_open()){
+// 		inputTraj << casadi_optimal_traj[iter + ii][xq] << " ";
+// 		inputTraj << casadi_optimal_traj[iter + ii][yq] << " ";
+// 		inputTraj << casadi_optimal_traj[iter + ii][zq] << " ";
+// 		inputTraj << casadi_optimal_traj[iter + ii][q1] << " ";
+// 		inputTraj << casadi_optimal_traj[iter + ii][q2] << " ";
+// 		inputTraj << casadi_optimal_traj[iter + ii][q3] << " ";
+// 		inputTraj << casadi_optimal_traj[iter + ii][q4] << " ";
+// 		inputTraj << casadi_optimal_traj[iter + ii][vbx] << " ";
+// 		inputTraj << casadi_optimal_traj[iter + ii][vby] << " ";
+// 		inputTraj << casadi_optimal_traj[iter + ii][vbz] << " ";
+// 		inputTraj << casadi_optimal_traj[iter + ii][wx] << " ";
+// 		inputTraj << casadi_optimal_traj[iter + ii][wy] << " ";
+// 		inputTraj << casadi_optimal_traj[iter + ii][wz] << " ";
+// 		inputTraj << casadi_optimal_traj[iter + ii][13] << " ";
+// 		inputTraj << casadi_optimal_traj[iter + ii][14] << " ";
+// 		inputTraj << casadi_optimal_traj[iter + ii][15] << " ";
+// 		inputTraj << casadi_optimal_traj[iter + ii][16] << " ";
+// 		inputTraj << endl;
+// 		
+// 	    }
+// 	}
  
  	// Log current state x0 and acados output x1 and x2
 	ofstream motorsLog("full_log.txt", std::ios_base::app | std::ios_base::out);
 
 	if (motorsLog.is_open()){
-	  motorsLog << xq_des << " ";
-	  motorsLog << yq_des << " ";
-	  motorsLog << zq_des << " ";
-	  motorsLog << actual_roll << " ";
-	  motorsLog << -actual_pitch << " ";
-	  motorsLog << actual_yaw  << " ";
-	  motorsLog << msg.linear.y << " ";
-	  motorsLog << msg.linear.x << " ";
-	  motorsLog << msg.angular.z << " ";
+// 	  motorsLog << xq_des << " ";
+// 	  motorsLog << yq_des << " ";
+// 	  motorsLog << zq_des << " ";
+// 	  motorsLog << actual_roll << " ";
+// 	  motorsLog << -actual_pitch << " ";
+// 	  motorsLog << actual_yaw  << " ";
+// 	  motorsLog << msg.linear.y << " ";
+// 	  motorsLog << msg.linear.x << " ";
+// 	  motorsLog << msg.angular.z << " ";
+	  motorsLog << actual_m1 << " ";
+	  motorsLog << actual_m2 << " ";
+	  motorsLog << actual_m3 << " ";
+	  motorsLog << actual_m4 << " ";
 	  motorsLog << actual_x << " ";
 	  motorsLog << actual_y << " ";
 	  motorsLog << actual_z << " ";
@@ -792,6 +807,23 @@ public:
 	  motorsLog << acados_out.u1[w3] << " ";
 	  motorsLog << acados_out.u1[w4] << " ";
 	  motorsLog << msg.linear.z<< " ";
+// 	  motorsLog << casadi_optimal_traj[iter][xq] << " ";
+// 	  motorsLog << casadi_optimal_traj[iter][yq] << " ";
+// 	  motorsLog << casadi_optimal_traj[iter][zq] << " ";
+// 	  motorsLog << casadi_optimal_traj[iter][q1] << " ";
+// 	  motorsLog << casadi_optimal_traj[iter][q2] << " ";
+// 	  motorsLog << casadi_optimal_traj[iter][q3] << " ";
+// 	  motorsLog << casadi_optimal_traj[iter][q4] << " ";
+// 	  motorsLog << casadi_optimal_traj[iter][vbx] << " ";
+// 	  motorsLog << casadi_optimal_traj[iter][vby] << " ";
+// 	  motorsLog << casadi_optimal_traj[iter][vbz] << " ";
+// 	  motorsLog << casadi_optimal_traj[iter][wx] << " ";
+// 	  motorsLog << casadi_optimal_traj[iter][wy] << " ";
+// 	  motorsLog << casadi_optimal_traj[iter][wz] << " ";
+// 	  motorsLog << casadi_optimal_traj[iter][13] << " ";
+// 	  motorsLog << casadi_optimal_traj[iter][14] << " ";
+// 	  motorsLog << casadi_optimal_traj[iter][15] << " ";
+// 	  motorsLog << casadi_optimal_traj[iter][16] << " ";
 	  motorsLog << endl;
 
 	  motorsLog.close();
@@ -819,6 +851,7 @@ private:
     ros::Subscriber m_imu_sub;
     ros::Subscriber m_eRaptor_sub;
     ros::Subscriber m_euler_sub;
+    ros::Subscriber m_motors;
 
     unsigned int k,i,j,ii;
 

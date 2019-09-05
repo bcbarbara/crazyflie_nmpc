@@ -47,19 +47,19 @@ max_thrust = 22
 # set weighting matrices
 nlp_cost = ra.cost
 Q = np.eye(nx)
-Q[0,0] = 70.0      # x
-Q[1,1] = 60.0      # y
-Q[2,2] = 90.0      # z
+Q[0,0] = 90.0       # x
+Q[1,1] = 90.0       # y
+Q[2,2] = 100.0      # z
 Q[3,3] = 1.0e-3     # q1
 Q[4,4] = 1.0e-3     # q2
 Q[5,5] = 1.0e-3     # q3
 Q[6,6] = 1.0e-3     # q4
-Q[7,7] = 2.0        # vbx
-Q[8,8] = 2.0        # vby
+Q[7,7] = 9e-1       # vbx
+Q[8,8] = 1.0        # vby
 Q[9,9] = 4.0        # vbz
-Q[10,10] = 1.0e-5     # wx
-Q[11,11] = 1.0e-5      # wy
-Q[12,12] = 10.0      # wz
+Q[10,10] = 1.0e-5   # wx
+Q[11,11] = 1.0e-5   # wy
+Q[12,12] = 10.0     # wz
 
 R = np.eye(nu)
 R[0,0] = 0.06    # w1
@@ -92,7 +92,7 @@ Vu[15,2] = 1.0
 Vu[16,3] = 1.0
 nlp_cost.Vu = Vu
 
-nlp_cost.W_e = Q
+nlp_cost.W_e = 50*Q
 
 Vx_e = np.zeros((ny_e, nx))
 Vx_e[0,0] = 1.0
@@ -115,18 +115,7 @@ nlp_cost.yref   = np.array([0, 0, 0.5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, hov_w, hov_
 nlp_cost.yref_e = np.array([0, 0, 0.5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
 nlp_con = ra.constraints
-#nlp_con.lbx = np.array([-dxq,-dzq])
-#nlp_con.ubx = np.array([+dxq,+dzq])
-#nlp_con.idxbx = np.array([4,5])
-#nlp_con.lbx_e = np.array([-dxq,-dzq])
-#nlp_con.ubx_e= np.array([+dxq,+dzq])
-#nlp_con.idxbx_e = np.array([4,5])
-#nlp_con.lbx = np.array([-xq,-zq,-pitch,-alpha,-dxq,-dzq,-dpitch,-dalpha])
-#nlp_con.ubx = np.array([+xq,+zq,+pitch,+alpha,+dxq,+dzq,+dpitch,+dalpha])
-#nlp_con.idxbx = np.array([0,1,2,3,4,5,6,7])
-#nlp_con.lbx_e = np.array([-xq,-zq,-pitch,-alpha,-dxq,-dzq,-dpitch,-dalpha])
-#nlp_con.ubx_e = np.array([+xq,+zq,+pitch,+alpha,+dxq,+dzq,+dpitch,+dalpha])
-#nlp_con.idxbx_e = np.array([0,1,2,3,4,5,6,7])
+
 nlp_con.lbu = np.array([0,0,0,0])
 nlp_con.ubu = np.array([+max_thrust,+max_thrust,+max_thrust,+max_thrust])
 nlp_con.x0  = np.array([0,0,0,1,0,0,0,0,0,0,0,0,0])
