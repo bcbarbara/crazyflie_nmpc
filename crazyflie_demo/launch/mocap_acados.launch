@@ -13,7 +13,7 @@
 			<param name="tf_prefix" value="crazyflie" />
 			<param name="enable_logging" value="True" />
 			<param name="enable_logging_battery" value="False" />
-			<param name="enable_logging_motors" value="False" />
+			<param name="enable_logging_motors" value="True" />
 			<param name="enable_logging_euler_angles" value="True" />
 			<param name="enable_logging_kf_quaternion" value="False" />
 			<param name="enable_logging_onboard_position" value="False" />
@@ -23,6 +23,11 @@
 			<param name="enable_logging_pose" value="False" />
 			<param name="enable_logging_pressure" value="False" />
 			<param name="enable_logging_temperature" value="False" />
+      <rosparam>
+      genericLogTopics: ["log1"]
+      genericLogTopicFrequencies: [65]
+      genericLogTopic_log1_Variables: ["motor.m1", "motor.m2", "motor.m3", "motor.m4"]
+    </rosparam>
 		</node>
 
 		<node
