@@ -90,7 +90,7 @@
 	<include file="$(find cortex_stream)/launch/cortex_stream.launch"/>
 
 	<node name="nmpc" pkg="crazyflie_controller" type="acados_debug" output="screen" ns="crazyflie">
-		<param name="ref_traj" value="$(find crazyflie_controller)/traj/smooth_step.txt"/>
+		<param name="ref_traj" value="$(find crazyflie_controller)/traj/helix_traj.txt"/>
   	</node>
 
 
