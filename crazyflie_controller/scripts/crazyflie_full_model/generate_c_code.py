@@ -14,7 +14,7 @@ model = export_ode_model()
 # set model_name
 ra.model_name = model.name
 
-Tf = 1*0.75
+Tf = 0.75
 N = 50
 nx = model.x.size()[0]
 nu = model.u.size()[0]
@@ -38,23 +38,20 @@ mq  = 33e-3     # [Kg] with one marker
 Ct  = 3.25e-4   # [N/Krpm^2]
 
 # bounds
-max_lv_body = 1.0
-max_av_body = 1.0
-box_bounds = 0.5
 hov_w = np.sqrt((mq*g0)/(4*Ct))
 max_thrust = 22
 
 # set weighting matrices
 nlp_cost = ra.cost
 Q = np.eye(nx)
-Q[0,0] = 90.0       # x
-Q[1,1] = 90.0       # y
+Q[0,0] = 120.0       # x
+Q[1,1] = 100.0       # y
 Q[2,2] = 100.0      # z
 Q[3,3] = 1.0e-3     # q1
 Q[4,4] = 1.0e-3     # q2
 Q[5,5] = 1.0e-3     # q3
 Q[6,6] = 1.0e-3     # q4
-Q[7,7] = 9e-1       # vbx
+Q[7,7] = 7e-1       # vbx
 Q[8,8] = 1.0        # vby
 Q[9,9] = 4.0        # vbz
 Q[10,10] = 1.0e-5   # wx
