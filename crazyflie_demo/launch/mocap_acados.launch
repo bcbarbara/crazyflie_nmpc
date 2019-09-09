@@ -13,7 +13,7 @@
 			<param name="tf_prefix" value="crazyflie" />
 			<param name="enable_logging" value="True" />
 			<param name="enable_logging_battery" value="False" />
-			<param name="enable_logging_motors" value="True" />
+			<param name="enable_logging_motors" value="False" />
 			<param name="enable_logging_euler_angles" value="True" />
 			<param name="enable_logging_kf_quaternion" value="False" />
 			<param name="enable_logging_onboard_position" value="False" />
@@ -23,11 +23,6 @@
 			<param name="enable_logging_pose" value="False" />
 			<param name="enable_logging_pressure" value="False" />
 			<param name="enable_logging_temperature" value="False" />
-      <rosparam>
-      genericLogTopics: ["log1"]
-      genericLogTopicFrequencies: [65]
-      genericLogTopic_log1_Variables: ["motor.m1", "motor.m2", "motor.m3", "motor.m4"]
-    </rosparam>
 		</node>
 
 		<node
@@ -36,16 +31,14 @@
 			type="publish_external_position_eraptor.py"
 			output="screen">
 		</node>
-
 	</group>
-
-	<node name="acados_cmd"
+	<!--node name="acados_cmd"
 				pkg="rqt_plot"
 				type="rqt_plot"
 				args="/crazyflie/cmd_vel/linear"
 	/>
 
-	<!--node name="acados_traj"
+	<node name="acados_traj"
 				pkg="rqt_plot"
 				type="rqt_plot"
 				args="/crazyflie/acados_traj/vector"
@@ -96,11 +89,12 @@
 	<!-- run eraptor bridge -->
 	<include file="$(find cortex_stream)/launch/cortex_stream.launch"/>
 
-	<include file="$(find crazyflie_demo)/launch/nmpc_debug.launch">
-	</include>
+	<node name="nmpc" pkg="crazyflie_controller" type="acados_debug" output="screen" ns="crazyflie">
+		<param name="ref_traj" value="$(find crazyflie_controller)/traj/smooth_step.txt"/>
+  	</node>
 
 
 	<node pkg="rqt_reconfigure" name="crazyflie_reconf" type="rqt_reconfigure" output="screen">
-</node>
+	</node>
 
 </launch>
