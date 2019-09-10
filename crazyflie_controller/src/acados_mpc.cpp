@@ -4,16 +4,18 @@
 // msgs
 #include <std_msgs/String.h>
 #include <geometry_msgs/PointStamped.h>
-#include <std_msgs/String.h>
+#include <geometry_msgs/Twist.h>
+// crazyflie
 #include <crazyflie_controller/CrazyflieStateStamped.h>
-#include <crazyflie_controller/PropellerSpeeds.h>
+#include <crazyflie_controller/PropellerSpeedsStamped.h>
 #include "crazyflie_controller/GenericLogData.h"
 
 // Dynamic reconfirgure
 #include <dynamic_reconfigure/server.h>
-#include <crazyflie_controller/crazyflie_paramsConfig.h>
 #include <boost/thread.hpp>
 #include "boost/thread/mutex.hpp"
+// crazyflie
+#include <crazyflie_controller/crazyflie_paramsConfig.h>
 
 // Matrices and vectors
 #include <eigen3/Eigen/Dense>
@@ -78,51 +80,10 @@ using std::showpos;
 #define FIXED_U0 0
 #define READ_CASADI_TRAJ 0
 #define WRITE_OPENLOOP_TRAJ 0
-#define WRITE_FULL_LOG 1
+#define WRITE_FULL_LOG 0
 
 class NMPC
 	{
-
-	ros::Publisher p_motvel;
-	ros::Publisher p_bodytwist;
-
-	// Variables for joy callback
-	double joy_roll,joy_pitch,joy_yaw;
-	double joy_thrust;
-
-	int32_t actual_m1,actual_m2,actual_m3,actual_m4;
-
-	ros::Subscriber m_imu_sub;
-	ros::Subscriber m_eRaptor_sub;
-	ros::Subscriber m_euler_sub;
-	ros::Subscriber m_motors;
-
-	unsigned int k,i,j,ii;
-
-	float uss,Ct,mq;
-
-	// Variables of the nmpc control process
-	double x0_sign[NX];
-	double yref_sign[(NY*N)+NY];
-
-	// Variables for dynamic reconfigure
-	double xq_des,yq_des,zq_des;
-
-	// acados struct
-	solver_input acados_in;
-	solver_output acados_out;
-
-	int acados_status;
-
-	// For dynamic reconfigure
-	cf_state crazyflie_state;
-
-	// Variable for storing he optimal trajectory
-	std::vector<std::vector<double>> casadi_optimal_traj;
-	int N_STEPS,iter;
-
-public:
-
 	enum systemStates{
 		xq = 0,
 		yq = 1,
@@ -175,7 +136,47 @@ public:
 		double WN[NX*NX];
 	};
 
-	NMPC(const ros::NodeHandle& n)
+	ros::Publisher p_motvel;
+	ros::Publisher p_bodytwist;
+
+	ros::Subscriber s_estimator;
+
+	ros::Subscriber s_imu_sub;
+	ros::Subscriber s_eRaptor_sub;
+	ros::Subscriber s_euler_sub;
+	ros::Subscriber s_motors;
+
+	// Variables for joy callback
+	double joy_roll,joy_pitch,joy_yaw;
+	double joy_thrust;
+
+
+	unsigned int k,i,j,ii;
+
+	float uss,Ct,mq;
+
+	// Variables of the nmpc control process
+	double x0_sign[NX];
+	double yref_sign[(NY*N)+NY];
+
+	// Variables for dynamic reconfigure
+	double xq_des,yq_des,zq_des;
+
+	// acados struct
+	solver_input acados_in;
+	solver_output acados_out;
+	int acados_status;
+
+	// For dynamic reconfigure
+	cf_state crazyflie_state;
+
+	// Variable for storing he optimal trajectory
+	std::vector<std::vector<double>> casadi_optimal_traj;
+	int N_STEPS,iter;
+
+public:
+
+	NMPC(ros::NodeHandle& n)
 		{
 
 		int status = 0;
@@ -190,16 +191,13 @@ public:
 		p_bodytwist = n.advertise<geometry_msgs::Twist>("/crazyflie/cmd_vel", 1);
 
 		// publisher for the control inputs of acados (motor speeds to be applied)
-		p_motvel = n.advertise<crazyflie_controller::PropellerSpeeds>("/crazyflie/acados_motvel", 1);
+		p_motvel = n.advertise<crazyflie_controller::PropellerSpeedsStamped>("/crazyflie/acados_motvel", 1);
 
 		// subscriber of estimator state
 		s_estimator = n.subscribe("/cf_estimator/state_estimate", 5, &NMPC::iteration, this);
 
 		// Initializing control inputs
 		for(unsigned int i=0; i < NU; i++) acados_out.u1[i] = 0.0;
-
-		// Set elapsed time to zero initially
-		t0 = 0.0;
 
 		// Steady-state control input value
 		// (Kg)
@@ -349,7 +347,7 @@ public:
 
 	double rad2Deg(double rad)
 		{
-		rad * 180.0 / pi;
+		return rad * 180.0 / pi;
 		}
 
 	void nmpcReset()
@@ -363,7 +361,7 @@ public:
 		return pwm;
 		}
 
-	void iteration(const crazyflie_controller::CrazyflieStateStamped msg)
+	void iteration(const crazyflie_controller::CrazyflieStateStampedPtr& msg)
 		{
 		try
 			{
@@ -455,25 +453,25 @@ public:
 
 			// read msg
 			// position
-			x0_sign[xq] = msg->pos->x;
-			x0_sign[yq] = msg->pos->y;
-			x0_sign[zq] = msg->pos->z;
+			x0_sign[xq] = msg->pos.x;
+			x0_sign[yq] = msg->pos.y;
+			x0_sign[zq] = msg->pos.z;
 
 			// quaternion
-			x0_sign[q1] = msg->quat->w;
-			x0_sign[q2] = msg->quat->x;
-			x0_sign[q3] = msg->quat->y;
-			x0_sign[q4] = msg->quat->z;
+			x0_sign[q1] = msg->quat.w;
+			x0_sign[q2] = msg->quat.x;
+			x0_sign[q3] = msg->quat.y;
+			x0_sign[q4] = msg->quat.z;
 
 			// body velocities
-			x0_sign[vbx] = msg->vel->x;
-			x0_sign[vby] = msg->vel->y;
-			x0_sign[vbz] = msg->vel->z;
+			x0_sign[vbx] = msg->vel.x;
+			x0_sign[vby] = msg->vel.y;
+			x0_sign[vbz] = msg->vel.z;
 
 			// rates
-			x0_sign[wx] = msg->rates->x;
-			x0_sign[wy] = msg->rates->y;
-			x0_sign[wz] = msg->rates->z;
+			x0_sign[wx] = msg->rates.x;
+			x0_sign[wy] = msg->rates.y;
+			x0_sign[wz] = msg->rates.z;
 
 			//---------------------------------------
 			// acados NMPC
@@ -532,7 +530,9 @@ public:
 			ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 2, "x", (void *)acados_out.x2);
 
 			// publish acados output
-			crazyflie_controller::PropellerSpeeds _acadosOut;
+			crazyflie_controller::PropellerSpeedsStamped _acadosOut;
+			 _acadosOut.header.stamp = ros::Time::now();
+
 			if (FIXED_U0 == 1) {
 				_acadosOut.w1 =  acados_out.u1[w1];
 				_acadosOut.w2 =  acados_out.u1[w2];
@@ -559,13 +559,17 @@ public:
 			eu_imu = quatern2euler(&q_acados_out);
 
 			// Publish real control inputs
-			geometry_msgs::Twist msg;
-			msg.linear.x  = -rad2Deg(eu_imu.theta); // linear_x -> pitch
-			msg.linear.y  = rad2Deg(eu_imu.phi);    // linear_y -> roll
-			msg.linear.z  = krpm2pwm((acados_out.u1[w1]+acados_out.u1[w2]+acados_out.u1[w3]+acados_out.u1[w4])/4);
-			msg.angular.z = rad2Deg(acados_out.x1[wz]);
+			geometry_msgs::Twist bodytwist;
 
-			p_bodytwist.publish(msg);
+			// linear_x -> pitch
+			bodytwist.linear.x  = -rad2Deg(eu_imu.theta);
+			// linear_y -> roll
+			bodytwist.linear.y  = rad2Deg(eu_imu.phi);
+			bodytwist.linear.z  = krpm2pwm(
+				(acados_out.u1[w1]+acados_out.u1[w2]+acados_out.u1[w3]+acados_out.u1[w4])/4);
+			bodytwist.angular.z = rad2Deg(acados_out.x1[wz]);
+
+			p_bodytwist.publish(bodytwist);
 
 			#if WRITE_OPENLOOP_TRAJ
 			// for(ii=0; ii< N; ii++)
@@ -692,9 +696,8 @@ public:
 				motorsLog << endl;
 				motorsLog.close();
 				}
-			}
 			#endif
-
+			}
 		catch (int acados_status)
 			{
 			cout << "An exception occurred. Exception Nr. " << acados_status << '\n';

@@ -1,6 +1,7 @@
 *.pyc
 */CMakeFiles/*
 */catkin_generated/*
+*/c_generated_code/*
 *.cmake
 */Makefile
 crazyflie_controller/*.kdev4
