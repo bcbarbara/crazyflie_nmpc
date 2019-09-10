@@ -78,21 +78,20 @@
 				pkg="rqt_plot"
 				type="rqt_plot"
 				args="/crazyflie/angular_velo"
-	/-->
+	/>
 
 	<node name="acados_bag"
 				pkg="rosbag"
 				type="record"
 				args="record -o /home/barbara/crazyflie.bag /crazyflie/cmd_vel /crazyflie/acados_traj/vector /crazyflie/external_position/point /crazyflie/euler_angles/vector /crazyflie/quat /crazyflie/linear_velo /crazyflie/angular_velo"
-	/>
+	/-->
 
 	<!-- run eraptor bridge -->
 	<include file="$(find cortex_stream)/launch/cortex_stream.launch"/>
 
 	<node name="nmpc" pkg="crazyflie_controller" type="acados_debug" output="screen" ns="crazyflie">
-		<param name="ref_traj" value="$(find crazyflie_controller)/traj/helix_traj.txt"/>
+		<param name="ref_traj" value="$(find crazyflie_controller)/traj/square_wave_traj.txt"/>
   	</node>
-
 
 	<node pkg="rqt_reconfigure" name="crazyflie_reconf" type="rqt_reconfigure" output="screen">
 	</node>
