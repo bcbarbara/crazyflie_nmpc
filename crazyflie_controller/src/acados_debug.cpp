@@ -713,7 +713,7 @@ public:
 	   ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, ii, "x", (void *)(acados_out.xAllStages));
 
  	  // Log open-loop trajectory
-	  ofstream trajLog("openloop_traj.txt", std::ios_base::app | std::ios_base::out);
+	  ofstream trajLog("openloop_traj.txt", std::ios_base::trunc | std::ios_base::out);
 
 	  if (trajLog.is_open()){
 	    trajLog << acados_out.xAllStages[xq] << " ";
@@ -736,7 +736,7 @@ public:
 	}
 	
  	// Log current state x0 and acados output x1 and x2
-	ofstream motorsLog("full_log.txt", std::ios_base::app | std::ios_base::out);
+	ofstream motorsLog("full_log.txt", std::ios_base::trunc | std::ios_base::out);
 
 	if (motorsLog.is_open()){
 	  motorsLog << actual_roll << " ";
@@ -793,6 +793,7 @@ public:
 	  motorsLog << precomputed_traj[iter][14] << " ";
 	  motorsLog << precomputed_traj[iter][15] << " ";
 	  motorsLog << precomputed_traj[iter][16] << " ";
+	  motorsLog << acados_out.cpu_time << " ";
 	  motorsLog << endl;
 
 	  motorsLog.close();
