@@ -41,10 +41,11 @@
 // blasfeo
 #include "blasfeo/include/blasfeo_d_aux.h"
 #include "blasfeo/include/blasfeo_d_aux_ext_dep.h"
+
 // crazyflie_model
-#include "crazyflie_full_model/c_generated_code/crazyflie_model/crazyflie_model.h"
-#include "crazyflie_full_model/c_generated_code/acados_solver_crazyflie.h"
-#include "crazyflie_full_model/c_generated_code/acados_sim_solver_crazyflie.h"
+#include "crazyflie_model/crazyflie_model.h"
+#include "acados_solver_crazyflie.h"
+#include "acados_sim_solver_crazyflie.h"
 
 // Sampling time
 #define TS 0.015

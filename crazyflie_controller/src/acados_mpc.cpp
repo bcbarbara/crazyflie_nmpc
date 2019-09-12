@@ -39,8 +39,8 @@
 #include "blasfeo/include/blasfeo_d_aux_ext_dep.h"
 
 // crazyflie specific
-#include "crazyflie_full_model/c_generated_code/crazyflie_model/crazyflie_model.h"
-#include "crazyflie_full_model/c_generated_code/acados_solver_crazyflie.h"
+#include "crazyflie_model/crazyflie_model.h"
+#include "acados_solver_crazyflie.h"
 
 // global data
 ocp_nlp_in * nlp_in;

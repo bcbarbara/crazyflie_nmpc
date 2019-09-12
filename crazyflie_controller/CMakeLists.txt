@@ -18,6 +18,8 @@ find_package(
 
 set(acados_include "${PROJECT_SOURCE_DIR}/../acados/include")
 set(acados_lib "${PROJECT_SOURCE_DIR}/../acados/lib")
+set(full_model_build ${PROJECT_SOURCE_DIR}/scripts/crazyflie_full_model/c_generated_code/)
+set(simple_model_build ${PROJECT_SOURCE_DIR}/scripts/crazyflie_simple_model/c_generated_code/)
 
 generate_dynamic_reconfigure_options(
 	config/crazyflie_params.cfg
@@ -48,8 +50,8 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
 	${catkin_INCLUDE_DIRS}
-	scripts/crazyflie_full_model/c_generated_code
-	scripts/crazyflie_simple_model/c_generated_code
+	${full_model_build}
+	${full_model_build}
 	${acados_include}
 	${acados_include}/blasfeo/include/
 	${acados_include}/hpipm/include/
@@ -57,15 +59,12 @@ include_directories(
 	${acados_include}/qpOASES_e/
 )
 
-link_directories(${PROJECT_SOURCE_DIR}/scripts/crazyflie_full_model/c_generated_code)
-link_directories(${PROJECT_SOURCE_DIR}/scripts/crazyflie_simple_model/c_generated_code)
+link_directories(${full_model_build})
+link_directories(${simple_model_build})
 
-# acados DEBUG for 13 state model
-add_executable(acados_debug src/acados_debug.cpp)
-
-# Specify libraries to link a library or executable target against
+add_executable(acados_mpc src/acados_mpc.cpp)
 target_link_libraries(acados_mpc
-	${PROJECT_SOURCE_DIR}/scripts/crazyflie_full_model/c_generated_code/libacados_solver_crazyflie.so
+	${full_model_build}libacados_solver_crazyflie.so
 	${acados_lib}/libacados.so
 	${catkin_LIBRARIES}
 )
@@ -73,7 +72,8 @@ add_dependencies(acados_mpc ${PROJECT_NAME}_gencfg)
 
 add_executable(acados_estimator src/acados_estimator.cpp)
 target_link_libraries(acados_estimator
-	${PROJECT_SOURCE_DIR}/scripts/crazyflie_full_model/c_generated_code/libacados_solver_crazyflie.so
+	${full_model_build}libacados_solver_crazyflie.so
+	${acados_lib}/libacados.so
 	${catkin_LIBRARIES}
 )
 add_dependencies(acados_estimator ${PROJECT_NAME}_gencfg)
