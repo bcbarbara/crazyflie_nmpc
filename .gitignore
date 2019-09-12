@@ -7,6 +7,14 @@ crazyflie_controller/include/c_generated_code/main_crazyflie
 
 .devcontainer/devcontainer.json
 
+
+__pycache__
+.*.sw[a-z]
+*.mexmaci64
+slprj/
+*.slxc
+*.DS_Store
+
 *.pyc
 *.cmake
 *.kdev4
