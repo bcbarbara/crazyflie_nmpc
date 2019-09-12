@@ -14,7 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(Eigen3 REQUIRED)
 
-set(acados_include "/usr/local/include")
+set(acados_include "${PROJECT_SOURCE_DIR}/../acados/include")
+set(acados_lib "${PROJECT_SOURCE_DIR}/../acados/lib")
 
 generate_dynamic_reconfigure_options(
   config/crazyflie_params.cfg
@@ -43,34 +44,35 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
   ${catkin_INCLUDE_DIRS}
-  include/c_generated_code/crazyflie_full_model/c_generated_code
-  include/c_generated_code/crazyflie_simple_model/c_generated_code
-  include/
+  scripts/crazyflie_full_model/c_generated_code
+  scripts/crazyflie_simple_model/c_generated_code
   ${acados_include}
   ${acados_include}/blasfeo/include/
+  ${acados_include}/hpipm/include/
   ${acados_include}/acados/
   ${acados_include}/qpOASES_e/
 )
 
-link_directories(${PROJECT_SOURCE_DIR}/include/crazyflie_full_model/c_generated_code)
-link_directories(${PROJECT_SOURCE_DIR}/include/crazyflie_simple_model/c_generated_code)
+link_directories(${PROJECT_SOURCE_DIR}/scripts/crazyflie_full_model/c_generated_code)
+link_directories(${PROJECT_SOURCE_DIR}/scripts/crazyflie_simple_model/c_generated_code)
 
 # acados DEBUG for 13 state model
 add_executable(acados_debug src/acados_debug.cpp)
   # Specify libraries to link a library or executable target against
 target_link_libraries(acados_debug
-  ${PROJECT_SOURCE_DIR}/include/crazyflie_full_model/c_generated_code/libacados_solver_crazyflie.so
+  ${PROJECT_SOURCE_DIR}/scripts/crazyflie_full_model/c_generated_code/libacados_solver_crazyflie.so
+  ${acados_lib}/libacados.so
   ${catkin_LIBRARIES}
 )
 add_dependencies(acados_debug ${PROJECT_NAME}_gencfg)
 
 #simple model of the crazyflie with 7 states
-add_executable(acados_simple_model src/acados_simple_model.cpp)
-  # Specify libraries to link a library or executable target against
-target_link_libraries(acados_simple_model
-  ${PROJECT_SOURCE_DIR}/include/crazyflie_simple_model/c_generated_code/libacados_solver_crazyflie_simple_model.so
-  ${catkin_LIBRARIES}
-)
+# add_executable(acados_simple_model src/acados_simple_model.cpp)
+  # # Specify libraries to link a library or executable target against
+# target_link_libraries(acados_simple_model
+  # ${PROJECT_SOURCE_DIR}/scripts/crazyflie_simple_model/c_generated_code/libacados_solver_crazyflie_simple_model.so
+  # ${catkin_LIBRARIES}
+# )
 
 # measurement vector node
 add_executable(measurements_vector src/measurements_vector.cpp)
