@@ -13,7 +13,7 @@
 			<param name="tf_prefix" value="crazyflie" />
 			<param name="enable_logging" value="True" />
 			<param name="enable_logging_battery" value="False" />
-			<param name="enable_logging_motors" value="True" />
+			<param name="enable_logging_motors" value="False" />
 			<param name="enable_logging_euler_angles" value="True" />
 			<param name="enable_logging_kf_quaternion" value="False" />
 			<param name="enable_logging_onboard_position" value="False" />
@@ -23,11 +23,6 @@
 			<param name="enable_logging_pose" value="False" />
 			<param name="enable_logging_pressure" value="False" />
 			<param name="enable_logging_temperature" value="False" />
-      <rosparam>
-      genericLogTopics: ["log1"]
-      genericLogTopicFrequencies: [65]
-      genericLogTopic_log1_Variables: ["motor.m1", "motor.m2", "motor.m3", "motor.m4"]
-    </rosparam>
 		</node>
 
 		<node
@@ -36,16 +31,18 @@
 			type="publish_external_position_eraptor.py"
 			output="screen">
 		</node>
-
 	</group>
 
-	<node name="acados_cmd"
+	<!-- run eraptor bridge -->
+	<include file="$(find cortex_stream)/launch/cortex_stream.launch"/>
+
+	<!--node name="acados_cmd"
 				pkg="rqt_plot"
 				type="rqt_plot"
 				args="/crazyflie/cmd_vel/linear"
 	/>
 
-	<!--node name="acados_traj"
+	<node name="acados_traj"
 				pkg="rqt_plot"
 				type="rqt_plot"
 				args="/crazyflie/acados_traj/vector"
@@ -85,22 +82,21 @@
 				pkg="rqt_plot"
 				type="rqt_plot"
 				args="/crazyflie/angular_velo"
+	/>
 	/-->
 
 	<node name="acados_bag"
 				pkg="rosbag"
 				type="record"
-				args="record -o /home/barbara/crazyflie.bag /crazyflie/cmd_vel /crazyflie/acados_traj/vector /crazyflie/external_position/point /crazyflie/euler_angles/vector /crazyflie/quat /crazyflie/linear_velo /crazyflie/angular_velo"
-	/>
+				args="record -o /home/tom/crazyflie.bag /crazyflie/external_position /crazyflie/cmd_vel /crazyflie/acados_traj/vector /external_position /crazyflie/external_position/point /crazyflie/euler_angles/vector /crazyflie/quat /crazyflie/linear_velo /crazyflie/angular_velo"
+				>
+	</node>
 
-	<!-- run eraptor bridge -->
-	<include file="$(find cortex_stream)/launch/cortex_stream.launch"/>
-
-	<include file="$(find crazyflie_demo)/launch/nmpc_debug.launch">
-	</include>
-
+	<node name="nmpc" pkg="crazyflie_controller" type="acados_debug" output="screen" ns="crazyflie">
+		<param name="ref_traj" value="$(find crazyflie_controller)/traj/helix_traj.txt"/>
+  	</node>
 
 	<node pkg="rqt_reconfigure" name="crazyflie_reconf" type="rqt_reconfigure" output="screen">
-</node>
+	</node>
 
 </launch>

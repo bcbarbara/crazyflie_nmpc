@@ -1,13 +1,22 @@
+catkin_generated/*
+c_generated_code/*
+CMakeFiles/*
+
+# vim
+.*.sw[a-z]
+
+# python
+__pycache__
 *.pyc
-*/CMakeFiles/*
-*/catkin_generated/*
-*/c_generated_code/*
+
+.devcontainer/devcontainer.json
+*.mexmaci64
+slprj/
+*.slxc
+*.DS_Store
+*.kdev4
+
+# build
 *.cmake
-*/Makefile
-crazyflie_controller/*.kdev4
-crazyflie_controller/.kdev4
 *.o
 *.so
-.devcontainer/devcontainer.json
-crazyflie_controller/include/c_generated_code/main_crazyflie_pos
-crazyflie_controller/include/c_generated_code/main_crazyflie

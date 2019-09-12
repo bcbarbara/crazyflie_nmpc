@@ -27,6 +27,7 @@
 #include <sstream>
 #include <fstream>
 #include <ios>
+#include <typeinfo>
 
 // acados
 #include "acados/utils/print.h"
@@ -40,8 +41,8 @@
 #include "blasfeo/include/blasfeo_d_aux_ext_dep.h"
 
 // crazyflie specific
-#include "crazyflie_full_model/c_generated_code/crazyflie_model/crazyflie_model.h"
-#include "crazyflie_full_model/c_generated_code/acados_solver_crazyflie.h"
+#include "crazyflie_model/crazyflie_model.h"
+#include "acados_solver_crazyflie.h"
 // #include "crazyflie_model.h"
 // #include "acados_solver_crazyflie.h"
 
@@ -82,7 +83,15 @@ using std::showpos;
 class NMPC{
 public:
 
-    NMPC(const ros::NodeHandle& n){
+    NMPC(const ros::NodeHandle& n, const std::string& ref_traj){
+
+	// print log header
+	ofstream trajLog("openloop_traj.txt", std::ios_base::trunc | std::ios_base::out);
+	if (trajLog.is_open()) trajLog << "trajLog" << endl;
+	trajLog.close();
+	ofstream motorsLog("full_log.txt", std::ios_base::trunc | std::ios_base::out);
+	if (trajLog.is_open()) motorsLog << "motorsLog" << endl;
+	motorsLog.close();
 
 	int status = 0;
 	status = acados_create();
@@ -112,7 +121,7 @@ public:
 	// publisher for the current value of the angular velocities
 	m_cf_avb 		= nh.advertise<geometry_msgs::Vector3>("/crazyflie/angular_velo",1);
 	// subscriber fro the motors rpm
-	m_motors 		= nh.subscribe("/crazyflie/log1", 5, &NMPC::motorsCallback, this);
+	//m_motors 		= nh.subscribe("/crazyflie/log1", 5, &NMPC::motorsCallback, this);
 
 	// Set initial value of the linear velocities to zero
 	vx = 0.0;
@@ -150,8 +159,10 @@ public:
 	Ct = 3.25e-4;			// [N/Krpm^2]
 	uss = sqrt((mq*g0)/(4*Ct));
 	
+	const char * c = ref_traj.c_str();
+	
 	// Pre-load the trajectory
-	N_STEPS = readDataFromFile("/home/barbara/catkin_ws/src/crazyflie_ros/crazyflie_controller/src/optimal_trajectory.txt", casadi_optimal_traj);
+	N_STEPS = readDataFromFile(c, precomputed_traj);
 	if (N_STEPS == 0){
 		ROS_WARN("Cannot load CasADi optimal trajectory!");
 	}
@@ -500,23 +511,23 @@ public:
 	    if(iter < N_STEPS-N){
 		// Update reference
  		for (k = 0; k < N+1; k++) {
- 		      yref_sign[k * NY + 0] = casadi_optimal_traj[iter + k][xq];
-		      yref_sign[k * NY + 1] = casadi_optimal_traj[iter + k][yq];
-		      yref_sign[k * NY + 2] = casadi_optimal_traj[iter + k][zq];
-		      yref_sign[k * NY + 3] = casadi_optimal_traj[iter + k][q1];
-		      yref_sign[k * NY + 4] = casadi_optimal_traj[iter + k][q2];
-		      yref_sign[k * NY + 5] = casadi_optimal_traj[iter + k][q3];
-		      yref_sign[k * NY + 6] = casadi_optimal_traj[iter + k][q4];
-		      yref_sign[k * NY + 7] = casadi_optimal_traj[iter + k][vbx];
-		      yref_sign[k * NY + 8] = casadi_optimal_traj[iter + k][vby];
-		      yref_sign[k * NY + 9] = casadi_optimal_traj[iter + k][vbz];
-		      yref_sign[k * NY + 10] = casadi_optimal_traj[iter + k][wx];
-		      yref_sign[k * NY + 11] = casadi_optimal_traj[iter + k][wy];
-		      yref_sign[k * NY + 12] = casadi_optimal_traj[iter + k][wz];
-		      yref_sign[k * NY + 13] = casadi_optimal_traj[iter + k][13];
-		      yref_sign[k * NY + 14] = casadi_optimal_traj[iter + k][14];
-		      yref_sign[k * NY + 15] = casadi_optimal_traj[iter + k][15];
-		      yref_sign[k * NY + 16] = casadi_optimal_traj[iter + k][16];
+ 		      yref_sign[k * NY + 0] = precomputed_traj[iter + k][xq];
+		      yref_sign[k * NY + 1] = precomputed_traj[iter + k][yq];
+		      yref_sign[k * NY + 2] = precomputed_traj[iter + k][zq];
+		      yref_sign[k * NY + 3] = precomputed_traj[iter + k][q1];
+		      yref_sign[k * NY + 4] = precomputed_traj[iter + k][q2];
+		      yref_sign[k * NY + 5] = precomputed_traj[iter + k][q3];
+		      yref_sign[k * NY + 6] = precomputed_traj[iter + k][q4];
+		      yref_sign[k * NY + 7] = precomputed_traj[iter + k][vbx];
+		      yref_sign[k * NY + 8] = precomputed_traj[iter + k][vby];
+		      yref_sign[k * NY + 9] = precomputed_traj[iter + k][vbz];
+		      yref_sign[k * NY + 10] = precomputed_traj[iter + k][wx];
+		      yref_sign[k * NY + 11] = precomputed_traj[iter + k][wy];
+		      yref_sign[k * NY + 12] = precomputed_traj[iter + k][wz];
+		      yref_sign[k * NY + 13] = precomputed_traj[iter + k][13];
+		      yref_sign[k * NY + 14] = precomputed_traj[iter + k][14];
+		      yref_sign[k * NY + 15] = precomputed_traj[iter + k][15];
+		      yref_sign[k * NY + 16] = precomputed_traj[iter + k][16];
  		}
 		++iter;
 		//cout << iter << endl;
@@ -530,9 +541,9 @@ public:
 	    ROS_INFO("Holding last position of the trajectory.");
 	    // Get last point of tracketory and hold 
 	    for (k = 0; k < N+1; k++){
-		    yref_sign[k * NY + 0] = casadi_optimal_traj[N_STEPS-1][xq]; 
-		    yref_sign[k * NY + 1] = casadi_optimal_traj[N_STEPS-1][yq]; 
-		    yref_sign[k * NY + 2] = casadi_optimal_traj[N_STEPS-1][zq]; 
+		    yref_sign[k * NY + 0] = precomputed_traj[N_STEPS-1][xq]; 
+		    yref_sign[k * NY + 1] = precomputed_traj[N_STEPS-1][yq]; 
+		    yref_sign[k * NY + 2] = precomputed_traj[N_STEPS-1][zq]; 
 		    yref_sign[k * NY + 3] = 1.00;
 		    yref_sign[k * NY + 4] = 0.00;
 		    yref_sign[k * NY + 5] = 0.00;
@@ -705,17 +716,17 @@ public:
 
 	m_pubNav.publish(msg);
 
-// 	for(ii=0; ii< N; ii++){
-// 
-// 	   ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, ii, "x", (void *)(acados_out.xAllStages));
-// 
-//  	  // Log open-loop trajectory
-// 	  ofstream trajLog("traj_openloop.txt", std::ios_base::app | std::ios_base::out);
-// 
-// 	  if (trajLog.is_open()){
-// 	    trajLog << acados_out.xAllStages[xq] << " ";
-// 	    trajLog << acados_out.xAllStages[yq] << " ";
-// 	    trajLog << acados_out.xAllStages[zq] << " ";
+	for(ii=0; ii< N; ii++){
+
+	   ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, ii, "x", (void *)(acados_out.xAllStages));
+
+ 	  // Log open-loop trajectory
+	  ofstream trajLog("openloop_traj.txt", std::ios_base::app | std::ios_base::out);
+
+	  if (trajLog.is_open()){
+	    trajLog << acados_out.xAllStages[xq] << " ";
+	    trajLog << acados_out.xAllStages[yq] << " ";
+	    trajLog << acados_out.xAllStages[zq] << " ";
 // 	    trajLog << acados_out.xAllStages[q1] << " ";
 // 	    trajLog << acados_out.xAllStages[q2] << " ";
 // 	    trajLog << acados_out.xAllStages[q3] << " ";
@@ -726,56 +737,23 @@ public:
 // 	    trajLog << acados_out.xAllStages[wx] << " ";
 // 	    trajLog << acados_out.xAllStages[wy] << " ";
 // 	    trajLog << acados_out.xAllStages[wz] << " ";
-// 	    trajLog << endl;
-// 
-// 	    trajLog.close();
-// 	  }
-// 	}
+	    trajLog << endl;
+
+	    trajLog.close();
+	  }
+	}
 	
-	// Log for the trajectory
-// 	for(ii=0; ii< N; ii++){
-// 	  
-// 	    ofstream inputTraj("casadi_traj.txt", std::ios_base::app | std::ios_base::out);
-// 	    if (inputTraj.is_open()){
-// 		inputTraj << casadi_optimal_traj[iter + ii][xq] << " ";
-// 		inputTraj << casadi_optimal_traj[iter + ii][yq] << " ";
-// 		inputTraj << casadi_optimal_traj[iter + ii][zq] << " ";
-// 		inputTraj << casadi_optimal_traj[iter + ii][q1] << " ";
-// 		inputTraj << casadi_optimal_traj[iter + ii][q2] << " ";
-// 		inputTraj << casadi_optimal_traj[iter + ii][q3] << " ";
-// 		inputTraj << casadi_optimal_traj[iter + ii][q4] << " ";
-// 		inputTraj << casadi_optimal_traj[iter + ii][vbx] << " ";
-// 		inputTraj << casadi_optimal_traj[iter + ii][vby] << " ";
-// 		inputTraj << casadi_optimal_traj[iter + ii][vbz] << " ";
-// 		inputTraj << casadi_optimal_traj[iter + ii][wx] << " ";
-// 		inputTraj << casadi_optimal_traj[iter + ii][wy] << " ";
-// 		inputTraj << casadi_optimal_traj[iter + ii][wz] << " ";
-// 		inputTraj << casadi_optimal_traj[iter + ii][13] << " ";
-// 		inputTraj << casadi_optimal_traj[iter + ii][14] << " ";
-// 		inputTraj << casadi_optimal_traj[iter + ii][15] << " ";
-// 		inputTraj << casadi_optimal_traj[iter + ii][16] << " ";
-// 		inputTraj << endl;
-// 		
-// 	    }
-// 	}
- 
  	// Log current state x0 and acados output x1 and x2
 	ofstream motorsLog("full_log.txt", std::ios_base::app | std::ios_base::out);
 
 	if (motorsLog.is_open()){
-// 	  motorsLog << xq_des << " ";
-// 	  motorsLog << yq_des << " ";
-// 	  motorsLog << zq_des << " ";
-// 	  motorsLog << actual_roll << " ";
-// 	  motorsLog << -actual_pitch << " ";
-// 	  motorsLog << actual_yaw  << " ";
-// 	  motorsLog << msg.linear.y << " ";
-// 	  motorsLog << msg.linear.x << " ";
-// 	  motorsLog << msg.angular.z << " ";
-	  motorsLog << actual_m1 << " ";
-	  motorsLog << actual_m2 << " ";
-	  motorsLog << actual_m3 << " ";
-	  motorsLog << actual_m4 << " ";
+	  motorsLog << actual_roll << " ";
+	  motorsLog << -actual_pitch << " ";
+	  motorsLog << actual_yaw  << " ";
+	  motorsLog << msg.linear.y << " ";
+	  motorsLog << msg.linear.x << " ";
+	  motorsLog << msg.angular.z << " ";
+	  motorsLog << msg.linear.z<< " ";
 	  motorsLog << actual_x << " ";
 	  motorsLog << actual_y << " ";
 	  motorsLog << actual_z << " ";
@@ -806,24 +784,24 @@ public:
 	  motorsLog << acados_out.u1[w2] << " ";
 	  motorsLog << acados_out.u1[w3] << " ";
 	  motorsLog << acados_out.u1[w4] << " ";
-	  motorsLog << msg.linear.z<< " ";
-// 	  motorsLog << casadi_optimal_traj[iter][xq] << " ";
-// 	  motorsLog << casadi_optimal_traj[iter][yq] << " ";
-// 	  motorsLog << casadi_optimal_traj[iter][zq] << " ";
-// 	  motorsLog << casadi_optimal_traj[iter][q1] << " ";
-// 	  motorsLog << casadi_optimal_traj[iter][q2] << " ";
-// 	  motorsLog << casadi_optimal_traj[iter][q3] << " ";
-// 	  motorsLog << casadi_optimal_traj[iter][q4] << " ";
-// 	  motorsLog << casadi_optimal_traj[iter][vbx] << " ";
-// 	  motorsLog << casadi_optimal_traj[iter][vby] << " ";
-// 	  motorsLog << casadi_optimal_traj[iter][vbz] << " ";
-// 	  motorsLog << casadi_optimal_traj[iter][wx] << " ";
-// 	  motorsLog << casadi_optimal_traj[iter][wy] << " ";
-// 	  motorsLog << casadi_optimal_traj[iter][wz] << " ";
-// 	  motorsLog << casadi_optimal_traj[iter][13] << " ";
-// 	  motorsLog << casadi_optimal_traj[iter][14] << " ";
-// 	  motorsLog << casadi_optimal_traj[iter][15] << " ";
-// 	  motorsLog << casadi_optimal_traj[iter][16] << " ";
+	  motorsLog << precomputed_traj[iter][xq] << " ";
+	  motorsLog << precomputed_traj[iter][yq] << " ";
+	  motorsLog << precomputed_traj[iter][zq] << " ";
+	  motorsLog << precomputed_traj[iter][q1] << " ";
+	  motorsLog << precomputed_traj[iter][q2] << " ";
+	  motorsLog << precomputed_traj[iter][q3] << " ";
+	  motorsLog << precomputed_traj[iter][q4] << " ";
+	  motorsLog << precomputed_traj[iter][vbx] << " ";
+	  motorsLog << precomputed_traj[iter][vby] << " ";
+	  motorsLog << precomputed_traj[iter][vbz] << " ";
+	  motorsLog << precomputed_traj[iter][wx] << " ";
+	  motorsLog << precomputed_traj[iter][wy] << " ";
+	  motorsLog << precomputed_traj[iter][wz] << " ";
+	  motorsLog << precomputed_traj[iter][13] << " ";
+	  motorsLog << precomputed_traj[iter][14] << " ";
+	  motorsLog << precomputed_traj[iter][15] << " ";
+	  motorsLog << precomputed_traj[iter][16] << " ";
+	  motorsLog << acados_out.cpu_time << " ";
 	  motorsLog << endl;
 
 	  motorsLog.close();
@@ -896,7 +874,7 @@ private:
     cf_state crazyflie_state;
     
     // Variable for storing he optimal trajectory
-    std::vector<std::vector<double>> casadi_optimal_traj;
+    std::vector<std::vector<double>> precomputed_traj;
     int N_STEPS,iter;
 
 };
@@ -909,8 +887,12 @@ int main(int argc, char **argv)
   ros::NodeHandle n("~");
   double frequency;
   n.param("frequency", frequency, 65.0);
+  
+  std::string ref_traj;
+  n.getParam("ref_traj", ref_traj);
+  
 
-  NMPC nmpc(n);
+  NMPC nmpc(n,ref_traj);
   nmpc.run(frequency);
 
   return 0;
