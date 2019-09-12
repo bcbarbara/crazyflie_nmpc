@@ -1,5 +1,5 @@
 catkin_generated/*
-c_generated_code/*
+c_generated_code/
 CMakeFiles/*
 
 # vim
