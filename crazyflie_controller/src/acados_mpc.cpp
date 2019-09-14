@@ -585,10 +585,10 @@ public:
 
 			#if WRITE_OPENLOOP_TRAJ
 
-			crazyflie_controller::CrazyflieOpenloopTraj traj_msg; 
+			crazyflie_controller::CrazyflieOpenloopTraj traj_msg;
 			traj_msg.header.stamp = ros::Time::now();
 			traj_msg.cpu_time = acados_out.cpu_time;
- 
+
 			for(ii=0; ii< N; ii++)
 				{
 				ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, ii, "x", (void *)(acados_out.xi));
