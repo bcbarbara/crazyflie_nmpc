@@ -22,11 +22,13 @@
 			<param name="enable_logging_pose" value="False" />
 			<param name="enable_logging_pressure" value="False" />
 			<param name="enable_logging_temperature" value="False" />
-      <rosparam>
+
+<rosparam>
       genericLogTopics: ["log1"]
       genericLogTopicFrequencies: [65]
       genericLogTopic_log1_Variables: ["motor.m1", "motor.m2", "motor.m3", "motor.m4"]
-    </rosparam>
+</rosparam>
+
 		</node>
 
 		<node
@@ -37,70 +39,33 @@
 		</node>
 	</group>
 
-	<node name="acados_cmd"
+	<node name="acados_plot_state"
 				pkg="rqt_plot"
 				type="rqt_plot"
-				args="/crazyflie/cmd_vel/linear"
+				args="
+				/cf_estimator/state_estimate/pos
+				"
 	/>
 
-	<!--node name="acados_traj"
-				pkg="rqt_plot"
-				type="rqt_plot"
-				args="/crazyflie/acados_traj/vector"
-	/-->
-
-	<!--node name="cf_position"
-				pkg="rqt_plot"
-				type="rqt_plot"
-				args="/crazyflie/external_position/point"
-	/>
-
-	<node name="cf_motors"
-				pkg="rqt_plot"
-				type="rqt_plot"
-				args="/crazyflie/acados_motvel"
-	/>
-
-	<node name="cf_euler_angles"
-				pkg="rqt_plot"
-				type="rqt_plot"
-				args="/crazyflie/euler_angles/vector"
-	/>
-
-	<node name="cf_quaternion"
-				pkg="rqt_plot"
-				type="rqt_plot"
-				args="/crazyflie/quat"
-	/>
-
-	<node name="cf_linear_velo"
-				pkg="rqt_plot"
-				type="rqt_plot"
-				args="/crazyflie/linear_velo"
-	/>
-
-	<node name="cf_angular_velo"
-				pkg="rqt_plot"
-				type="rqt_plot"
-				args="/crazyflie/angular_velo"
-	/-->
-
-	<!-- Save logs -->
 	<node name="acados_bag"
 				pkg="rosbag"
 				type="record"
-				args="record -o /home/barbara/crazyflie.bag /crazyflie/cmd_vel /crazyflie/acados_traj/vector /crazyflie/external_position/point /crazyflie/euler_angles/vector /crazyflie/quat /crazyflie/linear_velo /crazyflie/angular_velo"
-	/>
+				args="record -o crazyflie_predictor.bag
+					/crazyflie/cmd_vel
+					/crazyflie/acados_traj
+					/cf_estimator/state_estimate
+					/crazyflie/euler_angles"
+				>
+	</node>
 
 	<include file="$(find cortex_stream)/launch/cortex_stream.launch"/>
 
 	<node name="nmpc" pkg="crazyflie_controller" type="acados_mpc" output="screen" ns="crazyflie">
+		<param name="ref_traj" value="$(find crazyflie_controller)/traj/square.txt"/>
 	</node>
 
-	<node name="nmpc" pkg="crazyflie_controller" type="acados_estimator" output="screen" ns="crazyflie">
-	</node>
-
-	<node pkg="rqt_reconfigure" name="crazyflie_reconf" type="rqt_reconfigure" output="screen">
+	<node name="estimator" pkg="crazyflie_controller" type="acados_estimator" output="screen" ns="crazyflie">
+		<param name="delay" value='0.03'/>
 	</node>
 
 </launch>

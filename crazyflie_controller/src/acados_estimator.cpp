@@ -27,6 +27,7 @@
 #include "crazyflie_controller/GenericLogData.h"
 #include <crazyflie_controller/CrazyflieStateStamped.h>
 #include <crazyflie_controller/PropellerSpeedsStamped.h>
+
 // dynamic reconfirgure
 #include <dynamic_reconfigure/server.h>
 #include <crazyflie_controller/crazyflie_paramsConfig.h>
@@ -120,10 +121,10 @@ class ESTIMATOR
 	// control
 	ros::Publisher p_cf_state;
 	// log
-	ros::Publisher p_cf_quat;
-	ros::Publisher p_cf_lvb;
-	ros::Publisher p_cf_avb;
-	ros::Publisher p_cf_lpg;
+	// ros::Publisher p_cf_quat;
+	// ros::Publisher p_cf_lvb;
+	// ros::Publisher p_cf_avb;
+	// ros::Publisher p_cf_lpg;
 	//
 	ros::Subscriber s_imu;
 	ros::Subscriber s_eRaptor;
@@ -186,7 +187,7 @@ class ESTIMATOR
 
 	public:
 
-	ESTIMATOR(ros::NodeHandle& n)
+	ESTIMATOR(ros::NodeHandle& n, double delay)
 		{
 		delay = 0.02;
 
@@ -215,15 +216,6 @@ class ESTIMATOR
 		// subscriber for the motors rpm
 		// s_actual_motors = n.subscribe("/crazyflie/log1", 5, &ESTIMATOR::actual_motorsCallback, this);
 
-		// plots
-		// publisher for the current value of the quaternion
-		p_cf_quat = n.advertise<geometry_msgs::Quaternion>("/crazyflie/quat",1);
-		// publisher for the current value of the linear velocities
-		p_cf_lvb = n.advertise<geometry_msgs::Vector3>("/crazyflie/linear_velo",1);
-		// publisher for the current value of the angular velocities
-		p_cf_avb = n.advertise<geometry_msgs::Vector3>("/crazyflie/angular_velo",1);
-		// publisher for the current value of the linear position in global frame
-		p_cf_lpg = n.advertise<geometry_msgs::Vector3>("/crazyflie/linear_pos",1);
 
 		// initialize sim_acados_in.x0
 		for (int i=0; i++; i<NX) sim_acados_in.x0[i] = 0;
@@ -277,41 +269,46 @@ class ESTIMATOR
 
 	void callback_dynamic_reconfigure(crazyflie_controller::crazyflie_paramsConfig &config, uint32_t level)
 		{
+
 		if (level)
 			{
 			delay = config.delay;
+			ROS_INFO_STREAM("Delay: " << delay << endl);
+			ROS_INFO_STREAM("Delay config: " << config.delay << endl);
 			}
+
+
 		}
 
-	void publish_plot_state()
-		{
-		geometry_msgs::Quaternion cf_st_quat;
-		geometry_msgs::Vector3 cf_st_lvb;
-		geometry_msgs::Vector3 cf_st_avb;
-		geometry_msgs::Vector3 cf_st_lpg;
+	// void publish_plot_state()
+		// {
+		// geometry_msgs::Quaternion cf_st_quat;
+		// geometry_msgs::Vector3 cf_st_lvb;
+		// geometry_msgs::Vector3 cf_st_avb;
+		// geometry_msgs::Vector3 cf_st_lpg;
 
-		cf_st_lpg.x  = sim_acados_in.x0[xq];
-		cf_st_lpg.y  = sim_acados_in.x0[yq];
-		cf_st_lpg.z  = sim_acados_in.x0[zq];
+		// cf_st_lpg.x  = sim_acados_in.x0[xq];
+		// cf_st_lpg.y  = sim_acados_in.x0[yq];
+		// cf_st_lpg.z  = sim_acados_in.x0[zq];
 
-		cf_st_quat.w = sim_acados_in.x0[qw];
-		cf_st_quat.x = sim_acados_in.x0[qx];
-		cf_st_quat.y = sim_acados_in.x0[qy];
-		cf_st_quat.z = sim_acados_in.x0[qz];
+		// cf_st_quat.w = sim_acados_in.x0[qw];
+		// cf_st_quat.x = sim_acados_in.x0[qx];
+		// cf_st_quat.y = sim_acados_in.x0[qy];
+		// cf_st_quat.z = sim_acados_in.x0[qz];
 
-		cf_st_lvb.x  = sim_acados_in.x0[vbx];
-		cf_st_lvb.y  = sim_acados_in.x0[vby];
-		cf_st_lvb.z  = sim_acados_in.x0[vbz];
+		// cf_st_lvb.x  = sim_acados_in.x0[vbx];
+		// cf_st_lvb.y  = sim_acados_in.x0[vby];
+		// cf_st_lvb.z  = sim_acados_in.x0[vbz];
 
-		cf_st_avb.x  = sim_acados_in.x0[wx];
-		cf_st_avb.y  = sim_acados_in.x0[wy];
-		cf_st_avb.z  = sim_acados_in.x0[wz];
+		// cf_st_avb.x  = sim_acados_in.x0[wx];
+		// cf_st_avb.y  = sim_acados_in.x0[wy];
+		// cf_st_avb.z  = sim_acados_in.x0[wz];
 
-		p_cf_quat.publish(cf_st_quat);
-		p_cf_lvb.publish(cf_st_lvb);
-		p_cf_avb.publish(cf_st_avb);
-		p_cf_lpg.publish(cf_st_lpg);
-		}
+		// p_cf_quat.publish(cf_st_quat);
+		// p_cf_lvb.publish(cf_st_lvb);
+		// p_cf_avb.publish(cf_st_avb);
+		// p_cf_lpg.publish(cf_st_lpg);
+		// }
 
 	euler quatern2euler(Quaterniond* q)
 		{
@@ -562,8 +559,9 @@ class ESTIMATOR
 		sim_acados_in.x0[wz] = actual_wz;
 
 		// set discretization time
-		double Td = delay;
-		sim_in_set(crazyflie_sim_config, crazyflie_sim_dims, crazyflie_sim_in, "T", &Td);
+		sim_in_set(crazyflie_sim_config, crazyflie_sim_dims, crazyflie_sim_in, "T", &delay);
+
+		// ROS_INFO_STREAM("Delay: " << delay << endl);
 
 		// set initial state
 		sim_in_set(crazyflie_sim_config, crazyflie_sim_dims, crazyflie_sim_in, "x", sim_acados_in.x0);
@@ -577,6 +575,7 @@ class ESTIMATOR
 
 		// solve
 		sim_acados_status = crazyflie_acados_sim_solve();
+		// ROS_INFO_STREAM("Sim solver : " << sim_acados_status << endl);
 
 		// get and print output
 		sim_out_get(crazyflie_sim_config, crazyflie_sim_dims, crazyflie_sim_out, "xn", sim_acados_out.xn);
@@ -606,7 +605,7 @@ class ESTIMATOR
 
 		p_cf_state.publish(crazyflie_state);
 
-		publish_plot_state();
+		// publish_plot_state();
 
 		}
 	};
@@ -621,7 +620,9 @@ int main(int argc, char **argv)
 	// n.param("frequency", frequency, 65.0);
 	// n.param("delay", delay, 20.0);
 
-	ESTIMATOR est(n);
+	n.getParam("delay", delay);
+
+	ESTIMATOR est(n, delay);
 	est.run(frequency);
 
 	return 0;
