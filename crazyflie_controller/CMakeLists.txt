@@ -29,15 +29,17 @@ add_message_files(
 	FILES
 	GenericLogData.msg
 	CrazyflieState.msg
-	CrazyflieStateStamped.msg
 	PropellerSpeeds.msg
 	PropellerSpeedsStamped.msg
+	CrazyflieStateStamped.msg
+	CrazyflieOpenloopTraj.msg
 )
 
 generate_messages(
 	DEPENDENCIES
 	std_msgs
 	geometry_msgs
+	crazyflie_controller
 )
 
 catkin_package(
