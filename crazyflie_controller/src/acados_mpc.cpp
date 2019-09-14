@@ -6,9 +6,12 @@
 #include <geometry_msgs/PointStamped.h>
 #include <geometry_msgs/Twist.h>
 // crazyflie
+#include <crazyflie_controller/CrazyflieState.h>
+#include <crazyflie_controller/PropellerSpeeds.h>
 #include <crazyflie_controller/CrazyflieStateStamped.h>
 #include <crazyflie_controller/PropellerSpeedsStamped.h>
-#include "crazyflie_controller/GenericLogData.h"
+#include <crazyflie_controller/CrazyflieOpenloopTraj.h>
+#include <crazyflie_controller/GenericLogData.h>
 
 // Dynamic reconfirgure
 #include <dynamic_reconfigure/server.h>
@@ -79,7 +82,7 @@ using std::showpos;
 #define CONTROLLER 1
 #define FIXED_U0 0
 #define READ_CASADI_TRAJ 0
-#define WRITE_OPENLOOP_TRAJ 0
+#define WRITE_OPENLOOP_TRAJ 1
 #define WRITE_FULL_LOG 0
 
 class NMPC
@@ -107,7 +110,7 @@ class NMPC
 		w4 = 3
 	};
 
-	enum cf_state{
+	enum reference_mode{
 		Regulation = 0,
 		Tracking = 1,
 		Position_Hold = 2
@@ -125,7 +128,8 @@ class NMPC
 		double u1[NU];
 		double x1[NX];
 		double x2[NX];
-		double xAllStages[NX];
+		double xi[NU];
+		double ui[NU];
 	};
 
 	struct solver_input{
@@ -138,6 +142,8 @@ class NMPC
 
 	ros::Publisher p_motvel;
 	ros::Publisher p_bodytwist;
+	// trajectory
+	ros::Publisher p_ol_traj;
 
 	ros::Subscriber s_estimator;
 
@@ -160,23 +166,23 @@ class NMPC
 	double yref_sign[(NY*N)+NY];
 
 	// Variables for dynamic reconfigure
-	double xq_des,yq_des,zq_des;
+	double xq_des, yq_des, zq_des;
 
 	// acados struct
 	solver_input acados_in;
 	solver_output acados_out;
 	int acados_status;
 
-	// For dynamic reconfigure
-	cf_state crazyflie_state;
+	reference_mode policy;
 
 	// Variable for storing he optimal trajectory
-	std::vector<std::vector<double>> casadi_optimal_traj;
+	// Variable for storing he optimal trajectory
+	std::vector<std::vector<double>> precomputed_traj;
 	int N_STEPS,iter;
 
 public:
 
-	NMPC(ros::NodeHandle& n)
+	NMPC(ros::NodeHandle& n, const std::string& ref_traj)
 		{
 
 		int status = 0;
@@ -193,6 +199,9 @@ public:
 		// publisher for the control inputs of acados (motor speeds to be applied)
 		p_motvel = n.advertise<crazyflie_controller::PropellerSpeedsStamped>("/crazyflie/acados_motvel", 1);
 
+		// solution
+		p_ol_traj = n.advertise<crazyflie_controller::CrazyflieOpenloopTraj>("/cf_mpc/openloop_traj",1);
+
 		// subscriber of estimator state
 		s_estimator = n.subscribe("/cf_estimator/state_estimate", 5, &NMPC::iteration, this);
 
@@ -207,14 +216,16 @@ public:
 		// steady state prop speed (kRPM)
 		uss = sqrt((mq*g0)/(4*Ct));
 
+		const char * c = ref_traj.c_str();
 		// Pre-load the trajectory
-		N_STEPS = readDataFromFile("/home/barbara/catkin_ws/src/crazyflie_ros/crazyflie_controller/src/optimal_trajectory.txt", casadi_optimal_traj);
+		N_STEPS = readDataFromFile(c, precomputed_traj);
 		if (N_STEPS == 0){
 			ROS_WARN("Cannot load CasADi optimal trajectory!");
 		}
 		else{
 			ROS_INFO_STREAM("Number of steps: " << N_STEPS << endl);
 		}
+		//
 
 		// Set number of trajectory iterations to zero initially
 		iter = 0;
@@ -238,8 +249,9 @@ public:
 			{
 			if(config.enable_traj_tracking)
 				{
+				ROS_INFO_STREAM("Tracking trajectory");
 				config.enable_regulation = false;
-				crazyflie_state = Tracking;
+				policy = Tracking;
 				}
 			if(config.enable_regulation)
 				{
@@ -247,7 +259,7 @@ public:
 				xq_des = config.xq_des;
 				yq_des = config.yq_des;
 				zq_des = config.zq_des;
-				crazyflie_state = Regulation;
+				policy = Regulation;
 				}
 			}
 
@@ -365,7 +377,7 @@ public:
 		{
 		try
 			{
-			switch(crazyflie_state)
+			switch(policy)
 				{
 				case Regulation:
 					{
@@ -375,20 +387,20 @@ public:
 						yref_sign[k * NY + 0] = xq_des;	// xq
 						yref_sign[k * NY + 1] = yq_des;	// yq
 						yref_sign[k * NY + 2] = zq_des;	// zq
-						yref_sign[k * NY + 3] = 1.00;		// q1
-						yref_sign[k * NY + 4] = 0.00;		// q2
-						yref_sign[k * NY + 5] = 0.00;		// q3
-						yref_sign[k * NY + 6] = 0.00;		// q4
-						yref_sign[k * NY + 7] = 0.00;		// vbx
-						yref_sign[k * NY + 8] = 0.00;		// vby
-						yref_sign[k * NY + 9] = 0.00;		// vbz
+						yref_sign[k * NY + 3] = 1.00;	// q1
+						yref_sign[k * NY + 4] = 0.00;	// q2
+						yref_sign[k * NY + 5] = 0.00;	// q3
+						yref_sign[k * NY + 6] = 0.00;	// q4
+						yref_sign[k * NY + 7] = 0.00;	// vbx
+						yref_sign[k * NY + 8] = 0.00;	// vby
+						yref_sign[k * NY + 9] = 0.00;	// vbz
 						yref_sign[k * NY + 10] = 0.00;	// wx
 						yref_sign[k * NY + 11] = 0.00;	// wy
 						yref_sign[k * NY + 12] = 0.00;	// wz
-						yref_sign[k * NY + 13] = uss;		// w1
-						yref_sign[k * NY + 14] = uss;		// w2
-						yref_sign[k * NY + 15] = uss;		// w3
-						yref_sign[k * NY + 16] = uss;		// w4
+						yref_sign[k * NY + 13] = uss;	// w1
+						yref_sign[k * NY + 14] = uss;	// w2
+						yref_sign[k * NY + 15] = uss;	// w3
+						yref_sign[k * NY + 16] = uss;	// w4
 						}
 					break;
 					}
@@ -396,29 +408,29 @@ public:
 					{
 					if(iter >= N_STEPS-N)
 						{
-						crazyflie_state = Position_Hold;
+						policy = Position_Hold;
 						break;
 						}
 					// Update reference
 					for (k = 0; k < N+1; k++)
 						{
-						yref_sign[k * NY + 0] = casadi_optimal_traj[iter + k][xq];
-						yref_sign[k * NY + 1] = casadi_optimal_traj[iter + k][yq];
-						yref_sign[k * NY + 2] = casadi_optimal_traj[iter + k][zq];
-						yref_sign[k * NY + 3] = casadi_optimal_traj[iter + k][q1];
-						yref_sign[k * NY + 4] = casadi_optimal_traj[iter + k][q2];
-						yref_sign[k * NY + 5] = casadi_optimal_traj[iter + k][q3];
-						yref_sign[k * NY + 6] = casadi_optimal_traj[iter + k][q4];
-						yref_sign[k * NY + 7] = casadi_optimal_traj[iter + k][vbx];
-						yref_sign[k * NY + 8] = casadi_optimal_traj[iter + k][vby];
-						yref_sign[k * NY + 9] = casadi_optimal_traj[iter + k][vbz];
-						yref_sign[k * NY + 10] = casadi_optimal_traj[iter + k][wx];
-						yref_sign[k * NY + 11] = casadi_optimal_traj[iter + k][wy];
-						yref_sign[k * NY + 12] = casadi_optimal_traj[iter + k][wz];
-						yref_sign[k * NY + 13] = casadi_optimal_traj[iter + k][13];
-						yref_sign[k * NY + 14] = casadi_optimal_traj[iter + k][14];
-						yref_sign[k * NY + 15] = casadi_optimal_traj[iter + k][15];
-						yref_sign[k * NY + 16] = casadi_optimal_traj[iter + k][16];
+						yref_sign[k * NY + 0] = precomputed_traj[iter + k][xq];
+						yref_sign[k * NY + 1] = precomputed_traj[iter + k][yq];
+						yref_sign[k * NY + 2] = precomputed_traj[iter + k][zq];
+						yref_sign[k * NY + 3] = precomputed_traj[iter + k][q1];
+						yref_sign[k * NY + 4] = precomputed_traj[iter + k][q2];
+						yref_sign[k * NY + 5] = precomputed_traj[iter + k][q3];
+						yref_sign[k * NY + 6] = precomputed_traj[iter + k][q4];
+						yref_sign[k * NY + 7] = precomputed_traj[iter + k][vbx];
+						yref_sign[k * NY + 8] = precomputed_traj[iter + k][vby];
+						yref_sign[k * NY + 9] = precomputed_traj[iter + k][vbz];
+						yref_sign[k * NY + 10] = precomputed_traj[iter + k][wx];
+						yref_sign[k * NY + 11] = precomputed_traj[iter + k][wy];
+						yref_sign[k * NY + 12] = precomputed_traj[iter + k][wz];
+						yref_sign[k * NY + 13] = precomputed_traj[iter + k][13];
+						yref_sign[k * NY + 14] = precomputed_traj[iter + k][14];
+						yref_sign[k * NY + 15] = precomputed_traj[iter + k][15];
+						yref_sign[k * NY + 16] = precomputed_traj[iter + k][16];
 						}
 					++iter;
 					break;
@@ -429,9 +441,9 @@ public:
 					// Get last point of tracketory and hold
 					for (k = 0; k < N+1; k++)
 						{
-						yref_sign[k * NY + 0] = casadi_optimal_traj[N_STEPS-1][xq];
-						yref_sign[k * NY + 1] = casadi_optimal_traj[N_STEPS-1][yq];
-						yref_sign[k * NY + 2] = casadi_optimal_traj[N_STEPS-1][zq];
+						yref_sign[k * NY + 0] = precomputed_traj[N_STEPS-1][xq];
+						yref_sign[k * NY + 1] = precomputed_traj[N_STEPS-1][yq];
+						yref_sign[k * NY + 2] = precomputed_traj[N_STEPS-1][zq];
 						yref_sign[k * NY + 3] = 1.00;
 						yref_sign[k * NY + 4] = 0.00;
 						yref_sign[k * NY + 5] = 0.00;
@@ -572,30 +584,43 @@ public:
 			p_bodytwist.publish(bodytwist);
 
 			#if WRITE_OPENLOOP_TRAJ
-			// for(ii=0; ii< N; ii++)
-			// {
-			// ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, ii, "x", (void *)(acados_out.xAllStages));
-			// // Log open-loop trajectory
-			// ofstream trajLog("traj_openloop.txt", std::ios_base::app | std::ios_base::out);
-			// if (trajLog.is_open())
-			// {
-			// 	trajLog << acados_out.xAllStages[xq] << " ";
-			// 	trajLog << acados_out.xAllStages[yq] << " ";
-			// 	trajLog << acados_out.xAllStages[zq] << " ";
-			// 	trajLog << acados_out.xAllStages[q1] << " ";
-			// 	trajLog << acados_out.xAllStages[q2] << " ";
-			// 	trajLog << acados_out.xAllStages[q3] << " ";
-			// 	trajLog << acados_out.xAllStages[q4] << " ";
-			// 	trajLog << acados_out.xAllStages[vbx] << " ";
-			// 	trajLog << acados_out.xAllStages[vby] << " ";
-			// 	trajLog << acados_out.xAllStages[vbz] << " ";
-			// 	trajLog << acados_out.xAllStages[wx] << " ";
-			// 	trajLog << acados_out.xAllStages[wy] << " ";
-			// 	trajLog << acados_out.xAllStages[wz] << " ";
-			// 	trajLog << endl;
-			// 	trajLog.close();
-			// 	}
-			// }
+
+			crazyflie_controller::CrazyflieOpenloopTraj traj_msg; 
+			traj_msg.header.stamp = ros::Time::now();
+			traj_msg.cpu_time = acados_out.cpu_time;
+ 
+			for(ii=0; ii< N; ii++)
+				{
+				ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, ii, "x", (void *)(acados_out.xi));
+				ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, ii, "u", (void *)(acados_out.ui));
+
+				crazyflie_controller::CrazyflieState crazyflie_state;
+				crazyflie_controller::PropellerSpeeds crazyflie_control;
+
+				crazyflie_state.pos.x    = acados_out.xi[xq];
+				crazyflie_state.pos.y    = acados_out.xi[yq];
+				crazyflie_state.pos.z    = acados_out.xi[zq];
+				crazyflie_state.vel.x    = acados_out.xi[vbx];
+				crazyflie_state.vel.y    = acados_out.xi[vby];
+				crazyflie_state.vel.z    = acados_out.xi[vbz];
+				crazyflie_state.quat.x   = acados_out.xi[q2];
+				crazyflie_state.quat.y   = acados_out.xi[q3];
+				crazyflie_state.quat.z   = acados_out.xi[q4];
+				crazyflie_state.quat.w   = acados_out.xi[q1];
+				crazyflie_state.rates.x  = acados_out.xi[wx];
+				crazyflie_state.rates.y  = acados_out.xi[wy];
+				crazyflie_state.rates.z  = acados_out.xi[wz];
+
+				crazyflie_control.w1 = acados_out.ui[0];
+				crazyflie_control.w2 = acados_out.ui[1];
+				crazyflie_control.w3 = acados_out.ui[2];
+				crazyflie_control.w4 = acados_out.ui[3];
+
+				traj_msg.states.push_back(crazyflie_state);
+				traj_msg.controls.push_back(crazyflie_control);
+				}
+
+			p_ol_traj.publish(traj_msg);
 			#endif
 
 			#if READ_CASADI_TRAJ
@@ -711,7 +736,10 @@ int main(int argc, char **argv)
 
 	ros::NodeHandle n("~");
 
-	NMPC nmpc(n);
+	std::string ref_traj;
+	n.getParam("ref_traj", ref_traj);
+
+	NMPC nmpc(n,ref_traj);
 	nmpc.run();
 
 	return 0;
