@@ -233,11 +233,11 @@ public:
 
 	void run()
 		{
-		// ROS_DEBUG("Setting up the dynamic reconfigure panel and server");
-		// dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsConfig> server;
-		// dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsConfig>::CallbackType f;
-		// f = boost::bind(&NMPC::callback_dynamic_reconfigure, this, _1, _2);
-		// server.setCallback(f);
+		ROS_DEBUG("Setting up the dynamic reconfigure panel and server");
+		dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsConfig> server;
+		dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsConfig>::CallbackType f;
+		f = boost::bind(&NMPC::callback_dynamic_reconfigure, this, _1, _2);
+		server.setCallback(f);
 
 		ros::spin();
 		}
@@ -408,7 +408,7 @@ public:
 					acados_in.yref[k * NY + 15] = precomputed_traj[iter + k][15];
 					acados_in.yref[k * NY + 16] = precomputed_traj[iter + k][16];
 					}
-				for (; k < N+1; k++)
+				for (k=N_STEPS-iter; k < N+1; k++)
 					{
 					acados_in.yref[k * NY + 0]  = precomputed_traj[N_STEPS][xq];
 					acados_in.yref[k * NY + 1]  = precomputed_traj[N_STEPS][yq];
@@ -450,28 +450,42 @@ public:
 				acados_in.yref[k * NY + 15] = precomputed_traj[iter + k][15];
 				acados_in.yref[k * NY + 16] = precomputed_traj[iter + k][16];
 				}
+			++iter;
 			#endif
 
-			for (k = 0; k < N+1; k++){
-			  yref_sign[k * NY + 0] = xq_des;	// xq
-			  yref_sign[k * NY + 1] = yq_des;	// yq
-			  yref_sign[k * NY + 2] = zq_des;	// zq
-			  yref_sign[k * NY + 3] = 1.00;		// q1
-			  yref_sign[k * NY + 4] = 0.00;		// q2
-			  yref_sign[k * NY + 5] = 0.00;		// q3
-			  yref_sign[k * NY + 6] = 0.00;		// q4
-			  yref_sign[k * NY + 7] = 0.00;		// vbx
-			  yref_sign[k * NY + 8] = 0.00;		// vby
-			  yref_sign[k * NY + 9] = 0.00;		// vbz
-			  yref_sign[k * NY + 10] = 0.00;	// wx
-			  yref_sign[k * NY + 11] = 0.00;	// wy
-			  yref_sign[k * NY + 12] = 0.00;	// wz
-			  yref_sign[k * NY + 13] = uss;		// w1
-			  yref_sign[k * NY + 14] = uss;		// w2
-			  yref_sign[k * NY + 15] = uss;		// w3
-			  yref_sign[k * NY + 16] = uss;		// w4
+			for (k = 0; k < N; k++){
+				acados_in.yref[k * NY + 0] = xq_des;	// xq
+				acados_in.yref[k * NY + 1] = yq_des;	// yq
+				acados_in.yref[k * NY + 2] = zq_des;	// zq
+				acados_in.yref[k * NY + 3] = 1.00;		// q1
+				acados_in.yref[k * NY + 4] = 0.00;		// q2
+				acados_in.yref[k * NY + 5] = 0.00;		// q3
+				acados_in.yref[k * NY + 6] = 0.00;		// q4
+				acados_in.yref[k * NY + 7] = 0.00;		// vbx
+				acados_in.yref[k * NY + 8] = 0.00;		// vby
+				acados_in.yref[k * NY + 9] = 0.00;		// vbz
+				acados_in.yref[k * NY + 10] = 0.00;	// wx
+				acados_in.yref[k * NY + 11] = 0.00;	// wy
+				acados_in.yref[k * NY + 12] = 0.00;	// wz
+				acados_in.yref[k * NY + 13] = uss;		// w1
+				acados_in.yref[k * NY + 14] = uss;		// w2
+				acados_in.yref[k * NY + 15] = uss;		// w3
+				acados_in.yref[k * NY + 16] = uss;		// w4
 			}
-			++iter;
+
+			acados_in.yref_e[k * NY + 0]  = xq_des;	// xq
+			acados_in.yref_e[k * NY + 1]  = yq_des;	// yq
+			acados_in.yref_e[k * NY + 2]  = zq_des;	// zq
+			acados_in.yref_e[k * NY + 3]  = 1.00;	// q1
+			acados_in.yref_e[k * NY + 4]  = 0.00;	// q2
+			acados_in.yref_e[k * NY + 5]  = 0.00;	// q3
+			acados_in.yref_e[k * NY + 6]  = 0.00;	// q4
+			acados_in.yref_e[k * NY + 7]  = 0.00;	// vbx
+			acados_in.yref_e[k * NY + 8]  = 0.00;	// vby
+			acados_in.yref_e[k * NY + 9]  = 0.00;	// vbz
+			acados_in.yref_e[k * NY + 10] = 0.00;	// wx
+			acados_in.yref_e[k * NY + 11] = 0.00;	// wy
+			acados_in.yref_e[k * NY + 12] = 0.00;	// wz
 
 			// read msg
 			// position
@@ -502,14 +516,14 @@ public:
 			ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "lbx", acados_in.x0);
 			ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "ubx", acados_in.x0);
 
-			for (i = 0; i < N; i++) {
-				for (j = 0; j < NY; ++j) {
-					acados_in.yref[i*NY + j] = yref_sign[i*NY + j];
-				}
-			}
-			for (i = 0; i < NYN; i++) {
-				acados_in.yref_e[i] = yref_sign[N*NY + i];
-			}
+			// for (i = 0; i < N; i++) {
+				// for (j = 0; j < NY; ++j) {
+					// acados_in.yref[i*NY + j] = yref_sign[i*NY + j];
+				// }
+			// }
+			// for (i = 0; i < NYN; i++) {
+				// acados_in.yref_e[i] = yref_sign[N*NY + i];
+			// }
 
 			for (ii = 0; ii < N; ii++)
 				{
