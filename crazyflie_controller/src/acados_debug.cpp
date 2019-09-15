@@ -857,19 +857,19 @@ public:
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "acados_debug");
+	ros::init(argc, argv, "acados_debug");
 
-  // Read parameters
-  ros::NodeHandle n("~");
-  double frequency;
-  n.param("frequency", frequency, 65.0);
+	// Read parameters
+	ros::NodeHandle n("~");
+	double frequency;
+	n.param("frequency", frequency, 65.0);
 
-  std::string ref_traj;
-  n.getParam("ref_traj", ref_traj);
+	std::string ref_traj;
+	n.getParam("ref_traj", ref_traj);
 
 
-  NMPC nmpc(n,ref_traj);
-  nmpc.run(frequency);
+	NMPC nmpc(n,ref_traj);
+	nmpc.run(frequency);
 
-  return 0;
+	return 0;
 }
