@@ -134,7 +134,7 @@ class NMPC
 
 	struct solver_input{
 		double x0[NX];
-		double yref[(NY*N)+NY];
+		double yref[(NY*N)];
 		double yref_e[NYN];
 		double W[NY*NY];
 		double WN[NX*NX];
@@ -377,142 +377,113 @@ public:
 		{
 		try
 			{
-			switch(policy)
+
+			if(iter > N_STEPS)
 				{
-				case Regulation:
+				ROS_INFO_STREAM("Trajectory is over");
+				ros::shutdown();
+				}
+
+			if(iter >= N_STEPS-N)
+				{
+				for (k = 0; k < N_STEPS-iter; k++)
 					{
-					// Update regulation point
-					for (k = 0; k < N+1; k++)
-						{
-						yref_sign[k * NY + 0] = xq_des;	// xq
-						yref_sign[k * NY + 1] = yq_des;	// yq
-						yref_sign[k * NY + 2] = zq_des;	// zq
-						yref_sign[k * NY + 3] = 1.00;	// q1
-						yref_sign[k * NY + 4] = 0.00;	// q2
-						yref_sign[k * NY + 5] = 0.00;	// q3
-						yref_sign[k * NY + 6] = 0.00;	// q4
-						yref_sign[k * NY + 7] = 0.00;	// vbx
-						yref_sign[k * NY + 8] = 0.00;	// vby
-						yref_sign[k * NY + 9] = 0.00;	// vbz
-						yref_sign[k * NY + 10] = 0.00;	// wx
-						yref_sign[k * NY + 11] = 0.00;	// wy
-						yref_sign[k * NY + 12] = 0.00;	// wz
-						yref_sign[k * NY + 13] = uss;	// w1
-						yref_sign[k * NY + 14] = uss;	// w2
-						yref_sign[k * NY + 15] = uss;	// w3
-						yref_sign[k * NY + 16] = uss;	// w4
-						}
-					break;
+					acados_in.yref[k * NY + 0]  = precomputed_traj[iter + k][xq];
+					acados_in.yref[k * NY + 1]  = precomputed_traj[iter + k][yq];
+					acados_in.yref[k * NY + 2]  = precomputed_traj[iter + k][zq];
+					acados_in.yref[k * NY + 3]  = precomputed_traj[iter + k][q1];
+					acados_in.yref[k * NY + 4]  = precomputed_traj[iter + k][q2];
+					acados_in.yref[k * NY + 5]  = precomputed_traj[iter + k][q3];
+					acados_in.yref[k * NY + 6]  = precomputed_traj[iter + k][q4];
+					acados_in.yref[k * NY + 7]  = precomputed_traj[iter + k][vbx];
+					acados_in.yref[k * NY + 8]  = precomputed_traj[iter + k][vby];
+					acados_in.yref[k * NY + 9]  = precomputed_traj[iter + k][vbz];
+					acados_in.yref[k * NY + 10] = precomputed_traj[iter + k][wx];
+					acados_in.yref[k * NY + 11] = precomputed_traj[iter + k][wy];
+					acados_in.yref[k * NY + 12] = precomputed_traj[iter + k][wz];
+					acados_in.yref[k * NY + 13] = precomputed_traj[iter + k][13];
+					acados_in.yref[k * NY + 14] = precomputed_traj[iter + k][14];
+					acados_in.yref[k * NY + 15] = precomputed_traj[iter + k][15];
+					acados_in.yref[k * NY + 16] = precomputed_traj[iter + k][16];
 					}
-				case Tracking:
+				for (; k < N+1; k++)
 					{
-					if(iter >= N_STEPS-N)
-						{
-						policy = Position_Hold;
-						break;
-						}
-					// Update reference
-					for (k = 0; k < N+1; k++)
-						{
-						yref_sign[k * NY + 0] = precomputed_traj[iter + k][xq];
-						yref_sign[k * NY + 1] = precomputed_traj[iter + k][yq];
-						yref_sign[k * NY + 2] = precomputed_traj[iter + k][zq];
-						yref_sign[k * NY + 3] = precomputed_traj[iter + k][q1];
-						yref_sign[k * NY + 4] = precomputed_traj[iter + k][q2];
-						yref_sign[k * NY + 5] = precomputed_traj[iter + k][q3];
-						yref_sign[k * NY + 6] = precomputed_traj[iter + k][q4];
-						yref_sign[k * NY + 7] = precomputed_traj[iter + k][vbx];
-						yref_sign[k * NY + 8] = precomputed_traj[iter + k][vby];
-						yref_sign[k * NY + 9] = precomputed_traj[iter + k][vbz];
-						yref_sign[k * NY + 10] = precomputed_traj[iter + k][wx];
-						yref_sign[k * NY + 11] = precomputed_traj[iter + k][wy];
-						yref_sign[k * NY + 12] = precomputed_traj[iter + k][wz];
-						yref_sign[k * NY + 13] = precomputed_traj[iter + k][13];
-						yref_sign[k * NY + 14] = precomputed_traj[iter + k][14];
-						yref_sign[k * NY + 15] = precomputed_traj[iter + k][15];
-						yref_sign[k * NY + 16] = precomputed_traj[iter + k][16];
-						}
-					++iter;
-					break;
-					}
-				case Position_Hold:
-					{
-					ROS_INFO("Holding last position of the trajectory.");
-					// Get last point of tracketory and hold
-					for (k = 0; k < N+1; k++)
-						{
-						yref_sign[k * NY + 0] = precomputed_traj[N_STEPS-1][xq];
-						yref_sign[k * NY + 1] = precomputed_traj[N_STEPS-1][yq];
-						yref_sign[k * NY + 2] = precomputed_traj[N_STEPS-1][zq];
-						yref_sign[k * NY + 3] = 1.00;
-						yref_sign[k * NY + 4] = 0.00;
-						yref_sign[k * NY + 5] = 0.00;
-						yref_sign[k * NY + 6] = 0.00;
-						yref_sign[k * NY + 7] = 0.00;
-						yref_sign[k * NY + 8] = 0.00;
-						yref_sign[k * NY + 9] = 0.00;
-						yref_sign[k * NY + 10] = 0.00;
-						yref_sign[k * NY + 11] = 0.00;
-						yref_sign[k * NY + 12] = 0.00;
-						yref_sign[k * NY + 13] = uss;
-						yref_sign[k * NY + 14] = uss;
-						yref_sign[k * NY + 15] = uss;
-						yref_sign[k * NY + 16] = uss;
-						}
-					break;
+					acados_in.yref[k * NY + 0]  = precomputed_traj[N_STEPS][xq];
+					acados_in.yref[k * NY + 1]  = precomputed_traj[N_STEPS][yq];
+					acados_in.yref[k * NY + 2]  = precomputed_traj[N_STEPS][zq];
+					acados_in.yref[k * NY + 3]  = precomputed_traj[N_STEPS][q1];
+					acados_in.yref[k * NY + 4]  = precomputed_traj[N_STEPS][q2];
+					acados_in.yref[k * NY + 5]  = precomputed_traj[N_STEPS][q3];
+					acados_in.yref[k * NY + 6]  = precomputed_traj[N_STEPS][q4];
+					acados_in.yref[k * NY + 7]  = precomputed_traj[N_STEPS][vbx];
+					acados_in.yref[k * NY + 8]  = precomputed_traj[N_STEPS][vby];
+					acados_in.yref[k * NY + 9]  = precomputed_traj[N_STEPS][vbz];
+					acados_in.yref[k * NY + 10] = precomputed_traj[N_STEPS][wx];
+					acados_in.yref[k * NY + 11] = precomputed_traj[N_STEPS][wy];
+					acados_in.yref[k * NY + 12] = precomputed_traj[N_STEPS][wz];
+					acados_in.yref[k * NY + 13] = precomputed_traj[N_STEPS][13];
+					acados_in.yref[k * NY + 14] = precomputed_traj[N_STEPS][14];
+					acados_in.yref[k * NY + 15] = precomputed_traj[N_STEPS][15];
+					acados_in.yref[k * NY + 16] = precomputed_traj[N_STEPS][16];
 					}
 				}
 
+			for (k = 0; k < N+1; k++)
+				{
+				acados_in.yref[k * NY + 0]  = precomputed_traj[iter + k][xq];
+				acados_in.yref[k * NY + 1]  = precomputed_traj[iter + k][yq];
+				acados_in.yref[k * NY + 2]  = precomputed_traj[iter + k][zq];
+				acados_in.yref[k * NY + 3]  = precomputed_traj[iter + k][q1];
+				acados_in.yref[k * NY + 4]  = precomputed_traj[iter + k][q2];
+				acados_in.yref[k * NY + 5]  = precomputed_traj[iter + k][q3];
+				acados_in.yref[k * NY + 6]  = precomputed_traj[iter + k][q4];
+				acados_in.yref[k * NY + 7]  = precomputed_traj[iter + k][vbx];
+				acados_in.yref[k * NY + 8]  = precomputed_traj[iter + k][vby];
+				acados_in.yref[k * NY + 9]  = precomputed_traj[iter + k][vbz];
+				acados_in.yref[k * NY + 10] = precomputed_traj[iter + k][wx];
+				acados_in.yref[k * NY + 11] = precomputed_traj[iter + k][wy];
+				acados_in.yref[k * NY + 12] = precomputed_traj[iter + k][wz];
+				acados_in.yref[k * NY + 13] = precomputed_traj[iter + k][13];
+				acados_in.yref[k * NY + 14] = precomputed_traj[iter + k][14];
+				acados_in.yref[k * NY + 15] = precomputed_traj[iter + k][15];
+				acados_in.yref[k * NY + 16] = precomputed_traj[iter + k][16];
+				}
+
+			++iter;
+
 			// read msg
 			// position
-			x0_sign[xq] = msg->pos.x;
-			x0_sign[yq] = msg->pos.y;
-			x0_sign[zq] = msg->pos.z;
+			acados_in.x0[xq] = msg->pos.x;
+			acados_in.x0[yq] = msg->pos.y;
+			acados_in.x0[zq] = msg->pos.z;
 
 			// quaternion
-			x0_sign[q1] = msg->quat.w;
-			x0_sign[q2] = msg->quat.x;
-			x0_sign[q3] = msg->quat.y;
-			x0_sign[q4] = msg->quat.z;
+			acados_in.x0[q1] = msg->quat.w;
+			acados_in.x0[q2] = msg->quat.x;
+			acados_in.x0[q3] = msg->quat.y;
+			acados_in.x0[q4] = msg->quat.z;
 
 			// body velocities
-			x0_sign[vbx] = msg->vel.x;
-			x0_sign[vby] = msg->vel.y;
-			x0_sign[vbz] = msg->vel.z;
+			acados_in.x0[vbx] = msg->vel.x;
+			acados_in.x0[vby] = msg->vel.y;
+			acados_in.x0[vbz] = msg->vel.z;
 
 			// rates
-			x0_sign[wx] = msg->rates.x;
-			x0_sign[wy] = msg->rates.y;
-			x0_sign[wz] = msg->rates.z;
+			acados_in.x0[wx] = msg->rates.x;
+			acados_in.x0[wy] = msg->rates.y;
+			acados_in.x0[wz] = msg->rates.z;
 
 			//---------------------------------------
 			// acados NMPC
 			//---------------------------------------
 
-			// set initial condition
-			for (i = 0; i < NX; i++)
-				{
-				acados_in.x0[i] = x0_sign[i];
-				// ROS_INFO_STREAM("x0: " << acados_in.x0[i] << endl);
-				}
 			ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "lbx", acados_in.x0);
 			ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "ubx", acados_in.x0);
 
-			// set reference
-			for (i = 0; i < N; i++) {
-				for (j = 0; j < NY; ++j) {
-					acados_in.yref[i*NY + j] = yref_sign[i*NY + j];
-					// ROS_INFO_STREAM("yref: " << acados_in.yref[i] << endl);
-				}
-			}
-			for (ii = 0; ii < N; ii++) {
+			for (ii = 0; ii < N; ii++)
+				{
 				ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, ii, "yref", acados_in.yref + ii*NY);
-			}
-
-			// set terminal state
-			for (i = 0; i < NYN; i++) {
-				acados_in.yref_e[i] = yref_sign[N*NY + i];
-			}
+				}
 			ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "yref", acados_in.yref_e);
 
 			// set constraints
@@ -542,21 +513,21 @@ public:
 			ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 2, "x", (void *)acados_out.x2);
 
 			// publish acados output
-			crazyflie_controller::PropellerSpeedsStamped _acadosOut;
-			 _acadosOut.header.stamp = ros::Time::now();
+			crazyflie_controller::PropellerSpeedsStamped propellerspeeds;
+			propellerspeeds.header.stamp = ros::Time::now();
 
 			if (FIXED_U0 == 1) {
-				_acadosOut.w1 =  acados_out.u1[w1];
-				_acadosOut.w2 =  acados_out.u1[w2];
-				_acadosOut.w3 =  acados_out.u1[w3];
-				_acadosOut.w4 =  acados_out.u1[w4];
+				propellerspeeds.w1 =  acados_out.u1[w1];
+				propellerspeeds.w2 =  acados_out.u1[w2];
+				propellerspeeds.w3 =  acados_out.u1[w3];
+				propellerspeeds.w4 =  acados_out.u1[w4];
 			} else {
-				_acadosOut.w1 =  acados_out.u0[w1];
-				_acadosOut.w2 =  acados_out.u0[w2];
-				_acadosOut.w3 =  acados_out.u0[w3];
-				_acadosOut.w4 =  acados_out.u0[w4];
+				propellerspeeds.w1 =  acados_out.u0[w1];
+				propellerspeeds.w2 =  acados_out.u0[w2];
+				propellerspeeds.w3 =  acados_out.u0[w3];
+				propellerspeeds.w4 =  acados_out.u0[w4];
 			}
-			p_motvel.publish(_acadosOut);
+			p_motvel.publish(propellerspeeds);
 
 			// Select the set of optimal states to calculate the real cf control inputs
 			Quaterniond q_acados_out;
@@ -578,10 +549,13 @@ public:
 			// linear_y -> roll
 			bodytwist.linear.y  = rad2Deg(eu_imu.phi);
 			bodytwist.linear.z  = krpm2pwm(
-				(acados_out.u1[w1]+acados_out.u1[w2]+acados_out.u1[w3]+acados_out.u1[w4])/4);
+				(acados_out.u1[w1]+acados_out.u1[w2]+acados_out.u1[w3]+acados_out.u1[w4])/4
+			);
 			bodytwist.angular.z = rad2Deg(acados_out.x1[wz]);
 
 			p_bodytwist.publish(bodytwist);
+
+			ROS_INFO_STREAM("Iteration: " << iter << endl);
 
 			#if WRITE_OPENLOOP_TRAJ
 
@@ -621,35 +595,6 @@ public:
 				}
 
 			p_ol_traj.publish(traj_msg);
-			#endif
-
-			#if READ_CASADI_TRAJ
-			// Log for the trajectory
-			// for(ii=0; ii< N; ii++)
-			// {
-			// ofstream inputTraj("casadi_traj.txt", std::ios_base::app | std::ios_base::out);
-			// if (inputTraj.is_open())
-			// 	{
-			// 	inputTraj << casadi_optimal_traj[iter + ii][xq] << " ";
-			// 	inputTraj << casadi_optimal_traj[iter + ii][yq] << " ";
-			// 	inputTraj << casadi_optimal_traj[iter + ii][zq] << " ";
-			// 	inputTraj << casadi_optimal_traj[iter + ii][q1] << " ";
-			// 	inputTraj << casadi_optimal_traj[iter + ii][q2] << " ";
-			// 	inputTraj << casadi_optimal_traj[iter + ii][q3] << " ";
-			// 	inputTraj << casadi_optimal_traj[iter + ii][q4] << " ";
-			// 	inputTraj << casadi_optimal_traj[iter + ii][vbx] << " ";
-			// 	inputTraj << casadi_optimal_traj[iter + ii][vby] << " ";
-			// 	inputTraj << casadi_optimal_traj[iter + ii][vbz] << " ";
-			// 	inputTraj << casadi_optimal_traj[iter + ii][wx] << " ";
-			// 	inputTraj << casadi_optimal_traj[iter + ii][wy] << " ";
-			// 	inputTraj << casadi_optimal_traj[iter + ii][wz] << " ";
-			// 	inputTraj << casadi_optimal_traj[iter + ii][13] << " ";
-			// 	inputTraj << casadi_optimal_traj[iter + ii][14] << " ";
-			// 	inputTraj << casadi_optimal_traj[iter + ii][15] << " ";
-			// 	inputTraj << casadi_optimal_traj[iter + ii][16] << " ";
-			// 	inputTraj << endl;
-			// 	}
-			// }
 			#endif
 
 			#if WRITE_FULL_LOG
