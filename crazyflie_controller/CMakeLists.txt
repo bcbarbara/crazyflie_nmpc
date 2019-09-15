@@ -23,7 +23,7 @@ set(simple_model_build ${PROJECT_SOURCE_DIR}/scripts/crazyflie_simple_model/c_ge
 
 generate_dynamic_reconfigure_options(
 	config/crazyflie_params.cfg
-	config/WeightMatrices.cfg
+	config/crazyflie_estimator.cfg
 )
 
 add_message_files(
