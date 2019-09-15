@@ -47,8 +47,8 @@ max_thrust = 22
 # set weighting matrices
 nlp_cost = ra.cost
 Q = np.eye(nx)
-Q[0,0] = 120.0       # x
-Q[1,1] = 100.0       # y
+Q[0,0] = 120.0      # x
+Q[1,1] = 100.0      # y
 Q[2,2] = 100.0      # z
 Q[3,3] = 1.0e-3     # q1
 Q[4,4] = 1.0e-3     # q2
