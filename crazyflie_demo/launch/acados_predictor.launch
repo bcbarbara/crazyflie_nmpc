@@ -61,7 +61,7 @@
 	<include file="$(find cortex_stream)/launch/cortex_stream.launch"/>
 
 	<node name="nmpc" pkg="crazyflie_controller" type="acados_mpc" output="screen" ns="crazyflie">
-		<param name="ref_traj" value="$(find crazyflie_controller)/traj/square.txt"/>
+		<param name="ref_traj" value="$(find crazyflie_controller)/traj/helix_traj.txt"/>
 	</node>
 
 	<node name="estimator" pkg="crazyflie_controller" type="acados_estimator" output="screen" ns="crazyflie">
