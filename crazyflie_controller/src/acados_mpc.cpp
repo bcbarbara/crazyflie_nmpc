@@ -233,12 +233,11 @@ public:
 
 	void run()
 		{
-
-		ROS_DEBUG("Setting up the dynamic reconfigure panel and server");
-		dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsConfig> server;
-		dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsConfig>::CallbackType f;
-		f = boost::bind(&NMPC::callback_dynamic_reconfigure, this, _1, _2);
-		server.setCallback(f);
+		// ROS_DEBUG("Setting up the dynamic reconfigure panel and server");
+		// dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsConfig> server;
+		// dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsConfig>::CallbackType f;
+		// f = boost::bind(&NMPC::callback_dynamic_reconfigure, this, _1, _2);
+		// server.setCallback(f);
 
 		ros::spin();
 		}
@@ -375,15 +374,18 @@ public:
 
 	void iteration(const crazyflie_controller::CrazyflieStateStampedPtr& msg)
 		{
+		ROS_INFO_STREAM("mpc iteration");
+		ROS_WARN("mpc iteration");
 		try
 			{
 
 			if(iter > N_STEPS)
 				{
 				ROS_INFO_STREAM("Trajectory is over");
-				ros::shutdown();
+				// ros::shutdown();
 				}
 
+			# if 0
 			if(iter >= N_STEPS-N)
 				{
 				for (k = 0; k < N_STEPS-iter; k++)
@@ -448,7 +450,27 @@ public:
 				acados_in.yref[k * NY + 15] = precomputed_traj[iter + k][15];
 				acados_in.yref[k * NY + 16] = precomputed_traj[iter + k][16];
 				}
+			#endif
 
+			for (k = 0; k < N+1; k++){
+			  yref_sign[k * NY + 0] = xq_des;	// xq
+			  yref_sign[k * NY + 1] = yq_des;	// yq
+			  yref_sign[k * NY + 2] = zq_des;	// zq
+			  yref_sign[k * NY + 3] = 1.00;		// q1
+			  yref_sign[k * NY + 4] = 0.00;		// q2
+			  yref_sign[k * NY + 5] = 0.00;		// q3
+			  yref_sign[k * NY + 6] = 0.00;		// q4
+			  yref_sign[k * NY + 7] = 0.00;		// vbx
+			  yref_sign[k * NY + 8] = 0.00;		// vby
+			  yref_sign[k * NY + 9] = 0.00;		// vbz
+			  yref_sign[k * NY + 10] = 0.00;	// wx
+			  yref_sign[k * NY + 11] = 0.00;	// wy
+			  yref_sign[k * NY + 12] = 0.00;	// wz
+			  yref_sign[k * NY + 13] = uss;		// w1
+			  yref_sign[k * NY + 14] = uss;		// w2
+			  yref_sign[k * NY + 15] = uss;		// w3
+			  yref_sign[k * NY + 16] = uss;		// w4
+			}
 			++iter;
 
 			// read msg
@@ -479,6 +501,15 @@ public:
 
 			ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "lbx", acados_in.x0);
 			ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "ubx", acados_in.x0);
+
+			for (i = 0; i < N; i++) {
+				for (j = 0; j < NY; ++j) {
+					acados_in.yref[i*NY + j] = yref_sign[i*NY + j];
+				}
+			}
+			for (i = 0; i < NYN; i++) {
+				acados_in.yref_e[i] = yref_sign[N*NY + i];
+			}
 
 			for (ii = 0; ii < N; ii++)
 				{
@@ -552,6 +583,7 @@ public:
 				(acados_out.u1[w1]+acados_out.u1[w2]+acados_out.u1[w3]+acados_out.u1[w4])/4
 			);
 			bodytwist.angular.z = rad2Deg(acados_out.x1[wz]);
+			if  ( bodytwist.linear.z > 64000 ) bodytwist.linear.z = 64000;
 
 			p_bodytwist.publish(bodytwist);
 
@@ -668,9 +700,10 @@ public:
 				}
 			#endif
 			}
+
 		catch (int acados_status)
 			{
-			cout << "An exception occurred. Exception Nr. " << acados_status << '\n';
+			ROS_INFO_STREAM("An exception occurred. Exception Nr. ");
 			}
 		}
 	};
