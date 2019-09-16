@@ -79,10 +79,13 @@ using std::showpos;
 #define pi  3.14159265358979323846
 #define g0 9.80665
 
-#define CONTROLLER 1
+#define WEIGHT_MATRICES 1
+#define SET_WEIGHTS 1
+#define TRACK_TRAJ 0
+#define REGULATION 1
+#define PUB_OPENLOOP_TRAJ 1
 #define FIXED_U0 0
 #define READ_CASADI_TRAJ 0
-#define WRITE_OPENLOOP_TRAJ 1
 #define WRITE_FULL_LOG 0
 
 class NMPC
@@ -156,7 +159,6 @@ class NMPC
 	double joy_roll,joy_pitch,joy_yaw;
 	double joy_thrust;
 
-
 	unsigned int k,i,j,ii;
 
 	float uss,Ct,mq;
@@ -167,6 +169,14 @@ class NMPC
 
 	// Variables for dynamic reconfigure
 	double xq_des, yq_des, zq_des;
+
+	// Variables for dynamic reconfigure
+	double Wdiag_xq,Wdiag_yq,Wdiag_zq;
+	double Wdiag_q1,Wdiag_q2,Wdiag_q3,Wdiag_q4;
+	double Wdiag_vbx,Wdiag_vby,Wdiag_vbz;
+	double Wdiag_wx,Wdiag_wy,Wdiag_wz;
+	double Wdiag_w1,Wdiag_w2,Wdiag_w3,Wdiag_w4;
+	double WN_factor;
 
 	// acados struct
 	solver_input acados_in;
@@ -186,6 +196,8 @@ public:
 		{
 
 		int status = 0;
+		double WN_factor = 50;
+
 		status = acados_create();
 
 		if (status){
@@ -200,7 +212,7 @@ public:
 		p_motvel = n.advertise<crazyflie_controller::PropellerSpeedsStamped>("/crazyflie/acados_motvel", 1);
 
 		// solution
-		p_ol_traj = n.advertise<crazyflie_controller::CrazyflieOpenloopTraj>("/cf_mpc/openloop_traj",1);
+		p_ol_traj = n.advertise<crazyflie_controller::CrazyflieOpenloopTraj>("/cf_mpc/openloop_traj", 2);
 
 		// subscriber of estimator state
 		s_estimator = n.subscribe("/cf_estimator/state_estimate", 5, &NMPC::iteration, this);
@@ -229,6 +241,24 @@ public:
 
 		// Set number of trajectory iterations to zero initially
 		iter = 0;
+
+		Wdiag_xq	= 120.0 ;
+		Wdiag_yq	= 100.0 ;
+		Wdiag_zq	= 100.0 ;
+		Wdiag_q1	= 1.0e-3;
+		Wdiag_q2	= 1.0e-3;
+		Wdiag_q3	= 1.0e-3;
+		Wdiag_q4	= 1.0e-3;
+		Wdiag_vbx	= 7e-1  ;
+		Wdiag_vby	= 1.0   ;
+		Wdiag_vbz	= 4.0   ;
+		Wdiag_wx	= 1.0e-5;
+		Wdiag_wy	= 1.0e-5;
+		Wdiag_wz	= 10.0  ;
+		Wdiag_w1	= 0.06  ;
+		Wdiag_w2	= 0.06  ;
+		Wdiag_w3	= 0.06  ;
+		Wdiag_w4	= 0.06  ;
 		}
 
 	void run()
@@ -261,6 +291,25 @@ public:
 				policy = Regulation;
 				}
 			}
+
+		ROS_INFO("Changing the weight of NMPC matrices!");
+		Wdiag_xq	= config.Wdiag_xq;
+		Wdiag_yq	= config.Wdiag_yq;
+		Wdiag_zq	= config.Wdiag_zq;
+		Wdiag_q1	= config.Wdiag_q1;
+		Wdiag_q2	= config.Wdiag_q2;
+		Wdiag_q3	= config.Wdiag_q3;
+		Wdiag_q4	= config.Wdiag_q4;
+		Wdiag_vbx	= config.Wdiag_vbx;
+		Wdiag_vby	= config.Wdiag_vby;
+		Wdiag_vbz	= config.Wdiag_vbz;
+		Wdiag_wx	= config.Wdiag_wx;
+		Wdiag_wy	= config.Wdiag_wy;
+		Wdiag_wz	= config.Wdiag_wz;
+		Wdiag_w1	= config.Wdiag_w1;
+		Wdiag_w2	= config.Wdiag_w2;
+		Wdiag_w3	= config.Wdiag_w3;
+		Wdiag_w4	= config.Wdiag_w4;
 
 		ROS_INFO_STREAM(
 			fixed << showpos << "Quad status" << endl
@@ -374,18 +423,18 @@ public:
 
 	void iteration(const crazyflie_controller::CrazyflieStateStampedPtr& msg)
 		{
-		ROS_INFO_STREAM("mpc iteration");
-		ROS_WARN("mpc iteration");
 		try
 			{
+
+			// --- Track trajectory
+			#if TRACK_TRAJ
 
 			if(iter > N_STEPS)
 				{
 				ROS_INFO_STREAM("Trajectory is over");
-				// ros::shutdown();
+				ros::shutdown();
 				}
 
-			# if 0
 			if(iter >= N_STEPS-N)
 				{
 				for (k = 0; k < N_STEPS-iter; k++)
@@ -451,7 +500,11 @@ public:
 				acados_in.yref[k * NY + 16] = precomputed_traj[iter + k][16];
 				}
 			++iter;
+
 			#endif
+
+			// --- Regulation
+			#if REGULATION
 
 			for (k = 0; k < N; k++){
 				acados_in.yref[k * NY + 0] = xq_des;	// xq
@@ -486,8 +539,49 @@ public:
 			acados_in.yref_e[k * NY + 10] = 0.00;	// wx
 			acados_in.yref_e[k * NY + 11] = 0.00;	// wy
 			acados_in.yref_e[k * NY + 12] = 0.00;	// wz
+			#endif
 
-			// read msg
+			// --- Set Weights
+			for (ii = 0; ii < (NU+NX)*(NU*NX); ii++) {
+				acados_in.W[ii] = 0.0;
+			}
+			for (ii = 0; ii < (NX)*(NX); ii++) {
+				acados_in.WN[ii] = 0.0;
+			}
+
+			acados_in.W[0+0*(NU+NX)]   = Wdiag_xq;
+			acados_in.W[1+1*(NU+NX)]   = Wdiag_yq;
+			acados_in.W[2+2*(NU+NX)]   = Wdiag_zq;
+			acados_in.W[3+3*(NU+NX)]   = Wdiag_q1;
+			acados_in.W[4+4*(NU+NX)]   = Wdiag_q2;
+			acados_in.W[5+5*(NU+NX)]   = Wdiag_q3;
+			acados_in.W[6+6*(NU+NX)]   = Wdiag_q4;
+			acados_in.W[7+7*(NU+NX)]   = Wdiag_vbx;
+			acados_in.W[8+8*(NU+NX)]   = Wdiag_vby;
+			acados_in.W[9+9*(NU+NX)]   = Wdiag_vbz;
+			acados_in.W[10+10*(NU+NX)] = Wdiag_wx;
+			acados_in.W[11+11*(NU+NX)] = Wdiag_wy;
+			acados_in.W[12+12*(NU+NX)] = Wdiag_wz;
+			acados_in.W[13+13*(NU+NX)] = Wdiag_w1;
+			acados_in.W[14+14*(NU+NX)] = Wdiag_w2;
+			acados_in.W[15+15*(NU+NX)] = Wdiag_w3;
+			acados_in.W[16+16*(NU+NX)] = Wdiag_w4;
+
+			acados_in.WN[0+0*(NX)]   = Wdiag_xq*WN_factor;
+			acados_in.WN[1+1*(NX)]   = Wdiag_yq*WN_factor;
+			acados_in.WN[2+2*(NX)]   = Wdiag_zq*WN_factor;
+			acados_in.WN[3+3*(NX)]   = Wdiag_q1*WN_factor;
+			acados_in.WN[4+4*(NX)]   = Wdiag_q2*WN_factor;
+			acados_in.WN[5+5*(NX)]   = Wdiag_q3*WN_factor;
+			acados_in.WN[6+6*(NX)]   = Wdiag_q4*WN_factor;
+			acados_in.WN[7+7*(NX)]   = Wdiag_vbx*WN_factor;
+			acados_in.WN[8+8*(NX)]   = Wdiag_vby*WN_factor;
+			acados_in.WN[9+9*(NX)]   = Wdiag_vbz*WN_factor;
+			acados_in.WN[10+10*(NX)] = Wdiag_wx*WN_factor;
+			acados_in.WN[11+11*(NX)] = Wdiag_wy*WN_factor;
+			acados_in.WN[12+12*(NX)] = Wdiag_wz*WN_factor;
+
+			// --- Read Estimate
 			// position
 			acados_in.x0[xq] = msg->pos.x;
 			acados_in.x0[yq] = msg->pos.y;
@@ -509,9 +603,7 @@ public:
 			acados_in.x0[wy] = msg->rates.y;
 			acados_in.x0[wz] = msg->rates.z;
 
-			//---------------------------------------
-			// acados NMPC
-			//---------------------------------------
+			// --- acados NMPC
 
 			ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "lbx", acados_in.x0);
 			ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "ubx", acados_in.x0);
@@ -531,11 +623,19 @@ public:
 				}
 			ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "yref", acados_in.yref_e);
 
+			#if SET_WEIGHTS
+			for (ii = 0; ii < N; ii++)
+				{
+				ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, ii, "W", acados_in.W);
+				}
+			ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "W", acados_in.WN);
+			#endif
+
 			// set constraints
-			if (FIXED_U0 == 1) {
+			#if FIXED_U0
 				ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "lbu", acados_out.u1);
 				ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "ubu", acados_out.u1);
-			}
+			#endif
 
 			// call solver
 			acados_status = acados_solve();
@@ -601,9 +701,8 @@ public:
 
 			p_bodytwist.publish(bodytwist);
 
-			ROS_INFO_STREAM("Iteration: " << iter << endl);
-
-			#if WRITE_OPENLOOP_TRAJ
+			// --- Publish openloop
+			#if PUB_OPENLOOP_TRAJ
 
 			crazyflie_controller::CrazyflieOpenloopTraj traj_msg;
 			traj_msg.header.stamp = ros::Time::now();
@@ -644,6 +743,7 @@ public:
 			#endif
 
 			#if WRITE_FULL_LOG
+
 			// Log current state x0 and acados output x1 and x2
 			ofstream motorsLog("full_log.txt", std::ios_base::app | std::ios_base::out);
 			if (motorsLog.is_open())
