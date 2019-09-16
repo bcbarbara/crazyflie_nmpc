@@ -28,7 +28,6 @@
       genericLogTopicFrequencies: [65]
       genericLogTopic_log1_Variables: ["motor.m1", "motor.m2", "motor.m3", "motor.m4"]
 </rosparam>
-
 		</node>
 
 		<node
@@ -37,7 +36,10 @@
 			type="publish_external_position_eraptor.py"
 			output="screen">
 		</node>
+
 	</group>
+
+	<include file="$(find cortex_stream)/launch/cortex_stream.launch"/>
 
 	<node name="acados_plot_state"
 				pkg="rqt_plot"
@@ -51,21 +53,19 @@
 				pkg="rosbag"
 				type="record"
 				args="record -o crazyflie_predictor.bag
-					/crazyflie/cmd_vel
-					/crazyflie/acados_traj
+					/cf_mpc/openloop_traj
 					/cf_estimator/state_estimate
+					/crazyflie/cmd_vel
 					/crazyflie/euler_angles"
 				>
 	</node>
 
-	<include file="$(find cortex_stream)/launch/cortex_stream.launch"/>
-
 	<node name="nmpc" pkg="crazyflie_controller" type="acados_mpc" output="screen" ns="crazyflie">
-		<param name="ref_traj" value="$(find crazyflie_controller)/traj/helix_traj.txt"/>
+		<param name="ref_traj" value="$(find crazyflie_controller)/traj/smooth_step.txt"/>
 	</node>
 
 	<node name="estimator" pkg="crazyflie_controller" type="acados_estimator" output="screen" ns="crazyflie">
-		<param name="delay" value='0.03'/>
+		<param name="delay" value='0.06'/>
 	</node>
 
 </launch>

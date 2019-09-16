@@ -189,7 +189,6 @@ class ESTIMATOR
 
 	ESTIMATOR(ros::NodeHandle& n, double delay)
 		{
-		delay = 0.02;
 
 		int status = 0;
 		status = crazyflie_acados_sim_create();
@@ -483,9 +482,9 @@ class ESTIMATOR
 	void eRaptorCallback(const geometry_msgs::PointStampedConstPtr& msg)
 		{
 		// Position of crazyflie marker
-		actual_x = msg->point.x;
-		actual_y = msg->point.y;
-		actual_z = msg->point.z;
+		actual_x = msg->point.x +2.474;
+		actual_y = msg->point.y +0.713;
+		actual_z = msg->point.z -0.755;
 		}
 
 	void eulerCallback(const geometry_msgs::Vector3StampedPtr& msg)
@@ -615,11 +614,8 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "cf_estimator");
 	ros::NodeHandle n("~");
 
-	double frequency = 65.0;
-	double delay = 0.02;
-	// n.param("frequency", frequency, 65.0);
-	// n.param("delay", delay, 20.0);
-
+	double frequency = 66.6;
+	double delay;
 	n.getParam("delay", delay);
 
 	ESTIMATOR est(n, delay);
