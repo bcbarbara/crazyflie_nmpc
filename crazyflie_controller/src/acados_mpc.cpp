@@ -722,10 +722,10 @@ public:
 				crazyflie_state.vel.x    = acados_out.xi[vbx];
 				crazyflie_state.vel.y    = acados_out.xi[vby];
 				crazyflie_state.vel.z    = acados_out.xi[vbz];
+				crazyflie_state.quat.w   = acados_out.xi[q1];
 				crazyflie_state.quat.x   = acados_out.xi[q2];
 				crazyflie_state.quat.y   = acados_out.xi[q3];
 				crazyflie_state.quat.z   = acados_out.xi[q4];
-				crazyflie_state.quat.w   = acados_out.xi[q1];
 				crazyflie_state.rates.x  = acados_out.xi[wx];
 				crazyflie_state.rates.y  = acados_out.xi[wy];
 				crazyflie_state.rates.z  = acados_out.xi[wz];
