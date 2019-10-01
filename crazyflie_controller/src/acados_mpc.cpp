@@ -79,14 +79,14 @@ using std::showpos;
 #define pi  3.14159265358979323846
 #define g0 9.80665
 
-#define WEIGHT_MATRICES 1
-#define SET_WEIGHTS 1
+#define WEIGHT_MATRICES 0
+#define SET_WEIGHTS 0
 #define TRACK_TRAJ 0
 #define REGULATION 1
-#define PUB_OPENLOOP_TRAJ 1
+#define RECONFIGURE 0
+#define PUB_OPENLOOP_TRAJ 0
 #define FIXED_U0 0
 #define READ_CASADI_TRAJ 0
-#define WRITE_FULL_LOG 0
 
 class NMPC
 	{
@@ -237,7 +237,10 @@ public:
 		else{
 			ROS_INFO_STREAM("Number of steps: " << N_STEPS << endl);
 		}
-		//
+		// Initialize dynamic reconfigure options
+		xq_des = 0;
+		yq_des = 0;
+		zq_des = 0;
 
 		// Set number of trajectory iterations to zero initially
 		iter = 0;
@@ -264,10 +267,14 @@ public:
 	void run()
 		{
 		ROS_DEBUG("Setting up the dynamic reconfigure panel and server");
+
+		#if RECONFIGURE
+
 		dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsConfig> server;
 		dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsConfig>::CallbackType f;
 		f = boost::bind(&NMPC::callback_dynamic_reconfigure, this, _1, _2);
 		server.setCallback(f);
+		#endif
 
 		ros::spin();
 		}
@@ -370,34 +377,6 @@ public:
 		angle.psi	= psi;
 
 		return angle;
-		}
-
-	Quaterniond euler2quatern(euler angle)
-		{
-
-		Quaterniond q;
-
-		double cosPhi = cos(angle.phi*0.5);
-		double sinPhi = sin(angle.phi*0.5);
-
-		double cosTheta = cos(angle.theta*0.5);
-		double sinTheta = sin(angle.theta*0.5);
-
-		double cosPsi = cos(angle.psi*0.5);
-		double sinPsi = sin(angle.psi*0.5);
-
-		// Convention according the firmware of the crazyflie
-		q.w() = cosPsi*cosTheta*cosPhi + sinPsi*sinTheta*sinPhi;
-		q.x() = -(cosPsi*cosTheta*sinPhi - sinPsi*sinTheta*cosPhi);
-		q.y() = -(cosPsi*sinTheta*cosPhi + sinPsi*cosTheta*sinPhi);
-		q.z() = -(sinPsi*cosTheta*cosPhi - cosPsi*sinTheta*sinPhi);
-
-		if(q.w() < 0){
-			q.w() = -q.w();
-			q.vec() = -q.vec();
-		}
-
-		return q;
 		}
 
 	double deg2Rad(double deg)
@@ -638,7 +617,7 @@ public:
 			#endif
 
 			// call solver
-			acados_status = acados_solve();
+			// acados_status = acados_solve();
 
 			// assign output signals
 			acados_out.status = acados_status;
@@ -682,9 +661,20 @@ public:
 			q_acados_out.z() = acados_out.x2[q4];
 			q_acados_out.normalize();
 
+			// replay input
+			Quaterniond q_acados_in;
+			q_acados_in.w() = acados_in.x0[q1];
+			q_acados_in.x() = acados_in.x0[q2];
+			q_acados_in.y() = acados_in.x0[q3];
+			q_acados_in.z() = acados_in.x0[q4];
+			q_acados_in.normalize();
+
+
 			// Convert acados output quaternion to desired euler angles
 			euler eu_imu;
-			eu_imu = quatern2euler(&q_acados_out);
+			// eu_imu = quatern2euler(&q_acados_out);
+
+			eu_imu = quatern2euler(&q_acados_in);
 
 			// Publish real control inputs
 			geometry_msgs::Twist bodytwist;
@@ -693,11 +683,14 @@ public:
 			bodytwist.linear.x  = -rad2Deg(eu_imu.theta);
 			// linear_y -> roll
 			bodytwist.linear.y  = rad2Deg(eu_imu.phi);
+
 			bodytwist.linear.z  = krpm2pwm(
 				(acados_out.u1[w1]+acados_out.u1[w2]+acados_out.u1[w3]+acados_out.u1[w4])/4
 			);
 			bodytwist.angular.z = rad2Deg(acados_out.x1[wz]);
-			if  ( bodytwist.linear.z > 64000 ) bodytwist.linear.z = 64000;
+
+			bodytwist.linear.z = 100;
+			bodytwist.angular.z = 0;
 
 			p_bodytwist.publish(bodytwist);
 

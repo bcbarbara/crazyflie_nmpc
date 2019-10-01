@@ -32,6 +32,7 @@ add_message_files(
 	CrazyflieState.msg
 	PropellerSpeeds.msg
 	PropellerSpeedsStamped.msg
+	EulerAnglesStamped.msg
 	CrazyflieStateStamped.msg
 	CrazyflieOpenloopTraj.msg
 )
