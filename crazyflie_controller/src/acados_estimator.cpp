@@ -25,6 +25,7 @@
 #include <geometry_msgs/QuaternionStamped.h>
 #include <geometry_msgs/Vector3Stamped.h>
 #include "crazyflie_controller/GenericLogData.h"
+#include "crazyflie_controller/EulerAnglesStamped.h"
 #include <crazyflie_controller/CrazyflieStateStamped.h>
 #include <crazyflie_controller/PropellerSpeedsStamped.h>
 
@@ -35,7 +36,6 @@
 #include "boost/thread/mutex.hpp"
 
 // acados
-//
 #include "acados/utils/print.h"
 #include "acados_c/ocp_nlp_interface.h"
 #include "acados_c/external_function_interface.h"
@@ -78,26 +78,26 @@ using std::showpos;
 class ESTIMATOR
 	{
 	enum systemStates{
-	  xq = 0,
-	  yq = 1,
-	  zq = 2,
-	  qw = 3,
-	  qx = 4,
-	  qy = 5,
-	  qz = 6,
-	  vbx = 7,
-	  vby = 8,
-	  vbz = 9,
-	  wx = 10,
-	  wy = 11,
-	  wz = 12
+		xq = 0,
+		yq = 1,
+		zq = 2,
+		qw = 3,
+		qx = 4,
+		qy = 5,
+		qz = 6,
+		vbx = 7,
+		vby = 8,
+		vbz = 9,
+		wx = 10,
+		wy = 11,
+		wz = 12
 	};
 
 	enum controlInputs{
-	  w1 = 0,
-	  w2 = 1,
-	  w3 = 2,
-	  w4 = 3
+		w1 = 0,
+		w2 = 1,
+		w3 = 2,
+		w4 = 3
 	};
 
 	struct euler{
@@ -120,6 +120,7 @@ class ESTIMATOR
 
 	// control
 	ros::Publisher p_cf_state;
+	ros::Publisher p_cf_euler;
 	// log
 	// ros::Publisher p_cf_quat;
 	// ros::Publisher p_cf_lvb;
@@ -201,6 +202,8 @@ class ESTIMATOR
 		// publish crazyflie state
 		p_cf_state = n.advertise<crazyflie_controller::CrazyflieStateStamped>(
 			"/cf_estimator/state_estimate",1);
+		p_cf_euler = n.advertise<crazyflie_controller::EulerAnglesStamped>(
+			"/cf_estimator/euler_angles", 5);
 
 		// subscriber for the motion capture system position
 		s_eRaptor = n.subscribe("/crazyflie/external_position", 5, &ESTIMATOR::eRaptorCallback, this);
@@ -356,6 +359,7 @@ class ESTIMATOR
 			q.w() = -q.w();
 			q.vec() = -q.vec();
 			}
+
 		return q;
 		}
 
@@ -482,17 +486,29 @@ class ESTIMATOR
 	void eRaptorCallback(const geometry_msgs::PointStampedConstPtr& msg)
 		{
 		// Position of crazyflie marker
-		actual_x = msg->point.x +2.474;
-		actual_y = msg->point.y +0.713;
-		actual_z = msg->point.z -0.755;
+		// actual_x = msg->point.x +2.474;
+		// actual_y = msg->point.y +0.713;
+		// actual_z = msg->point.z -0.755;
+		actual_x = msg->point.x;
+		actual_y = msg->point.y;
+		actual_z = msg->point.z;
 		}
 
 	void eulerCallback(const geometry_msgs::Vector3StampedPtr& msg)
 		{
 		// Euler angles
-		actual_roll  = msg->vector.x;
-		actual_pitch = -msg->vector.y; // the pitch coming from the IMU seems to have an inverted sign (for no reason)
-		actual_yaw = msg->vector.z;
+		actual_roll  = - msg->vector.x;
+		// the pitch coming from the IMU seems to have an inverted sign (for no reason)
+		actual_pitch = - msg->vector.y;
+		actual_yaw   = - msg->vector.z;
+
+		crazyflie_controller::EulerAnglesStamped euler_msg;
+		euler_msg.header = msg->header;
+		euler_msg.roll = actual_roll;
+		euler_msg.pitch = actual_pitch;
+		euler_msg.yaw = actual_yaw;
+
+		p_cf_euler.publish(euler_msg);
 		}
 
 	void imuCallback(const sensor_msgs::Imu::ConstPtr& msg)
@@ -594,10 +610,10 @@ class ESTIMATOR
 		crazyflie_state.vel.x    = sim_acados_out.xn[vbx];
 		crazyflie_state.vel.y    = sim_acados_out.xn[vby];
 		crazyflie_state.vel.z    = sim_acados_out.xn[vbz];
+		crazyflie_state.quat.w   = sim_acados_out.xn[qw];
 		crazyflie_state.quat.x   = sim_acados_out.xn[qx];
 		crazyflie_state.quat.y   = sim_acados_out.xn[qy];
 		crazyflie_state.quat.z   = sim_acados_out.xn[qz];
-		crazyflie_state.quat.w   = sim_acados_out.xn[qw];
 		crazyflie_state.rates.x  = sim_acados_out.xn[wx];
 		crazyflie_state.rates.y  = sim_acados_out.xn[wy];
 		crazyflie_state.rates.z  = sim_acados_out.xn[wz];
