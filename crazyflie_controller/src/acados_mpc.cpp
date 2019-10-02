@@ -362,14 +362,18 @@ public:
 
 		euler angle;
 
-		double R11 = q->w()*q->w()+q->x()*q->x()-q->y()*q->y()-q->z()*q->z();
-		double R21 = 2*(q->x()*q->y()+q->w()*q->z());
-		double R31 = 2*(q->x()*q->z()-q->w()*q->y());
-		double R32 = 2*(q->y()*q->z()+q->w()*q->x());
-		double R33 = q->w()*q->w()-q->x()*q->x()-q->y()*q->y()+q->z()*q->z();
+		double R11 = 2*(q->w()*q->w()+q->x()*q->x())-1;
+		double R12 = 2*(q->x()*q->y()+q->w()*q->z());
+		double R13 = 2*(q->x()*q->z()-q->w()*q->y());
+		double R21 = 2*(q->x()*q->y()-q->w()*q->z());
+		double R22 = 2*(q->w()*q->w()+q->y()*q->y())-1;
+		double R23 = 2*(q->y()*q->z()+q->w()*q->x());
+		double R31 = 2*(q->x()*q->z()+q->w()*q->y());
+		double R32 = 2*(q->y()*q->z()-q->w()*q->x());
+		double R33 = 2*(q->w()*q->w()+q->z()*q->z())-1;
 
 		double phi	 = atan2(R32, R33);
-		double theta = asin(-R31);
+		double theta = -asin(R31);
 		double psi	 = atan2(R21, R11);
 
 		angle.phi	= phi;

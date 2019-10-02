@@ -121,12 +121,14 @@ class ESTIMATOR
 	// control
 	ros::Publisher p_cf_state;
 	ros::Publisher p_cf_euler;
+	ros::Publisher p_cf_quaternion;
 	// log
 	// ros::Publisher p_cf_quat;
 	// ros::Publisher p_cf_lvb;
 	// ros::Publisher p_cf_avb;
 	// ros::Publisher p_cf_lpg;
 	//
+	ros::Subscriber s_sensorfusion6;
 	ros::Subscriber s_imu;
 	ros::Subscriber s_eRaptor;
 	ros::Subscriber s_euler;
@@ -172,6 +174,12 @@ class ESTIMATOR
 	float actual_y;
 	float actual_z;
 
+	// Variables for sensor fusion 6
+	float actual_qw;
+	float actual_qx;
+	float actual_qy;
+	float actual_qz;
+
 	int32_t
 		actual_m1,
 		actual_m2,
@@ -213,6 +221,8 @@ class ESTIMATOR
 		s_euler = n.subscribe("/crazyflie/euler_angles", 5, &ESTIMATOR::eulerCallback, this);
 		// subscriber for the motor speeds applied
 		s_motors = n.subscribe("/crazyflie/acados_motvel",5, &ESTIMATOR::motorsCallback, this);
+		// subscriber for sensor fusion returning the quaternion
+		s_sensorfusion6 = n.subscribe("/crazyflie/sf6",5, &ESTIMATOR::sensorfusion6Callback, this);
 
 		// logs
 		// subscriber for the motors rpm
@@ -312,28 +322,6 @@ class ESTIMATOR
 		// p_cf_lpg.publish(cf_st_lpg);
 		// }
 
-	euler quatern2euler(Quaterniond* q)
-		{
-
-		euler angle;
-
-		double R11 = q->w()*q->w()+q->x()*q->x()-q->y()*q->y()-q->z()*q->z();
-		double R21 = 2*(q->x()*q->y()+q->w()*q->z());
-		double R31 = 2*(q->x()*q->z()-q->w()*q->y());
-		double R32 = 2*(q->y()*q->z()+q->w()*q->x());
-		double R33 = q->w()*q->w()-q->x()*q->x()-q->y()*q->y()+q->z()*q->z();
-
-		double phi = atan2(R32, R33);
-		double theta = asin(-R31);
-		double psi = atan2(R21, R11);
-
-		angle.phi = phi;
-		angle.theta = theta;
-		angle.psi = psi;
-
-		return angle;
-		}
-
 	Quaterniond euler2quatern(euler angle)
 		{
 
@@ -349,10 +337,14 @@ class ESTIMATOR
 		double sinPsi = sin(angle.psi*0.5);
 
 		// Convention according the firmware of the crazyflie
-		q.w() = cosPsi*cosTheta*cosPhi + sinPsi*sinTheta*sinPhi;
+		q.w() = cosPhi*cosTheta*cosPsi + sinPhi*sinTheta*sinPsi;
+		/*q.x() = sinPhi*cosTheta*cosPsi - cosPhi*sinTheta*sinPsi;
+		q.y() = cosPhi*sinTheta*cosPsi - sinPhi*cosTheta*sinPsi;
+		q.z() = cosPhi*cosTheta*sinPsi - sinPhi*sinTheta*cosPsi;*/
 		q.x() = -(cosPsi*cosTheta*sinPhi - sinPsi*sinTheta*cosPhi);
 		q.y() = -(cosPsi*sinTheta*cosPhi + sinPsi*cosTheta*sinPhi);
 		q.z() = -(sinPsi*cosTheta*cosPhi - cosPsi*sinTheta*sinPhi);
+
 
 		if(q.w() < 0)
 			{
@@ -425,7 +417,6 @@ class ESTIMATOR
 		{
 		 // This is the convertion between
 		// quaternion orientation to rotation matrix
-		// from EARTH to BODY (considering ZYX euler sequence)
 		Matrix3d Sq;
 		Vector3d vb;
 
@@ -438,7 +429,6 @@ class ESTIMATOR
 		double S31 = 2*(q->x()*q->z()+q->w()*q->y());
 		double S32 = 2*(q->y()*q->z()-q->w()*q->x());
 		double S33 = 2*(q->w()*q->w()+q->z()*q->z())-1;
-
 
 		Sq << S11,S12,S13,
 			   S21,S22,S23,
@@ -457,6 +447,14 @@ class ESTIMATOR
 	double rad2Deg(double rad)
 		{
 		return rad * 180.0 / pi;
+		}
+
+	void sensorfusion6Callback(const crazyflie_controller::GenericLogDataConstPtr& msg)
+		{
+			actual_qw = msg->values[0];
+			actual_qx = msg->values[1];
+			actual_qy = msg->values[2];
+			actual_qz = msg->values[3];
 		}
 
 	void motorsCallback(const crazyflie_controller::PropellerSpeedsStampedPtr& msg)
@@ -497,10 +495,9 @@ class ESTIMATOR
 	void eulerCallback(const geometry_msgs::Vector3StampedPtr& msg)
 		{
 		// Euler angles
-		actual_roll  = - msg->vector.x;
-		// the pitch coming from the IMU seems to have an inverted sign (for no reason)
-		actual_pitch = - msg->vector.y;
-		actual_yaw   = - msg->vector.z;
+		actual_roll  =  msg->vector.x;
+		actual_pitch =  msg->vector.y;
+		actual_yaw   =  msg->vector.z;
 
 		crazyflie_controller::EulerAnglesStamped euler_msg;
 		euler_msg.header = msg->header;
@@ -551,15 +548,23 @@ class ESTIMATOR
 		Quaterniond q_imu = euler2quatern(eu);
 		q_imu.normalize();
 
+		/*Quaterniond q_imu;
+		q_imu.w() = actual_qw;
+		q_imu.x() = actual_qx;
+		q_imu.y() = actual_qy;
+		q_imu.z() = actual_qz;
+		q_imu.normalize();*/
+
 		sim_acados_in.x0[qw] = q_imu.w();
 		sim_acados_in.x0[qx] = q_imu.x();
 		sim_acados_in.x0[qy] = q_imu.y();
 		sim_acados_in.x0[qz] = q_imu.z();
 
-		// --- Body linear velocities
+		// -- inertial linear velocities
 		Vector3d vi_mat;
 		vi_mat = estimateWordLinearVelocities(dt,t0);
 
+		// --- Body linear velocities
 		Vector3d vb_mat;
 		vb_mat = rotateLinearVeloE2B(&q_imu,vi_mat);
 
