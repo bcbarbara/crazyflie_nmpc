@@ -13,7 +13,6 @@
 			<param name="tf_prefix" value="crazyflie" />
 			<param name="enable_logging" value="True" />
 			<param name="enable_logging_battery" value="False" />
-			<param name="enable_logging_motors" value="False" />
 			<param name="enable_logging_euler_angles" value="True" />
 			<param name="enable_logging_kf_quaternion" value="False" />
 			<param name="enable_logging_onboard_position" value="False" />
@@ -31,34 +30,30 @@
 			type="publish_external_position_eraptor.py"
 			output="screen">
 		</node>
-
 	</group>
 
-	<include file="$(find cortex_stream)/launch/cortex_stream.launch"/>
+  <node launch-prefix="run_tmux_swayv " name="thrust_plot"
+        pkg="rqt_plot"
+        type="rqt_plot"
+        args="/crazyflie/cmd_vel/linear"
+	/>
+  <node launch-prefix="run_tmux_swayv " name="pos_plot"
+        pkg="rqt_plot"
+        type="rqt_plot"
+        args="/crazyflie/external_position/point"
+	/>
 
-	<node name="acados_bag"
-				pkg="rosbag"
-				type="record"
-<<<<<<< HEAD
-				args="record -o /home/barbara/crazyflie.bag /crazyflie/cmd_vel /crazyflie/acados_traj/vector /crazyflie/external_position/point /crazyflie/euler_angles/vector /crazyflie/quat /crazyflie/linear_velo /crazyflie/angular_velo"
-	/-->
+  <node launch-prefix="run_tmux_swayv " name="pos_plot"
+        pkg="rqt_plot"
+        type="rqt_plot"
+        args="/crazyflie/external_position/point"
+	/>
+
 
 	<!-- run eraptor bridge -->
 	<include file="$(find cortex_stream)/launch/cortex_stream.launch"/>
 
-	<node name="nmpc" pkg="crazyflie_controller" type="acados_debug" output="screen" ns="crazyflie">
-		<param name="ref_traj" value="$(find crazyflie_controller)/traj/smooth_step.txt"/>
-  	</node>
-
-	<node pkg="rqt_reconfigure" name="crazyflie_reconf" type="rqt_reconfigure" output="screen">
-=======
-				args="record -o /home/tom/crazyflie.bag /crazyflie/external_position /crazyflie/cmd_vel /crazyflie/acados_traj/vector /external_position /crazyflie/external_position/point /crazyflie/euler_angles/vector /crazyflie/quat /crazyflie/linear_velo /crazyflie/angular_velo"
-				>
->>>>>>> ce2093583099413f1ee7c7c23124b7519baba97c
-	</node>
-
-<node name="nmpc" pkg="crazyflie_controller" type="acados_debug" output="screen" ns="crazyflie">
-<param name="ref_traj" value="$(find crazyflie_controller)/traj/helix_traj.txt"/>
-</node>
+	<include launch-prefix="run_tmux " file="$(find crazyflie_demo)/launch/nmpc_debug.launch">
+	</include>
 
 </launch>
