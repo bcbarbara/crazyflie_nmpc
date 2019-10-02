@@ -7,13 +7,12 @@
 	</include>
 
 	<group ns="crazyflie">
-
 		<node pkg="crazyflie_driver" type="crazyflie_add" name="crazyflie_add" output="screen">
 			<param name="uri" value="$(arg uri)" />
 			<param name="tf_prefix" value="crazyflie" />
 			<param name="enable_logging" value="True" />
 			<param name="enable_logging_battery" value="False" />
-			<param name="enable_logging_motors" value="False" />
+			<param name="enable_logging_motors" value="True" />
 			<param name="enable_logging_euler_angles" value="True" />
 			<param name="enable_logging_kf_quaternion" value="False" />
 			<param name="enable_logging_onboard_position" value="False" />
@@ -23,6 +22,12 @@
 			<param name="enable_logging_pose" value="False" />
 			<param name="enable_logging_pressure" value="False" />
 			<param name="enable_logging_temperature" value="False" />
+
+<rosparam>
+      genericLogTopics: ["log1"]
+      genericLogTopicFrequencies: [65]
+      genericLogTopic_log1_Variables: ["motor.m1", "motor.m2", "motor.m3", "motor.m4"]
+</rosparam>
 		</node>
 
 		<node
@@ -36,15 +41,31 @@
 
 	<include file="$(find cortex_stream)/launch/cortex_stream.launch"/>
 
+	<node name="acados_plot_state"
+				pkg="rqt_plot"
+				type="rqt_plot"
+				args="
+				/cf_estimator/state_estimate/pos
+				"
+	/>
+
 	<node name="acados_bag"
 				pkg="rosbag"
 				type="record"
-				args="record -o /home/tom/crazyflie.bag /crazyflie/external_position /crazyflie/cmd_vel /crazyflie/acados_traj/vector /external_position /crazyflie/external_position/point /crazyflie/euler_angles/vector /crazyflie/quat /crazyflie/linear_velo /crazyflie/angular_velo"
+				args="record -o crazyflie_predictor.bag
+					/cf_mpc/openloop_traj
+					/cf_estimator/state_estimate
+					/crazyflie/cmd_vel
+					/crazyflie/euler_angles"
 				>
 	</node>
 
-<node name="nmpc" pkg="crazyflie_controller" type="acados_debug" output="screen" ns="crazyflie">
-<param name="ref_traj" value="$(find crazyflie_controller)/traj/helix_traj.txt"/>
-</node>
+	<node name="nmpc" pkg="crazyflie_controller" type="acados_mpc" output="screen" ns="crazyflie">
+		<param name="ref_traj" value="$(find crazyflie_controller)/traj/smooth_step.txt"/>
+	</node>
+
+	<node name="estimator" pkg="crazyflie_controller" type="acados_estimator" output="screen" ns="crazyflie">
+		<param name="delay" value='0.06'/>
+	</node>
 
 </launch>
