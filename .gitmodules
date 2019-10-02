@@ -4,3 +4,6 @@
 [submodule "crazyflie_tools"]
 	path = crazyflie_tools
 	url = https://github.com/whoenig/crazyflie_tools
+[submodule "acados"]
+	path = acados
+	url = https://github.com/acados/acados
