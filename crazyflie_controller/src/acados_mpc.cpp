@@ -185,8 +185,7 @@ class NMPC
 
 	reference_mode policy;
 
-	// Variable for storing he optimal trajectory
-	// Variable for storing he optimal trajectory
+	// Variable for storing the optimal trajectory
 	std::vector<std::vector<double>> precomputed_traj;
 	int N_STEPS,iter;
 
@@ -525,10 +524,10 @@ public:
 			#endif
 
 			// --- Set Weights
-			for (ii = 0; ii < (NU+NX)*(NU*NX); ii++) {
+			for (ii = 0; ii < ((NY)*(NY)); ii++) {
 				acados_in.W[ii] = 0.0;
 			}
-			for (ii = 0; ii < (NX)*(NX); ii++) {
+			for (ii = 0; ii < ((NX)*(NX)); ii++) {
 				acados_in.WN[ii] = 0.0;
 			}
 
@@ -621,7 +620,7 @@ public:
 			#endif
 
 			// call solver
-			// acados_status = acados_solve();
+			acados_status = acados_solve();
 
 			// assign output signals
 			acados_out.status = acados_status;
@@ -631,13 +630,13 @@ public:
 			// get solution
 			ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 0, "u", (void *)acados_out.u0);
 
-			// get solution at stage 1
+			// get solution at stage N = 1
 			ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 1, "u", (void *)acados_out.u1);
 
-			// get next stage
+			// get next stage N = 1
 			ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 1, "x", (void *)acados_out.x1);
 
-			// get stage 2 which compensates 15 ms for the delay
+			// get stage N = 2 which compensates 15 ms for the delay
 			ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 2, "x", (void *)acados_out.x2);
 
 			// publish acados output
@@ -659,10 +658,10 @@ public:
 
 			// Select the set of optimal states to calculate the real cf control inputs
 			Quaterniond q_acados_out;
-			q_acados_out.w() = acados_out.x2[q1];
-			q_acados_out.x() = acados_out.x2[q2];
-			q_acados_out.y() = acados_out.x2[q3];
-			q_acados_out.z() = acados_out.x2[q4];
+			q_acados_out.w() = acados_out.x1[q1];
+			q_acados_out.x() = acados_out.x1[q2];
+			q_acados_out.y() = acados_out.x1[q3];
+			q_acados_out.z() = acados_out.x1[q4];
 			q_acados_out.normalize();
 
 			// replay input
@@ -676,9 +675,9 @@ public:
 
 			// Convert acados output quaternion to desired euler angles
 			euler eu_imu;
-			// eu_imu = quatern2euler(&q_acados_out);
+			eu_imu = quatern2euler(&q_acados_out);
 
-			eu_imu = quatern2euler(&q_acados_in);
+			//eu_imu = quatern2euler(&q_acados_in);
 
 			// Publish real control inputs
 			geometry_msgs::Twist bodytwist;
@@ -687,14 +686,15 @@ public:
 			bodytwist.linear.x  = -rad2Deg(eu_imu.theta);
 			// linear_y -> roll
 			bodytwist.linear.y  = rad2Deg(eu_imu.phi);
-
+			// linear_z -> thrust
 			bodytwist.linear.z  = krpm2pwm(
-				(acados_out.u1[w1]+acados_out.u1[w2]+acados_out.u1[w3]+acados_out.u1[w4])/4
+				(propellerspeeds.w1+propellerspeeds.w2+propellerspeeds.w3+propellerspeeds.w4)/4
 			);
+			// angular_z -> yaw rate
 			bodytwist.angular.z = rad2Deg(acados_out.x1[wz]);
 
-			bodytwist.linear.z = 100;
-			bodytwist.angular.z = 0;
+			//bodytwist.linear.z = 100;
+			//bodytwist.angular.z = 0;
 
 			p_bodytwist.publish(bodytwist);
 
