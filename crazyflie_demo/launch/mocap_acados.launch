@@ -31,6 +31,7 @@
 			type="publish_external_position_eraptor.py"
 			output="screen">
 		</node>
+<<<<<<< HEAD
 
 	</group>
 
@@ -64,34 +65,17 @@
 				type="rqt_plot"
 				args="/crazyflie/acados_motvel"
 	/>
+=======
+>>>>>>> 08bb2467672c42fa7d6b25b73471d43c6f461f37
 
-	<node name="cf_euler_angles"
-				pkg="rqt_plot"
-				type="rqt_plot"
-				args="/crazyflie/euler_angles/vector"
-	/>
+	</group>
 
-	<node name="cf_quaternion"
-				pkg="rqt_plot"
-				type="rqt_plot"
-				args="/crazyflie/quat"
-	/>
-
-	<node name="cf_linear_velo"
-				pkg="rqt_plot"
-				type="rqt_plot"
-				args="/crazyflie/linear_velo"
-	/>
-
-	<node name="cf_angular_velo"
-				pkg="rqt_plot"
-				type="rqt_plot"
-				args="/crazyflie/angular_velo"
-	/-->
+	<include file="$(find cortex_stream)/launch/cortex_stream.launch"/>
 
 	<node name="acados_bag"
 				pkg="rosbag"
 				type="record"
+<<<<<<< HEAD
 				args="record -o /home/barbara/crazyflie.bag /crazyflie/cmd_vel /crazyflie/acados_traj/vector /crazyflie/external_position/point /crazyflie/euler_angles/vector /crazyflie/quat /crazyflie/linear_velo /crazyflie/angular_velo"
 	/>
 
@@ -104,6 +88,15 @@
 
 
 	<node pkg="rqt_reconfigure" name="crazyflie_reconf" type="rqt_reconfigure" output="screen">
+</node>
+=======
+				args="record -o /home/tom/crazyflie.bag /crazyflie/external_position /crazyflie/cmd_vel /crazyflie/acados_traj/vector /external_position /crazyflie/external_position/point /crazyflie/euler_angles/vector /crazyflie/quat /crazyflie/linear_velo /crazyflie/angular_velo"
+				>
+	</node>
+>>>>>>> 08bb2467672c42fa7d6b25b73471d43c6f461f37
+
+<node name="nmpc" pkg="crazyflie_controller" type="acados_debug" output="screen" ns="crazyflie">
+<param name="ref_traj" value="$(find crazyflie_controller)/traj/helix_traj.txt"/>
 </node>
 
 </launch>
