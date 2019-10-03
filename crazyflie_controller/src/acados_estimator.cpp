@@ -499,10 +499,10 @@ class ESTIMATOR
 		actual_yaw   =  msg->vector.z;
 
 		crazyflie_controller::EulerAnglesStamped euler_msg;
-		euler_msg.header = msg->header;
-		euler_msg.roll = actual_roll;
-		euler_msg.pitch = actual_pitch;
-		euler_msg.yaw = actual_yaw;
+		euler_msg.header 	= msg->header;
+		euler_msg.roll 		= actual_roll;
+		euler_msg.pitch 	= actual_pitch;
+		euler_msg.yaw 		= actual_yaw;
 
 		p_cf_euler.publish(euler_msg);
 		}

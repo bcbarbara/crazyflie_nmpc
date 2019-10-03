@@ -598,14 +598,14 @@ public:
 				{
 				ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, ii, "yref", acados_in.yref + ii*NY);
 				}
-			ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "yref", acados_in.yref_e);
+				ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "yref", acados_in.yref_e);
 
 			#if SET_WEIGHTS
 			for (ii = 0; ii < N; ii++)
 				{
 				ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, ii, "W", acados_in.W);
 				}
-			ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "W", acados_in.WN);
+				ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "W", acados_in.WN);
 			#endif
 
 			// set constraints
@@ -660,12 +660,12 @@ public:
 			q_acados_out.normalize();
 
 			// replay input
-			Quaterniond q_acados_in;
-			q_acados_in.w() = acados_in.x0[q1];
-			q_acados_in.x() = acados_in.x0[q2];
-			q_acados_in.y() = acados_in.x0[q3];
-			q_acados_in.z() = acados_in.x0[q4];
-			q_acados_in.normalize();
+			//Quaterniond q_acados_in;
+			//q_acados_in.w() = acados_in.x0[q1];
+			//q_acados_in.x() = acados_in.x0[q2];
+			//q_acados_in.y() = acados_in.x0[q3];
+			//q_acados_in.z() = acados_in.x0[q4];
+			//q_acados_in.normalize();
 
 
 			// Convert acados output quaternion to desired euler angles
@@ -688,7 +688,7 @@ public:
 			// angular_z -> yaw rate
 			bodytwist.angular.z = rad2Deg(acados_out.x1[wz]);
 
-			//bodytwist.linear.z = 100;
+			bodytwist.linear.z = 100;
 			//bodytwist.angular.z = 0;
 
 			p_bodytwist.publish(bodytwist);

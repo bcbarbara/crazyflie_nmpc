@@ -55,12 +55,9 @@
 	<node name="acados_plot_pos"
 				pkg="rqt_plot"
 				type="rqt_plot"
-				args="
-			/cf_estimator/euler_angles/roll
-			/cf_estimator/euler_angles/pitch
-			/cf_estimator/euler_angles/yaw
-			/crazyflie/cmd_vel/linear/x
-			/crazyflie/cmd_vel/linear/y
+				args="/crazyflie/cmd_vel/linear/x
+							/crazyflie/cmd_vel/linear/y
+							/crazyflie/euler_angles/vector
 				"
 	/>
 
