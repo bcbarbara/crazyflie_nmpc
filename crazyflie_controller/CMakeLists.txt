@@ -48,6 +48,7 @@ include_directories(
   include/
   ${acados_include}
   ${acados_include}/blasfeo/include/
+  ${acados_include}/hpipm/include/
   ${acados_include}/acados/
   ${acados_include}/qpOASES_e/
 )
