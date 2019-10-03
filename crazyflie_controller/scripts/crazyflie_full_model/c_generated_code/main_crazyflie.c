@@ -140,7 +140,7 @@ int main() {
     if (crazyflie_sim_opts->sens_forw){
         sim_out_get(crazyflie_sim_config, crazyflie_sim_dims, crazyflie_sim_out, "S_forw", S_forw_out);
         printf("\nS_forw_out: \n");
-        d_print_exp_mat(13, 13 + 4, S_forw_out, 13);
+        d_print_exp_mat(13, 13 + 13 + 4, S_forw_out, 13);
     }
 
     int status = 0;
