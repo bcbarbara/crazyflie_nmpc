@@ -496,7 +496,7 @@ class ESTIMATOR
 		{
 		// Euler angles
 		actual_roll  =  msg->vector.x;
-		actual_pitch =  msg->vector.y;
+		actual_pitch =  -msg->vector.y;
 		actual_yaw   =  msg->vector.z;
 
 		crazyflie_controller::EulerAnglesStamped euler_msg;
@@ -541,9 +541,9 @@ class ESTIMATOR
 		//
 		// Get the euler angles from the onboard stabilizer
 		euler eu;
-		eu.phi = deg2Rad(actual_roll);
-		eu.theta = deg2Rad(actual_pitch);
-		eu.psi = deg2Rad(actual_yaw);
+		eu.phi 		= deg2Rad(actual_roll);
+		eu.theta 	= deg2Rad(actual_pitch);
+		eu.psi 		= deg2Rad(actual_yaw);
 		// Convert IMU euler angles to quaternion
 		Quaterniond q_imu = euler2quatern(eu);
 		q_imu.normalize();
@@ -587,10 +587,10 @@ class ESTIMATOR
 		sim_in_set(crazyflie_sim_config, crazyflie_sim_dims, crazyflie_sim_in, "x", sim_acados_in.x0);
 
 		// set control
-		sim_acados_in.u0[0] = acados_w4_latest;
-		sim_acados_in.u0[1] = acados_w4_latest;
-		sim_acados_in.u0[2] = acados_w4_latest;
-		sim_acados_in.u0[3] = acados_w4_latest;
+		sim_acados_in.u0[w1] = acados_w1_latest;
+		sim_acados_in.u0[w2] = acados_w2_latest;
+		sim_acados_in.u0[w3] = acados_w3_latest;
+		sim_acados_in.u0[w4] = acados_w4_latest;
 		sim_in_set(crazyflie_sim_config, crazyflie_sim_dims, crazyflie_sim_in, "u", sim_acados_in.u0);
 
 		// solve
