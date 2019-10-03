@@ -4,6 +4,9 @@ from export_ode_model import *
 import numpy as np
 import scipy.linalg
 from ctypes import *
+from os.path import dirname, join, abspath
+
+ACADOS_PATH = join(dirname(abspath(__file__)), "../../../acados")
 
 # create render arguments
 ra = acados_ocp_nlp()
@@ -44,8 +47,8 @@ max_thrust = 22
 # set weighting matrices
 nlp_cost = ra.cost
 Q = np.eye(nx)
-Q[0,0] = 120.0       # x
-Q[1,1] = 100.0       # y
+Q[0,0] = 120.0      # x
+Q[1,1] = 100.0      # y
 Q[2,2] = 100.0      # z
 Q[3,3] = 1.0e-3     # q1
 Q[4,4] = 1.0e-3     # q2
@@ -130,97 +133,10 @@ ra.solver_config.nlp_solver_type = 'SQP_RTI'
 #ra.solver_config.nlp_solver_type = 'SQP'
 
 # set header path
-ra.acados_include_path  = '/usr/local/include'
-ra.acados_lib_path      = '/usr/local/lib'
+ra.acados_include_path  = f'{ACADOS_PATH}/include'
+ra.acados_lib_path      = f'{ACADOS_PATH}/lib'
+print(ra.acados_include_path)
 
 acados_solver = generate_solver(model, ra, json_file = 'acados_ocp.json')
 
 print('>> NMPC exported')
-
-#PI = 3.14159
-
-#Nsim = 400
-
-#simX = np.ndarray((Nsim, nx))
-#simU = np.ndarray((Nsim, nu))
-#angles = np.ndarray((Nsim,3))
-
-#euler = np.array([0,0,0])
-
-#for i in range(Nsim):
-#    status = acados_solver.solve()
-#    status = acados_solver.solve()
-#    status = acados_solver.solve()
-
-    # get solution
-#    x0 = acados_solver.get(0, "x")
-#    u0 = acados_solver.get(0, "u")
-
-    #print(u0)
-
-#    for j in range(nx):
-#        simX[i,j] = x0[j]
-
-#    for j in range(nu):
-#        simU[i,j] = u0[j]
-
-    # update initial condition
-#    x0 = acados_solver.get(1, "x")
-
-#    acados_solver.set(0, "lbx", x0)
-#    acados_solver.set(0, "ubx", x0)
-
-# plot results
-#import matplotlib.pyplot as plt
-
-#Tsim = 4
-#t = np.linspace(0.0, Tsim, Nsim)
-
-#plt.figure(1)
-#plt.subplot(4, 1, 1)
-#plt.step(t, simU[:, 0], 'r')
-#plt.ylabel('w1')
-#plt.xlabel('t')
-#plt.grid(True)
-#plt.subplot(4, 1, 2)
-##plt.step(t, simU[:, 1], 'r')
-#plt.ylabel('w2')
-#plt.xlabel('t')
-#plt.grid(True)
-#plt.subplot(4, 1, 3)
-#plt.step(t, simU[:, 2], 'r')
-#plt.ylabel('w3')
-##plt.xlabel('t')
-#plt.grid(True)
-#plt.subplot(4, 1, 4)
-#plt.step(t, simU[:, 3], 'r')
-#plt.ylabel('w4')
-#plt.xlabel('t')
-#plt.grid(True)
-
-#fig, (x, y, z) = plt.subplots(3)
-#fig.suptitle('Inertial positions')
-#x.plot(t, simX[:, 0], 'r')
-#y.plot(t, simX[:, 1], 'r')
-#z.plot(t, simX[:, 2], 'r')
-
-#fig, (q1, q2, q3, q4) = plt.subplots(4)
-#fig.suptitle('Quaternion')
-#q1.plot(t, simX[:, 3], 'r')
-#q2.plot(t, simX[:, 4], 'r')
-#q3.plot(t, simX[:, 5], 'r')
-#q4.plot(t, simX[:, 6], 'r')
-
-#fig, (h, v, w) = plt.subplots(3)
-#fig.suptitle('Body-frame linear velocities')
-#h.plot(t, simX[:, 7], 'r')
-#v.plot(t, simX[:, 8], 'r')
-#w.plot(t, simX[:, 9], 'r')
-
-#fig, (wx, wy, wz) = plt.subplots(3)
-#fig.suptitle('Body-frame angular rates')
-#wx.plot(t, simX[:, 10], 'r')
-#wy.plot(t, simX[:, 11], 'r')
-#wz.plot(t, simX[:, 12], 'r')
-
-#plt.show()
