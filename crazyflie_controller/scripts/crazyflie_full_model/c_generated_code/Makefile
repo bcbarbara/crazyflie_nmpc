@@ -45,8 +45,8 @@ OBJ+= crazyflie_model/crazyflie_expl_vde_forw.o
 OBJ+= acados_solver_crazyflie.o
 OBJ+= acados_sim_solver_crazyflie.o
 
-INCLUDE_PATH = /usr/local/include
-LIB_PATH = /usr/local/lib
+INCLUDE_PATH = /home/barbara/catkin_ws/src/crazyflie_ros/crazyflie_controller/scripts/crazyflie_full_model/../../../acados/include
+LIB_PATH = /home/barbara/catkin_ws/src/crazyflie_ros/crazyflie_controller/scripts/crazyflie_full_model/../../../acados/lib
 
 all: clean casadi_fun main solver sim_solver example
 

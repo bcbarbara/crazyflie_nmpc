@@ -83,11 +83,7 @@ using std::showpos;
 #define SET_WEIGHTS 0
 #define TRACK_TRAJ 0
 #define REGULATION 1
-<<<<<<< HEAD
 #define RECONFIGURE 1
-=======
-#define RECONFIGURE 0
->>>>>>> 08bb2467672c42fa7d6b25b73471d43c6f461f37
 #define PUB_OPENLOOP_TRAJ 0
 #define FIXED_U0 0
 #define READ_CASADI_TRAJ 0
@@ -221,11 +217,7 @@ public:
 		s_estimator = n.subscribe("/cf_estimator/state_estimate", 5, &NMPC::iteration, this);
 
 		// Initializing control inputs
-<<<<<<< HEAD
 		for(unsigned int i=0; i < NU; i++) acados_out.u0[i] = 0.0;
-=======
-		for(unsigned int i=0; i < NU; i++) acados_out.u1[i] = 0.0;
->>>>>>> 08bb2467672c42fa7d6b25b73471d43c6f461f37
 
 		// Steady-state control input value
 		// (Kg)
@@ -276,18 +268,10 @@ public:
 		ROS_DEBUG("Setting up the dynamic reconfigure panel and server");
 
 		#if RECONFIGURE
-<<<<<<< HEAD
 			dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsConfig> server;
 			dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsConfig>::CallbackType f;
 			f = boost::bind(&NMPC::callback_dynamic_reconfigure, this, _1, _2);
 			server.setCallback(f);
-=======
-
-		dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsConfig> server;
-		dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsConfig>::CallbackType f;
-		f = boost::bind(&NMPC::callback_dynamic_reconfigure, this, _1, _2);
-		server.setCallback(f);
->>>>>>> 08bb2467672c42fa7d6b25b73471d43c6f461f37
 		#endif
 
 		ros::spin();
@@ -377,15 +361,7 @@ public:
 		euler angle;
 
 		double R11 = 2*(q->w()*q->w()+q->x()*q->x())-1;
-<<<<<<< HEAD
 		double R21 = 2*(q->x()*q->y()-q->w()*q->z());
-=======
-		double R12 = 2*(q->x()*q->y()+q->w()*q->z());
-		double R13 = 2*(q->x()*q->z()-q->w()*q->y());
-		double R21 = 2*(q->x()*q->y()-q->w()*q->z());
-		double R22 = 2*(q->w()*q->w()+q->y()*q->y())-1;
-		double R23 = 2*(q->y()*q->z()+q->w()*q->x());
->>>>>>> 08bb2467672c42fa7d6b25b73471d43c6f461f37
 		double R31 = 2*(q->x()*q->z()+q->w()*q->y());
 		double R32 = 2*(q->y()*q->z()-q->w()*q->x());
 		double R33 = 2*(q->w()*q->w()+q->z()*q->z())-1;
@@ -394,30 +370,9 @@ public:
 		double theta = -asin(R31);
 		double psi	 = atan2(R21, R11);
 
-<<<<<<< HEAD
-		angle.phi		= phi;
-		angle.theta = theta;
-		angle.psi		= psi;
-
-		/*double R11 = 2*(q->w()*q->w()+q->x()*q->x())-1;
-		double R21 = 2*(q->x()*q->y()+q->w()*q->z());
-		double R31 = 2*(q->x()*q->z()-q->w()*q->y());
-		double R32 = 2*(q->y()*q->z()+q->w()*q->x());
-		double R33 = 2*(q->w()*q->w()+q->z()*q->z())-1;
-
-		double phi   = atan2(R32, R33);
-		double theta = -asin(R31);
-		double psi   = atan2(R21, R11);
-
-		angle.phi   = phi;
-		angle.theta = theta;
-		angle.psi   = psi;*/
-
-=======
-		angle.phi	= phi;
-		angle.theta = theta;
-		angle.psi	= psi;
->>>>>>> 08bb2467672c42fa7d6b25b73471d43c6f461f37
+		angle.phi		 = phi;
+		angle.theta  = theta;
+		angle.psi	   = psi;
 
 		return angle;
 		}
@@ -529,15 +484,9 @@ public:
 			#if REGULATION
 
 			for (k = 0; k < N; k++){
-<<<<<<< HEAD
 				acados_in.yref[k * NY + 0] = 0.0;	// xq
 				acados_in.yref[k * NY + 1] = 0.0;	// yq
 				acados_in.yref[k * NY + 2] = 0.4;	// zq
-=======
-				acados_in.yref[k * NY + 0] = xq_des;	// xq
-				acados_in.yref[k * NY + 1] = yq_des;	// yq
-				acados_in.yref[k * NY + 2] = zq_des;	// zq
->>>>>>> 08bb2467672c42fa7d6b25b73471d43c6f461f37
 				acados_in.yref[k * NY + 3] = 1.00;		// q1
 				acados_in.yref[k * NY + 4] = 0.00;		// q2
 				acados_in.yref[k * NY + 5] = 0.00;		// q3
@@ -545,36 +494,15 @@ public:
 				acados_in.yref[k * NY + 7] = 0.00;		// vbx
 				acados_in.yref[k * NY + 8] = 0.00;		// vby
 				acados_in.yref[k * NY + 9] = 0.00;		// vbz
-<<<<<<< HEAD
 				acados_in.yref[k * NY + 10] = 0.00;		// wx
 				acados_in.yref[k * NY + 11] = 0.00;		// wy
 				acados_in.yref[k * NY + 12] = 0.00;		// wz
-=======
-				acados_in.yref[k * NY + 10] = 0.00;	// wx
-				acados_in.yref[k * NY + 11] = 0.00;	// wy
-				acados_in.yref[k * NY + 12] = 0.00;	// wz
->>>>>>> 08bb2467672c42fa7d6b25b73471d43c6f461f37
 				acados_in.yref[k * NY + 13] = uss;		// w1
 				acados_in.yref[k * NY + 14] = uss;		// w2
 				acados_in.yref[k * NY + 15] = uss;		// w3
 				acados_in.yref[k * NY + 16] = uss;		// w4
 			}
 
-<<<<<<< HEAD
-			acados_in.yref_e[0]  = 0.0;	// xq
-			acados_in.yref_e[1]  = 0.0;	// yq
-			acados_in.yref_e[2]  = 0.4;	// zq
-			acados_in.yref_e[3]  = 1.00;		// q1
-			acados_in.yref_e[4]  = 0.00;		// q2
-			acados_in.yref_e[5]  = 0.00;		// q3
-			acados_in.yref_e[6]  = 0.00;		// q4
-			acados_in.yref_e[7]  = 0.00;		// vbx
-			acados_in.yref_e[8]  = 0.00;		// vby
-			acados_in.yref_e[9]  = 0.00;		// vbz
-			acados_in.yref_e[10] = 0.00;		// wx
-			acados_in.yref_e[11] = 0.00;		// wy
-			acados_in.yref_e[12] = 0.00;		// wz
-=======
 			acados_in.yref_e[k * NY + 0]  = xq_des;	// xq
 			acados_in.yref_e[k * NY + 1]  = yq_des;	// yq
 			acados_in.yref_e[k * NY + 2]  = zq_des;	// zq
@@ -588,7 +516,6 @@ public:
 			acados_in.yref_e[k * NY + 10] = 0.00;	// wx
 			acados_in.yref_e[k * NY + 11] = 0.00;	// wy
 			acados_in.yref_e[k * NY + 12] = 0.00;	// wz
->>>>>>> 08bb2467672c42fa7d6b25b73471d43c6f461f37
 			#endif
 
 			// --- Set Weights
@@ -751,9 +678,9 @@ public:
 			geometry_msgs::Twist bodytwist;
 
 			// linear_x -> pitch
-			bodytwist.linear.x  = -rad2Deg(eu_imu.theta);
+			bodytwist.linear.x  = rad2Deg(eu_imu.theta);
 			// linear_y -> roll
-			bodytwist.linear.y  = rad2Deg(eu_imu.phi);
+			bodytwist.linear.y  = -rad2Deg(eu_imu.phi);
 			// linear_z -> thrust
 			bodytwist.linear.z  = krpm2pwm(
 				(propellerspeeds.w1+propellerspeeds.w2+propellerspeeds.w3+propellerspeeds.w4)/4

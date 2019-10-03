@@ -65,11 +65,8 @@
 #define pi 3.14159265358979323846
 #define g0 9.80665
 
-<<<<<<< HEAD
 #define RECONFIGURE 0
 
-=======
->>>>>>> 08bb2467672c42fa7d6b25b73471d43c6f461f37
 external_function_casadi * forw_vde_casadi;
 using namespace Eigen;
 using std::ofstream;
@@ -227,11 +224,7 @@ class ESTIMATOR
 		// subscriber for the motor speeds applied
 		s_motors = n.subscribe("/crazyflie/acados_motvel",5, &ESTIMATOR::motorsCallback, this);
 		// subscriber for sensor fusion returning the quaternion
-<<<<<<< HEAD
 		//s_sensorfusion6 = n.subscribe("/crazyflie/sf6",5, &ESTIMATOR::sensorfusion6Callback, this);
-=======
-		s_sensorfusion6 = n.subscribe("/crazyflie/sf6",5, &ESTIMATOR::sensorfusion6Callback, this);
->>>>>>> 08bb2467672c42fa7d6b25b73471d43c6f461f37
 
 		// logs
 		// subscriber for the motors rpm
@@ -279,7 +272,6 @@ class ESTIMATOR
 		ros::NodeHandle node;
 		ros::Timer timer = node.createTimer(ros::Duration(1.0/frequency), &ESTIMATOR::predictor, this);
 
-<<<<<<< HEAD
 		#if RECONFIGURE
 			ROS_DEBUG("Setting up the dynamic reconfigure panel and server");
 			dynamic_reconfigure::Server<crazyflie_controller::crazyflie_estimatorConfig> server;
@@ -287,13 +279,6 @@ class ESTIMATOR
 			f = boost::bind(&ESTIMATOR::callback_dynamic_reconfigure, this, _1, _2);
 			server.setCallback(f);
 		#endif
-=======
-		ROS_DEBUG("Setting up the dynamic reconfigure panel and server");
-		dynamic_reconfigure::Server<crazyflie_controller::crazyflie_estimatorConfig> server;
-		dynamic_reconfigure::Server<crazyflie_controller::crazyflie_estimatorConfig>::CallbackType f;
-		f = boost::bind(&ESTIMATOR::callback_dynamic_reconfigure, this, _1, _2);
-		server.setCallback(f);
->>>>>>> 08bb2467672c42fa7d6b25b73471d43c6f461f37
 
 		ros::spin();
 		}
@@ -355,15 +340,7 @@ class ESTIMATOR
 		double cosPsi = cos(angle.psi*0.5);
 		double sinPsi = sin(angle.psi*0.5);
 
-<<<<<<< HEAD
 		q.w() = cosPhi*cosTheta*cosPsi + sinPhi*sinTheta*sinPsi;
-=======
-		// Convention according the firmware of the crazyflie
-		q.w() = cosPhi*cosTheta*cosPsi + sinPhi*sinTheta*sinPsi;
-		/*q.x() = sinPhi*cosTheta*cosPsi - cosPhi*sinTheta*sinPsi;
-		q.y() = cosPhi*sinTheta*cosPsi - sinPhi*cosTheta*sinPsi;
-		q.z() = cosPhi*cosTheta*sinPsi - sinPhi*sinTheta*cosPsi;*/
->>>>>>> 08bb2467672c42fa7d6b25b73471d43c6f461f37
 		q.x() = -(cosPsi*cosTheta*sinPhi - sinPsi*sinTheta*cosPhi);
 		q.y() = -(cosPsi*sinTheta*cosPhi + sinPsi*cosTheta*sinPhi);
 		q.z() = -(sinPsi*cosTheta*cosPhi - cosPsi*sinTheta*sinPhi);
@@ -440,7 +417,6 @@ class ESTIMATOR
 		{
 		 // This is the convertion between
 		// quaternion orientation to rotation matrix
-<<<<<<< HEAD
 		// from EARTH to BODY (considering ZYX euler sequence)
   	 Matrix3d Sq;
   	 Vector3d vb;
@@ -463,28 +439,6 @@ class ESTIMATOR
 			vb = Sq*v_inertial;
 
 			return vb;
-=======
-		Matrix3d Sq;
-		Vector3d vb;
-
-		double S11 = 2*(q->w()*q->w()+q->x()*q->x())-1;
-		double S12 = 2*(q->x()*q->y()+q->w()*q->z());
-		double S13 = 2*(q->x()*q->z()-q->w()*q->y());
-		double S21 = 2*(q->x()*q->y()-q->w()*q->z());
-		double S22 = 2*(q->w()*q->w()+q->y()*q->y())-1;
-		double S23 = 2*(q->y()*q->z()+q->w()*q->x());
-		double S31 = 2*(q->x()*q->z()+q->w()*q->y());
-		double S32 = 2*(q->y()*q->z()-q->w()*q->x());
-		double S33 = 2*(q->w()*q->w()+q->z()*q->z())-1;
-
-		Sq << S11,S12,S13,
-			   S21,S22,S23,
-			   S31,S32,S33;
-
-		vb = Sq*v_inertial;
-
-		return vb;
->>>>>>> 08bb2467672c42fa7d6b25b73471d43c6f461f37
 		}
 
 	double deg2Rad(double deg)
@@ -532,9 +486,6 @@ class ESTIMATOR
 	void eRaptorCallback(const geometry_msgs::PointStampedConstPtr& msg)
 		{
 		// Position of crazyflie marker
-		// actual_x = msg->point.x +2.474;
-		// actual_y = msg->point.y +0.713;
-		// actual_z = msg->point.z -0.755;
 		actual_x = msg->point.x;
 		actual_y = msg->point.y;
 		actual_z = msg->point.z;
@@ -596,8 +547,6 @@ class ESTIMATOR
 		Quaterniond q_imu = euler2quatern(eu);
 		q_imu.normalize();
 
-<<<<<<< HEAD
-=======
 		/*Quaterniond q_imu;
 		q_imu.w() = actual_qw;
 		q_imu.x() = actual_qx;
@@ -605,7 +554,6 @@ class ESTIMATOR
 		q_imu.z() = actual_qz;
 		q_imu.normalize();*/
 
->>>>>>> 08bb2467672c42fa7d6b25b73471d43c6f461f37
 		sim_acados_in.x0[qw] = q_imu.w();
 		sim_acados_in.x0[qx] = q_imu.x();
 		sim_acados_in.x0[qy] = q_imu.y();
@@ -638,17 +586,11 @@ class ESTIMATOR
 		sim_in_set(crazyflie_sim_config, crazyflie_sim_dims, crazyflie_sim_in, "x", sim_acados_in.x0);
 
 		// set control
-<<<<<<< HEAD
-		sim_acados_in.u0[0] = acados_w1_latest;
-		sim_acados_in.u0[1] = acados_w2_latest;
-		sim_acados_in.u0[2] = acados_w3_latest;
-		sim_acados_in.u0[3] = acados_w4_latest;
-=======
 		sim_acados_in.u0[w1] = acados_w1_latest;
 		sim_acados_in.u0[w2] = acados_w2_latest;
 		sim_acados_in.u0[w3] = acados_w3_latest;
 		sim_acados_in.u0[w4] = acados_w4_latest;
->>>>>>> 08bb2467672c42fa7d6b25b73471d43c6f461f37
+
 		sim_in_set(crazyflie_sim_config, crazyflie_sim_dims, crazyflie_sim_in, "u", sim_acados_in.u0);
 
 		// solve
