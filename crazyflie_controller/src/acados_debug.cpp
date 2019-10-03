@@ -150,9 +150,9 @@ public:
 	mq = 33e-3; 	  		// [Kg]
 	Ct = 3.25e-4;			// [N/Krpm^2]
 	uss = sqrt((mq*g0)/(4*Ct));
-	
+
 	const char * c = ref_traj.c_str();
-	
+
 	// Pre-load the trajectory
 	N_STEPS = readDataFromFile(c, precomputed_traj);
 	if (N_STEPS == 0){
@@ -161,7 +161,7 @@ public:
 	else{
 		ROS_INFO_STREAM("Number of steps: " << N_STEPS << endl);
 	}
-	
+
 	// Set number of trajectory iterations to zero initially
 	iter = 0;
     }
@@ -170,11 +170,11 @@ public:
         ros::NodeHandle node;
         ros::Timer timer = node.createTimer(ros::Duration(1.0/frequency), &NMPC::iteration, this);
 
-	ROS_DEBUG("Setting up the dynamic reconfigure panel and server");
-	dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsConfig> server;
-	dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsConfig>::CallbackType f;
-	f = boost::bind(&NMPC::callback_dynamic_reconfigure, this, _1, _2);
-	server.setCallback(f);
+      	ROS_DEBUG("Setting up the dynamic reconfigure panel and server");
+      	dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsConfig> server;
+      	dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsConfig>::CallbackType f;
+      	f = boost::bind(&NMPC::callback_dynamic_reconfigure, this, _1, _2);
+      	server.setCallback(f);
 
         ros::spin();
     }
@@ -182,17 +182,17 @@ public:
     void callback_dynamic_reconfigure(crazyflie_controller::crazyflie_paramsConfig &config, uint32_t level){
 
       if (level && CONTROLLER){
-	if(config.enable_traj_tracking){
-	  config.enable_regulation = false;
-	  crazyflie_state = Tracking;
-	}
-	if(config.enable_regulation){
-	  config.enable_traj_tracking = false;
-	  xq_des = config.xq_des;
-	  yq_des = config.yq_des;
-	  zq_des = config.zq_des;
-	  crazyflie_state = Regulation;
-	}	
+      	if(config.enable_traj_tracking){
+      	  config.enable_regulation = false;
+      	  crazyflie_state = Tracking;
+      	}
+      	if(config.enable_regulation){
+      	  config.enable_traj_tracking = false;
+      	  xq_des = config.xq_des;
+      	  yq_des = config.yq_des;
+      	  zq_des = config.zq_des;
+      	  crazyflie_state = Regulation;
+      	}
       }
 
       ROS_INFO_STREAM(fixed << showpos << "Quad status" << endl
@@ -223,11 +223,11 @@ public:
 	  w3 = 2,
 	  w4 = 3
     };
-    
+
     enum cf_state{
         Regulation = 0,
         Tracking = 1,
-	Position_Hold = 2
+	      Position_Hold = 2
     };
 
     struct euler{
@@ -252,11 +252,11 @@ public:
       double W[NY*NY];
       double WN[NX*NX];
     };
-  
+
     int readDataFromFile(const char* fileName, std::vector<std::vector<double>> &data){
-	std::ifstream file(fileName);
-	std::string line;
-	int num_of_steps = 0;
+  	std::ifstream file(fileName);
+  	std::string line;
+  	int num_of_steps = 0;
 
 	if (file.is_open()){
 		while(getline(file, line)){
@@ -278,21 +278,31 @@ public:
 		return 0;
 
 	return num_of_steps;
-}
+  }
 
-    euler quatern2euler(Quaterniond* q){
+  euler quatern2euler(Quaterniond* q){
 
 	euler angle;
 
-	double R11 = q->w()*q->w()+q->x()*q->x()-q->y()*q->y()-q->z()*q->z();
+  /*double R11 = 2*(q->w()*q->w()+q->x()*q->x())-1;
 	double R21 = 2*(q->x()*q->y()+q->w()*q->z());
 	double R31 = 2*(q->x()*q->z()-q->w()*q->y());
 	double R32 = 2*(q->y()*q->z()+q->w()*q->x());
-	double R33 = q->w()*q->w()-q->x()*q->x()-q->y()*q->y()+q->z()*q->z();
+	double R33 = 2*(q->w()*q->w()+q->z()*q->z())-1;
 
 	double phi   = atan2(R32, R33);
 	double theta = asin(-R31);
-	double psi   = atan2(R21, R11);
+	double psi   = atan2(R21, R11);*/
+
+  double R11 = 2*(q->w()*q->w()+q->x()*q->x())-1;
+  double R21 = 2*(q->x()*q->y()-q->w()*q->z());
+  double R31 = 2*(q->x()*q->z()+q->w()*q->y());
+  double R32 = 2*(q->y()*q->z()-q->w()*q->x());
+  double R33 = 2*(q->w()*q->w()+q->z()*q->z())-1;
+
+  double phi	 = atan2(R32, R33);
+  double theta = -asin(R31);
+  double psi	 = atan2(R21, R11);
 
 	angle.phi   = phi;
 	angle.theta = theta;
@@ -329,7 +339,7 @@ public:
     }
 
     double linearVelocity(std::vector <double> q_samples, std::vector <double> dq_samples, double Ts, double elapsed_time) {
-      
+
       // digital low-pass filter considering Ts = 15 ms
       double dq = 0;
       if (elapsed_time > 1.0) dq = 0.3306*dq_samples[4] - 0.02732*dq_samples[3] + 35.7*q_samples[4] - 35.7*q_samples[3];
@@ -416,9 +426,9 @@ public:
     double rad2Deg(double rad) {
 	  return rad * 180.0 / pi;
     }
-    
+
     void motorsCallback(const crazyflie_controller::GenericLogDataConstPtr& msg){
-    
+
 	// motors rpm
 	actual_m1 = msg->values[0];
 	actual_m2 = msg->values[1];
@@ -472,8 +482,8 @@ public:
 
       try{
 	switch(crazyflie_state){
-	
-	  case Regulation: 
+
+	  case Regulation:
 	  {
 	    // Update regulation point
 	    for (k = 0; k < N+1; k++){
@@ -495,9 +505,9 @@ public:
 		  yref_sign[k * NY + 15] = uss;		// w3
 		  yref_sign[k * NY + 16] = uss;		// w4
 	    }
-	    break;	    
+	    break;
 	  }
-	  
+
 	  case Tracking:
 	  {
 	    if(iter < N_STEPS-N){
@@ -527,15 +537,15 @@ public:
  	    else crazyflie_state = Position_Hold;
 	    break;
 	  }
-	  
+
 	  case Position_Hold:
 	  {
 	    ROS_INFO("Holding last position of the trajectory.");
-	    // Get last point of tracketory and hold 
+	    // Get last point of tracketory and hold
 	    for (k = 0; k < N+1; k++){
-		    yref_sign[k * NY + 0] = precomputed_traj[N_STEPS-1][xq]; 
-		    yref_sign[k * NY + 1] = precomputed_traj[N_STEPS-1][yq]; 
-		    yref_sign[k * NY + 2] = precomputed_traj[N_STEPS-1][zq]; 
+		    yref_sign[k * NY + 0] = precomputed_traj[N_STEPS-1][xq];
+		    yref_sign[k * NY + 1] = precomputed_traj[N_STEPS-1][yq];
+		    yref_sign[k * NY + 2] = precomputed_traj[N_STEPS-1][zq];
 		    yref_sign[k * NY + 3] = 1.00;
 		    yref_sign[k * NY + 4] = 0.00;
 		    yref_sign[k * NY + 5] = 0.00;
@@ -554,7 +564,7 @@ public:
 	  }
 	  break;
 	}
-	
+
 	//ROS_INFO_STREAM(crazyflie_state << endl);
 	// Storing inertial positions in state vector
 	x0_sign[xq] = actual_x;
@@ -695,16 +705,26 @@ public:
 	q_acados_out.z() = acados_out.x2[q4];
 	q_acados_out.normalize();
 
+  // replay input
+  Quaterniond q_acados_in;
+  q_acados_in.w() = acados_in.x0[q1];
+  q_acados_in.x() = acados_in.x0[q2];
+  q_acados_in.y() = acados_in.x0[q3];
+  q_acados_in.z() = acados_in.x0[q4];
+  q_acados_in.normalize();
+
 	// Convert acados output quaternion to desired euler angles
 	euler eu_imu;
 	eu_imu = quatern2euler(&q_acados_out);
 
 	// Publish real control inputs
 	geometry_msgs::Twist msg;
-	msg.linear.x  = -rad2Deg(eu_imu.theta); //linear_x -> pitch
-	msg.linear.y  = rad2Deg(eu_imu.phi);  // linear_y -> roll
+	msg.linear.x  = rad2Deg(eu_imu.theta); //linear_x -> pitch
+	msg.linear.y  = -rad2Deg(eu_imu.phi);  // linear_y -> roll
 	msg.linear.z  = krpm2pwm((acados_out.u1[w1]+acados_out.u1[w2]+acados_out.u1[w3]+acados_out.u1[w4])/4);
-	msg.angular.z  = rad2Deg(acados_out.x1[wz]);
+	msg.angular.z  = rad2Deg(acados_out.x2[wz]);
+
+  //msg.linear.z = 100;
 
 	m_pubNav.publish(msg);
 
@@ -734,13 +754,13 @@ public:
 	    trajLog.close();
 	  }
 	}
-	
+
  	// Log current state x0 and acados output x1 and x2
 	ofstream motorsLog("full_log.txt", std::ios_base::app | std::ios_base::out);
 
 	if (motorsLog.is_open()){
-	  motorsLog << actual_roll << " ";
-	  motorsLog << -actual_pitch << " ";
+	  motorsLog << -actual_roll << " ";
+	  motorsLog << actual_pitch << " ";
 	  motorsLog << actual_yaw  << " ";
 	  motorsLog << msg.linear.y << " ";
 	  motorsLog << msg.linear.x << " ";
@@ -860,10 +880,10 @@ private:
     float actual_x;
     float actual_y;
     float actual_z;
-    
+
     // For dynamic reconfigure
     cf_state crazyflie_state;
-    
+
     // Variable for storing he optimal trajectory
     std::vector<std::vector<double>> precomputed_traj;
     int N_STEPS,iter;
@@ -878,10 +898,10 @@ int main(int argc, char **argv)
   ros::NodeHandle n("~");
   double frequency;
   n.param("frequency", frequency, 65.0);
-  
+
   std::string ref_traj;
   n.getParam("ref_traj", ref_traj);
-  
+
 
   NMPC nmpc(n,ref_traj);
   nmpc.run(frequency);
