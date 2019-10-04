@@ -644,6 +644,45 @@ public:
 
 			p_bodytwist.publish(bodytwist);
 
+
+			/*ofstream ol_traj("full_log.txt", std::ios_base::app | std::ios_base::out);
+
+			if (ol_traj.is_open()){
+
+			  ol_traj << bodytwist.linear.y 	<< " ";
+			  ol_traj << bodytwist.linear.x		<< " ";
+			  ol_traj << bodytwist.angular.z  << " ";
+				ol_traj << bodytwist.linear.z   << " ";
+				ol_traj << acados_in.x0[xq] 		<< " ";
+				ol_traj << acados_in.x0[yq] 		<< " ";
+				ol_traj << acados_in.x0[zq] 		<< " ";
+				ol_traj << acados_in.x0[q1] 		<< " ";
+				ol_traj << acados_in.x0[q2] 		<< " ";
+				ol_traj << acados_in.x0[q3] 		<< " ";
+				ol_traj << acados_in.x0[q4] 		<< " ";
+				ol_traj << acados_in.x0[vbx] 	  << " ";
+				ol_traj << acados_in.x0[vby] 	  << " ";
+				ol_traj << acados_in.x0[vbz] 	  << " ";
+				ol_traj << acados_in.x0[wx] 		<< " ";
+				ol_traj << acados_in.x0[wy] 		<< " ";
+				ol_traj << acados_in.x0[wz] 		<< " ";
+			  ol_traj << acados_out.x2[xq] 		<< " ";
+			  ol_traj << acados_out.x2[yq] 		<< " ";
+			  ol_traj << acados_out.x2[zq] 		<< " ";
+			  ol_traj << acados_out.x2[q1] 		<< " ";
+			  ol_traj << acados_out.x2[q2] 		<< " ";
+			  ol_traj << acados_out.x2[q3] 		<< " ";
+			  ol_traj << acados_out.x2[q4] 		<< " ";
+			  ol_traj << acados_out.x2[vbx] 	<< " ";
+			  ol_traj << acados_out.x2[vby] 	<< " ";
+			  ol_traj << acados_out.x2[vbz] 	<< " ";
+			  ol_traj << acados_out.x2[wx] 		<< " ";
+			  ol_traj << acados_out.x2[wy] 		<< " ";
+			  ol_traj << acados_out.x2[wz] 		<< " ";
+				ol_traj << endl;
+			  ol_traj.close();
+			}*/
+
 			// --- Publish openloop
 			#if PUB_OPENLOOP_TRAJ
 

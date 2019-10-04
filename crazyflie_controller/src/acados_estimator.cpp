@@ -157,14 +157,6 @@ class ESTIMATOR
 	std::vector<double> vy_filter_samples;
 	std::vector<double> vz_filter_samples;
 
-	// Variables for angular rate LPF
-	std::vector<double> wx_samples;
-	std::vector<double> wy_samples;
-	std::vector<double> wz_samples;
-	std::vector<double> wx_filter_samples;
-	std::vector<double> wy_filter_samples;
-	std::vector<double> wz_filter_samples;
-
 	// Elapsed time
 	double t0;
 
@@ -191,6 +183,9 @@ class ESTIMATOR
 	float actual_qx;
 	float actual_qy;
 	float actual_qz;
+
+	int8_t MAX_ORDER = 20;
+	std::vector<double> y;
 
 	int32_t
 		actual_m1,
@@ -268,24 +263,8 @@ class ESTIMATOR
 		for (unsigned int i = 0; i <= 4; i++) vy_filter_samples[i] = 0.0;
 		for (unsigned int i = 0; i <= 4; i++) vz_filter_samples[i] = 0.0;
 
-		// Set size of buffer  of the estimated angular rates to zero
-		wx_samples.resize(5);
-		wy_samples.resize(5);
-		wz_samples.resize(5);
-
-		// Set initial value of the buffer to zero
-		for (unsigned int i = 0; i <= 4; i++) wx_samples[i] = 0.0;
-		for (unsigned int i = 0; i <= 4; i++) wy_samples[i] = 0.0;
-		for (unsigned int i = 0; i <= 4; i++) wz_samples[i] = 0.0;
-
-		// Set size of buffer
-		wx_filter_samples.resize(5);
-		wy_filter_samples.resize(5);
-		wz_filter_samples.resize(5);
-
-		for (unsigned int i = 0; i <= 4; i++) wx_filter_samples[i] = 0.0;
-		for (unsigned int i = 0; i <= 4; i++) wy_filter_samples[i] = 0.0;
-		for (unsigned int i = 0; i <= 4; i++) wz_filter_samples[i] = 0.0;
+		y.resize(MAX_ORDER);
+		for (unsigned int i = 0; i <= MAX_ORDER; i++) y[i] = 0.0;
 
 		// Set elapsed time to zero initially
 		t0 = 0.0;
@@ -316,8 +295,6 @@ class ESTIMATOR
 			ROS_INFO_STREAM("Delay: " << delay << endl);
 			ROS_INFO_STREAM("Delay config: " << config.delay << endl);
 			}
-
-
 		}
 
 	Quaterniond euler2quatern(euler angle)
@@ -407,64 +384,6 @@ class ESTIMATOR
 		return vearth;
 		}
 
-	double angularRateLPF(
-		std::vector <double> q_samples,
-		std::vector <double> dq_samples,
-		double Ts, double elapsed_time)
-		{
-		// digital low-pass filter considering Ts = 15 ms
-		double dq = 0;
-		if (elapsed_time > 1.0)
-			dq = 1.372*dq_samples[4] - 0.4705*dq_samples[3] + 6.498*q_samples[4] - 6.489*q_samples[3];
-		else
-			dq = (q_samples[4] - q_samples[3]) / Ts;
-		return dq;
-		}
-
-	Vector3d estimateRates(float dt, float delta)
-		{
-
-		Vector3d omega;
-		//estimte the angular rate
-		wx_samples[0] = wx_samples[1];
-		wx_samples[1] = wx_samples[2];
-		wx_samples[2] = wx_samples[3];
-		wx_samples[3] = wx_samples[4];
-		wx_samples[4] = actual_wx;
-		wy_samples[0] = wy_samples[1];
-		wy_samples[1] = wy_samples[2];
-		wy_samples[2] = wy_samples[3];
-		wy_samples[3] = wy_samples[4];
-		wy_samples[4] = actual_wy;
-		wz_samples[0] = wz_samples[1];
-		wz_samples[1] = wz_samples[2];
-		wz_samples[2] = wz_samples[3];
-		wz_samples[3] = wz_samples[4];
-		wz_samples[4] = actual_wz;
-
-		omega[0] = angularRateLPF(wx_samples, wx_filter_samples, dt, delta);
-		omega[1] = angularRateLPF(wy_samples, wy_filter_samples, dt, delta);
-		omega[2] = angularRateLPF(wz_samples, wz_filter_samples, dt, delta);
-
-		wx_filter_samples[0] = wx_filter_samples[1];
-		wx_filter_samples[1] = wx_filter_samples[2];
-		wx_filter_samples[2] = wx_filter_samples[3];
-		wx_filter_samples[3] = wx_filter_samples[4];
-		wx_filter_samples[4] = omega[0];
-		wy_filter_samples[0] = wy_filter_samples[1];
-		wy_filter_samples[1] = wy_filter_samples[2];
-		wy_filter_samples[2] = wy_filter_samples[3];
-		wy_filter_samples[3] = wy_filter_samples[4];
-		wy_filter_samples[4] = omega[1];
-		wz_filter_samples[0] = wz_filter_samples[1];
-		wz_filter_samples[1] = wz_filter_samples[2];
-		wz_filter_samples[2] = wz_filter_samples[3];
-		wz_filter_samples[3] = wz_filter_samples[4];
-		wz_filter_samples[4] = omega[2];
-
-		return omega;
-		}
-
 	Vector3d rotateLinearVeloE2B(Quaterniond* q, Vector3d v_inertial)
 		{
 		 // This is the convertion between
@@ -514,7 +433,6 @@ class ESTIMATOR
 	void motorsCallback(const crazyflie_controller::PropellerSpeedsStampedPtr& msg)
 		{
 		// motors rpm from mpc solution
-
 		acados_w1_prelatest = acados_w1_latest;
 		acados_w2_prelatest = acados_w2_latest;
 		acados_w3_prelatest = acados_w3_latest;
@@ -619,10 +537,6 @@ class ESTIMATOR
 		sim_acados_in.x0[vby] = vb_mat[1];
 		sim_acados_in.x0[vbz] = vb_mat[2];
 
-		// filtering angular rate measurements from gyro
-		Vector3d filtered_w;
-		filtered_w = estimateRates(dt,t0);
-
 		// --- Body angular velocities
 		sim_acados_in.x0[wx] = actual_wx;
 		sim_acados_in.x0[wy] = actual_wy;
@@ -660,7 +574,7 @@ class ESTIMATOR
 
 		crazyflie_state.header.stamp = ros::Time::now();
 
-		crazyflie_state.pos.x    = sim_acados_in.x0[xq];
+		/*crazyflie_state.pos.x    = sim_acados_in.x0[xq];
 		crazyflie_state.pos.y    = sim_acados_in.x0[yq];
 		crazyflie_state.pos.z    = sim_acados_in.x0[zq];
 		crazyflie_state.vel.x    = sim_acados_in.x0[vbx];
@@ -672,9 +586,9 @@ class ESTIMATOR
 		crazyflie_state.quat.z   = sim_acados_in.x0[qz];
 		crazyflie_state.rates.x  = sim_acados_in.x0[wx];
 		crazyflie_state.rates.y  = sim_acados_in.x0[wy];
-		crazyflie_state.rates.z  = sim_acados_in.x0[wz];
+		crazyflie_state.rates.z  = sim_acados_in.x0[wz];*/
 
-		/*crazyflie_state.pos.x    = sim_acados_out.xn[xq];
+		crazyflie_state.pos.x    = sim_acados_out.xn[xq];
 		crazyflie_state.pos.y    = sim_acados_out.xn[yq];
 		crazyflie_state.pos.z    = sim_acados_out.xn[zq];
 		crazyflie_state.vel.x    = sim_acados_out.xn[vbx];
@@ -686,32 +600,9 @@ class ESTIMATOR
 		crazyflie_state.quat.z   = sim_acados_out.xn[qz];
 		crazyflie_state.rates.x  = sim_acados_out.xn[wx];
 		crazyflie_state.rates.y  = sim_acados_out.xn[wy];
-		crazyflie_state.rates.z  = sim_acados_out.xn[wz];*/
+		crazyflie_state.rates.z  = sim_acados_out.xn[wz];
 
 		p_cf_state.publish(crazyflie_state);
-
-		ofstream cf_state("cf_state.txt", std::ios_base::app | std::ios_base::out);
-
-		if (cf_state.is_open()){
-
-		  cf_state << actual_roll 		<< " ";
-		  cf_state << actual_pitch		<< " ";
-		  cf_state << actual_yaw  		<< " ";
-		  cf_state << sim_acados_in.x0[xq] 	<< " ";
-		  cf_state << sim_acados_in.x0[yq] 	<< " ";
-		  cf_state << sim_acados_in.x0[zq] 	<< " ";
-		  cf_state << sim_acados_in.x0[qw] 	<< " ";
-		  cf_state << sim_acados_in.x0[qx] 	<< " ";
-		  cf_state << sim_acados_in.x0[qy] 	<< " ";
-		  cf_state << sim_acados_in.x0[qz] 	<< " ";
-		  cf_state << sim_acados_in.x0[vbx] 	<< " ";
-		  cf_state << sim_acados_in.x0[vby] 	<< " ";
-		  cf_state << sim_acados_in.x0[vbz] 	<< " ";
-		  cf_state << sim_acados_in.x0[wx] 	<< " ";
-		  cf_state << sim_acados_in.x0[wy] 	<< " ";
-		  cf_state << sim_acados_in.x0[wz] 	<< " ";
-		  cf_state.close();
-		}
 
 		}
 	};
