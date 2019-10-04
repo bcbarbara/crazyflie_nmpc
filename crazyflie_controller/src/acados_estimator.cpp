@@ -149,13 +149,23 @@ class ESTIMATOR
 
 	unsigned int k,i,j,ii;
 
-	double vx,vy,vz;
+	// Variables for linear velocity LPF
 	std::vector<double> x_samples;
 	std::vector<double> y_samples;
 	std::vector<double> z_samples;
 	std::vector<double> vx_filter_samples;
 	std::vector<double> vy_filter_samples;
 	std::vector<double> vz_filter_samples;
+
+	// Variables for angular rate LPF
+	std::vector<double> wx_samples;
+	std::vector<double> wy_samples;
+	std::vector<double> wz_samples;
+	std::vector<double> wx_filter_samples;
+	std::vector<double> wy_filter_samples;
+	std::vector<double> wz_filter_samples;
+
+	// Elapsed time
 	double t0;
 
 	// acados struct
@@ -239,12 +249,7 @@ class ESTIMATOR
 		for(unsigned int i=0; i < NU; i++) sim_acados_in.u0[i] = 0.0;
 		for(unsigned int i=0; i < NU; i++) sim_acados_in.u1[i] = 0.0;
 
-		// Set initial value of the linear velocities to zero
-		vx = 0.0;
-		vy = 0.0;
-		vz = 0.0;
-
-		// Set size of buffer
+		// Set size of buffer  of the estimated linear velocities to zero
 		x_samples.resize(5);
 		y_samples.resize(5);
 		z_samples.resize(5);
@@ -262,6 +267,25 @@ class ESTIMATOR
 		for (unsigned int i = 0; i <= 4; i++) vx_filter_samples[i] = 0.0;
 		for (unsigned int i = 0; i <= 4; i++) vy_filter_samples[i] = 0.0;
 		for (unsigned int i = 0; i <= 4; i++) vz_filter_samples[i] = 0.0;
+
+		// Set size of buffer  of the estimated angular rates to zero
+		wx_samples.resize(5);
+		wy_samples.resize(5);
+		wz_samples.resize(5);
+
+		// Set initial value of the buffer to zero
+		for (unsigned int i = 0; i <= 4; i++) wx_samples[i] = 0.0;
+		for (unsigned int i = 0; i <= 4; i++) wy_samples[i] = 0.0;
+		for (unsigned int i = 0; i <= 4; i++) wz_samples[i] = 0.0;
+
+		// Set size of buffer
+		wx_filter_samples.resize(5);
+		wy_filter_samples.resize(5);
+		wz_filter_samples.resize(5);
+
+		for (unsigned int i = 0; i <= 4; i++) wx_filter_samples[i] = 0.0;
+		for (unsigned int i = 0; i <= 4; i++) wy_filter_samples[i] = 0.0;
+		for (unsigned int i = 0; i <= 4; i++) wz_filter_samples[i] = 0.0;
 
 		// Set elapsed time to zero initially
 		t0 = 0.0;
@@ -296,36 +320,6 @@ class ESTIMATOR
 
 		}
 
-	// void publish_plot_state()
-		// {
-		// geometry_msgs::Quaternion cf_st_quat;
-		// geometry_msgs::Vector3 cf_st_lvb;
-		// geometry_msgs::Vector3 cf_st_avb;
-		// geometry_msgs::Vector3 cf_st_lpg;
-
-		// cf_st_lpg.x  = sim_acados_in.x0[xq];
-		// cf_st_lpg.y  = sim_acados_in.x0[yq];
-		// cf_st_lpg.z  = sim_acados_in.x0[zq];
-
-		// cf_st_quat.w = sim_acados_in.x0[qw];
-		// cf_st_quat.x = sim_acados_in.x0[qx];
-		// cf_st_quat.y = sim_acados_in.x0[qy];
-		// cf_st_quat.z = sim_acados_in.x0[qz];
-
-		// cf_st_lvb.x  = sim_acados_in.x0[vbx];
-		// cf_st_lvb.y  = sim_acados_in.x0[vby];
-		// cf_st_lvb.z  = sim_acados_in.x0[vbz];
-
-		// cf_st_avb.x  = sim_acados_in.x0[wx];
-		// cf_st_avb.y  = sim_acados_in.x0[wy];
-		// cf_st_avb.z  = sim_acados_in.x0[wz];
-
-		// p_cf_quat.publish(cf_st_quat);
-		// p_cf_lvb.publish(cf_st_lvb);
-		// p_cf_avb.publish(cf_st_avb);
-		// p_cf_lpg.publish(cf_st_lpg);
-		// }
-
 	Quaterniond euler2quatern(euler angle)
 		{
 
@@ -347,15 +341,15 @@ class ESTIMATOR
 
 
 		if(q.w() < 0)
-			{
-			q.w() = -q.w();
-			q.vec() = -q.vec();
-			}
+		  {
+		  q.w() = -q.w();
+		  q.vec() = -q.vec();
+		  }
 
 		return q;
 		}
 
-	double linearVelocity(
+	double linearVelocityLPF(
 		std::vector <double> q_samples,
 		std::vector <double> dq_samples,
 		double Ts, double elapsed_time)
@@ -390,9 +384,9 @@ class ESTIMATOR
 		z_samples[3] = z_samples[4];
 		z_samples[4] = actual_z;
 
-		vearth[0] = linearVelocity(x_samples, vx_filter_samples, dt, delta);
-		vearth[1] = linearVelocity(y_samples, vy_filter_samples, dt, delta);
-		vearth[2] = linearVelocity(z_samples, vz_filter_samples, dt, delta);
+		vearth[0] = linearVelocityLPF(x_samples, vx_filter_samples, dt, delta);
+		vearth[1] = linearVelocityLPF(y_samples, vy_filter_samples, dt, delta);
+		vearth[2] = linearVelocityLPF(z_samples, vz_filter_samples, dt, delta);
 
 		vx_filter_samples[0] = vx_filter_samples[1];
 		vx_filter_samples[1] = vx_filter_samples[2];
@@ -413,13 +407,71 @@ class ESTIMATOR
 		return vearth;
 		}
 
+	double angularRateLPF(
+		std::vector <double> q_samples,
+		std::vector <double> dq_samples,
+		double Ts, double elapsed_time)
+		{
+		// digital low-pass filter considering Ts = 15 ms
+		double dq = 0;
+		if (elapsed_time > 1.0)
+			dq = 1.372*dq_samples[4] - 0.4705*dq_samples[3] + 6.498*q_samples[4] - 6.489*q_samples[3];
+		else
+			dq = (q_samples[4] - q_samples[3]) / Ts;
+		return dq;
+		}
+
+	Vector3d estimateRates(float dt, float delta)
+		{
+
+		Vector3d omega;
+		//estimte the angular rate
+		wx_samples[0] = wx_samples[1];
+		wx_samples[1] = wx_samples[2];
+		wx_samples[2] = wx_samples[3];
+		wx_samples[3] = wx_samples[4];
+		wx_samples[4] = actual_wx;
+		wy_samples[0] = wy_samples[1];
+		wy_samples[1] = wy_samples[2];
+		wy_samples[2] = wy_samples[3];
+		wy_samples[3] = wy_samples[4];
+		wy_samples[4] = actual_wy;
+		wz_samples[0] = wz_samples[1];
+		wz_samples[1] = wz_samples[2];
+		wz_samples[2] = wz_samples[3];
+		wz_samples[3] = wz_samples[4];
+		wz_samples[4] = actual_wz;
+
+		omega[0] = angularRateLPF(wx_samples, wx_filter_samples, dt, delta);
+		omega[1] = angularRateLPF(wy_samples, wy_filter_samples, dt, delta);
+		omega[2] = angularRateLPF(wz_samples, wz_filter_samples, dt, delta);
+
+		wx_filter_samples[0] = wx_filter_samples[1];
+		wx_filter_samples[1] = wx_filter_samples[2];
+		wx_filter_samples[2] = wx_filter_samples[3];
+		wx_filter_samples[3] = wx_filter_samples[4];
+		wx_filter_samples[4] = omega[0];
+		wy_filter_samples[0] = wy_filter_samples[1];
+		wy_filter_samples[1] = wy_filter_samples[2];
+		wy_filter_samples[2] = wy_filter_samples[3];
+		wy_filter_samples[3] = wy_filter_samples[4];
+		wy_filter_samples[4] = omega[1];
+		wz_filter_samples[0] = wz_filter_samples[1];
+		wz_filter_samples[1] = wz_filter_samples[2];
+		wz_filter_samples[2] = wz_filter_samples[3];
+		wz_filter_samples[3] = wz_filter_samples[4];
+		wz_filter_samples[4] = omega[2];
+
+		return omega;
+		}
+
 	Vector3d rotateLinearVeloE2B(Quaterniond* q, Vector3d v_inertial)
 		{
 		 // This is the convertion between
-		// quaternion orientation to rotation matrix
-		// from EARTH to BODY (considering ZYX euler sequence)
-  	 Matrix3d Sq;
-  	 Vector3d vb;
+		 // quaternion orientation to rotation matrix
+		 // from EARTH to BODY (considering ZYX euler sequence)
+		 Matrix3d Sq;
+		 Vector3d vb;
 
 	 	 double S11 = 2*(q->w()*q->w()+q->x()*q->x())-1;
 	 	 double S12 = 2*(q->x()*q->y()+q->w()*q->z());
@@ -432,13 +484,13 @@ class ESTIMATOR
 	 	 double S33 = 2*(q->w()*q->w()+q->z()*q->z())-1;
 
 
-			Sq << S11,S12,S13,
-				   	S21,S22,S23,
-				   	S31,S32,S33;
+		Sq << S11,S12,S13,
+		      S21,S22,S23,
+		      S31,S32,S33;
 
-			vb = Sq*v_inertial;
+		vb = Sq*v_inertial;
 
-			return vb;
+		return vb;
 		}
 
 	double deg2Rad(double deg)
@@ -525,9 +577,9 @@ class ESTIMATOR
 		{
 
 		if(e.last_real.isZero())
-			{
-			t0 = e.current_real.toSec();
-			}
+		{
+		t0 = e.current_real.toSec();
+		}
 
 		double dt = e.current_real.toSec() - e.last_real.toSec();
 
@@ -543,17 +595,12 @@ class ESTIMATOR
 		eu.phi 		= deg2Rad(actual_roll);
 		eu.theta 	= deg2Rad(actual_pitch);
 		eu.psi 		= deg2Rad(actual_yaw);
+
 		// Convert IMU euler angles to quaternion
 		Quaterniond q_imu = euler2quatern(eu);
 		q_imu.normalize();
 
-		/*Quaterniond q_imu;
-		q_imu.w() = actual_qw;
-		q_imu.x() = actual_qx;
-		q_imu.y() = actual_qy;
-		q_imu.z() = actual_qz;
-		q_imu.normalize();*/
-
+		// storing converted quaternions
 		sim_acados_in.x0[qw] = q_imu.w();
 		sim_acados_in.x0[qx] = q_imu.x();
 		sim_acados_in.x0[qy] = q_imu.y();
@@ -571,6 +618,10 @@ class ESTIMATOR
 		sim_acados_in.x0[vbx] = vb_mat[0];
 		sim_acados_in.x0[vby] = vb_mat[1];
 		sim_acados_in.x0[vbz] = vb_mat[2];
+
+		// filtering angular rate measurements from gyro
+		Vector3d filtered_w;
+		filtered_w = estimateRates(dt,t0);
 
 		// --- Body angular velocities
 		sim_acados_in.x0[wx] = actual_wx;
@@ -609,7 +660,21 @@ class ESTIMATOR
 
 		crazyflie_state.header.stamp = ros::Time::now();
 
-		crazyflie_state.pos.x    = sim_acados_out.xn[xq];
+		crazyflie_state.pos.x    = sim_acados_in.x0[xq];
+		crazyflie_state.pos.y    = sim_acados_in.x0[yq];
+		crazyflie_state.pos.z    = sim_acados_in.x0[zq];
+		crazyflie_state.vel.x    = sim_acados_in.x0[vbx];
+		crazyflie_state.vel.y    = sim_acados_in.x0[vby];
+		crazyflie_state.vel.z    = sim_acados_in.x0[vbz];
+		crazyflie_state.quat.w   = sim_acados_in.x0[qw];
+		crazyflie_state.quat.x   = sim_acados_in.x0[qx];
+		crazyflie_state.quat.y   = sim_acados_in.x0[qy];
+		crazyflie_state.quat.z   = sim_acados_in.x0[qz];
+		crazyflie_state.rates.x  = sim_acados_in.x0[wx];
+		crazyflie_state.rates.y  = sim_acados_in.x0[wy];
+		crazyflie_state.rates.z  = sim_acados_in.x0[wz];
+
+		/*crazyflie_state.pos.x    = sim_acados_out.xn[xq];
 		crazyflie_state.pos.y    = sim_acados_out.xn[yq];
 		crazyflie_state.pos.z    = sim_acados_out.xn[zq];
 		crazyflie_state.vel.x    = sim_acados_out.xn[vbx];
@@ -621,11 +686,32 @@ class ESTIMATOR
 		crazyflie_state.quat.z   = sim_acados_out.xn[qz];
 		crazyflie_state.rates.x  = sim_acados_out.xn[wx];
 		crazyflie_state.rates.y  = sim_acados_out.xn[wy];
-		crazyflie_state.rates.z  = sim_acados_out.xn[wz];
+		crazyflie_state.rates.z  = sim_acados_out.xn[wz];*/
 
 		p_cf_state.publish(crazyflie_state);
 
-		// publish_plot_state();
+		ofstream cf_state("cf_state.txt", std::ios_base::app | std::ios_base::out);
+
+		if (cf_state.is_open()){
+
+		  cf_state << actual_roll 		<< " ";
+		  cf_state << actual_pitch		<< " ";
+		  cf_state << actual_yaw  		<< " ";
+		  cf_state << sim_acados_in.x0[xq] 	<< " ";
+		  cf_state << sim_acados_in.x0[yq] 	<< " ";
+		  cf_state << sim_acados_in.x0[zq] 	<< " ";
+		  cf_state << sim_acados_in.x0[qw] 	<< " ";
+		  cf_state << sim_acados_in.x0[qx] 	<< " ";
+		  cf_state << sim_acados_in.x0[qy] 	<< " ";
+		  cf_state << sim_acados_in.x0[qz] 	<< " ";
+		  cf_state << sim_acados_in.x0[vbx] 	<< " ";
+		  cf_state << sim_acados_in.x0[vby] 	<< " ";
+		  cf_state << sim_acados_in.x0[vbz] 	<< " ";
+		  cf_state << sim_acados_in.x0[wx] 	<< " ";
+		  cf_state << sim_acados_in.x0[wy] 	<< " ";
+		  cf_state << sim_acados_in.x0[wz] 	<< " ";
+		  cf_state.close();
+		}
 
 		}
 	};

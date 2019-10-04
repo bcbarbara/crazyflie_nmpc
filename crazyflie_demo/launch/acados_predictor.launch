@@ -9,17 +9,10 @@
 	<group ns="crazyflie">
 		<node pkg="crazyflie_driver" type="crazyflie_add" name="crazyflie_add" output="screen">
 			<param name="uri" value="$(arg uri)" />
-<<<<<<< HEAD
 			<param name="tf_prefix" value="/crazyflie" />
 			<param name="enable_logging" value="True" />
 			<param name="enable_logging_battery" value="False" />
 			<param name="enable_logging_motors" value="False" />
-=======
-			<param name="tf_prefix" value="crazyflie" />
-			<param name="enable_logging" value="True" />
-			<param name="enable_logging_battery" value="False" />
-			<param name="enable_logging_motors" value="True" />
->>>>>>> 08bb2467672c42fa7d6b25b73471d43c6f461f37
 			<param name="enable_logging_euler_angles" value="True" />
 			<param name="enable_logging_kf_quaternion" value="False" />
 			<param name="enable_logging_onboard_position" value="False" />
@@ -29,20 +22,6 @@
 			<param name="enable_logging_pose" value="False" />
 			<param name="enable_logging_pressure" value="False" />
 			<param name="enable_logging_temperature" value="False" />
-<<<<<<< HEAD
-			<!--rosparam>
-			 genericLogTopics: ["sf6"]
-			 genericLogTopicFrequencies: [100]
-			 genericLogTopic_sf6_Variables: ["sensfusion6.qw", "sensfusion6.qx", "sensfusion6.qy", "sensfusion6.qz"]
-			</rosparam-->
-=======
-
-<rosparam>
-      genericLogTopics: ["log1"]
-      genericLogTopicFrequencies: [65]
-      genericLogTopic_log1_Variables: ["motor.m1", "motor.m2", "motor.m3", "motor.m4"]
-</rosparam>
->>>>>>> 08bb2467672c42fa7d6b25b73471d43c6f461f37
 		</node>
 
 		<node
@@ -51,16 +30,11 @@
 			type="publish_external_position_eraptor.py"
 			output="screen">
 		</node>
-
 	</group>
 
 	<include file="$(find cortex_stream)/launch/cortex_stream.launch"/>
 
-<<<<<<< HEAD
 	<!--node name="acados_plot_state"
-=======
-	<node name="acados_plot_state"
->>>>>>> 08bb2467672c42fa7d6b25b73471d43c6f461f37
 				pkg="rqt_plot"
 				type="rqt_plot"
 				args="
@@ -77,27 +51,17 @@
 					/crazyflie/cmd_vel
 					/crazyflie/euler_angles"
 				>
-<<<<<<< HEAD
 	</node-->
-=======
-	</node>
->>>>>>> 08bb2467672c42fa7d6b25b73471d43c6f461f37
 
 	<node name="nmpc" pkg="crazyflie_controller" type="acados_mpc" output="screen" ns="crazyflie">
 		<param name="ref_traj" value="$(find crazyflie_controller)/traj/smooth_step.txt"/>
 	</node>
 
-<<<<<<< HEAD
+	<node name="estimator" pkg="crazyflie_controller" type="acados_estimator" output="screen" ns="crazyflie">
+		<param name="delay" value='0.0'/>
+	</node>
+
 	<!--node pkg="rqt_reconfigure" name="crazyflie_reconf" type="rqt_reconfigure" output="screen">
 </node-->
 
-	<node name="estimator" pkg="crazyflie_controller" type="acados_estimator" output="screen" ns="crazyflie">
-		<param name="delay" value='0.06'/>
-	</node>
-=======
-	<node name="estimator" pkg="crazyflie_controller" type="acados_estimator" output="screen" ns="crazyflie">
-		<param name="delay" value='0.06'/>
-	</node>
-
->>>>>>> 08bb2467672c42fa7d6b25b73471d43c6f461f37
 </launch>

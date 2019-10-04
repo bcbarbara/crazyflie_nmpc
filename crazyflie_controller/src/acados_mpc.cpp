@@ -81,12 +81,9 @@ using std::showpos;
 
 #define WEIGHT_MATRICES 0
 #define SET_WEIGHTS 0
-#define TRACK_TRAJ 0
-#define REGULATION 1
-#define RECONFIGURE 1
-#define PUB_OPENLOOP_TRAJ 0
 #define FIXED_U0 0
-#define READ_CASADI_TRAJ 0
+#define CONTROLLER 1
+#define PUB_OPENLOOP_TRAJ 0
 
 class NMPC
 	{
@@ -244,6 +241,7 @@ public:
 		// Set number of trajectory iterations to zero initially
 		iter = 0;
 
+		// Set weight matrix values
 		Wdiag_xq	= 120.0 ;
 		Wdiag_yq	= 100.0 ;
 		Wdiag_zq	= 100.0 ;
@@ -267,19 +265,17 @@ public:
 		{
 		ROS_DEBUG("Setting up the dynamic reconfigure panel and server");
 
-		#if RECONFIGURE
 			dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsConfig> server;
 			dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsConfig>::CallbackType f;
 			f = boost::bind(&NMPC::callback_dynamic_reconfigure, this, _1, _2);
 			server.setCallback(f);
-		#endif
 
 		ros::spin();
 		}
 
 	void callback_dynamic_reconfigure(crazyflie_controller::crazyflie_paramsConfig &config, uint32_t level)
 		{
-		if (level)
+		if (level && CONTROLLER)
 			{
 			if(config.enable_traj_tracking)
 				{
@@ -295,33 +291,35 @@ public:
 				zq_des = config.zq_des;
 				policy = Regulation;
 				}
+				ROS_INFO_STREAM(
+					fixed << showpos << "Quad status" << endl
+					<< "NMPC for regulation: " <<  (config.enable_regulation?"ON":"off") << endl
+					<< "NMPC trajectory tracker: " <<  (config.enable_traj_tracking?"ON":"off") << endl
+					<< "Current regulation point: " << xq_des << ", " << yq_des << ", " << zq_des << endl
+				);
 			}
 
-		ROS_INFO("Changing the weight of NMPC matrices!");
-		Wdiag_xq	= config.Wdiag_xq;
-		Wdiag_yq	= config.Wdiag_yq;
-		Wdiag_zq	= config.Wdiag_zq;
-		Wdiag_q1	= config.Wdiag_q1;
-		Wdiag_q2	= config.Wdiag_q2;
-		Wdiag_q3	= config.Wdiag_q3;
-		Wdiag_q4	= config.Wdiag_q4;
-		Wdiag_vbx	= config.Wdiag_vbx;
-		Wdiag_vby	= config.Wdiag_vby;
-		Wdiag_vbz	= config.Wdiag_vbz;
-		Wdiag_wx	= config.Wdiag_wx;
-		Wdiag_wy	= config.Wdiag_wy;
-		Wdiag_wz	= config.Wdiag_wz;
-		Wdiag_w1	= config.Wdiag_w1;
-		Wdiag_w2	= config.Wdiag_w2;
-		Wdiag_w3	= config.Wdiag_w3;
-		Wdiag_w4	= config.Wdiag_w4;
-
-		ROS_INFO_STREAM(
-			fixed << showpos << "Quad status" << endl
-			<< "NMPC for regulation: " <<  (config.enable_regulation?"ON":"off") << endl
-			<< "NMPC trajectory tracker: " <<  (config.enable_traj_tracking?"ON":"off") << endl
-			<< "Current regulation point: " << xq_des << ", " << yq_des << ", " << zq_des << endl
-		);
+		if (level && WEIGHT_MATRICES)
+		 {
+				ROS_INFO("Changing the weight of NMPC matrices!");
+				Wdiag_xq	= config.Wdiag_xq;
+				Wdiag_yq	= config.Wdiag_yq;
+				Wdiag_zq	= config.Wdiag_zq;
+				Wdiag_q1	= config.Wdiag_q1;
+				Wdiag_q2	= config.Wdiag_q2;
+				Wdiag_q3	= config.Wdiag_q3;
+				Wdiag_q4	= config.Wdiag_q4;
+				Wdiag_vbx	= config.Wdiag_vbx;
+				Wdiag_vby	= config.Wdiag_vby;
+				Wdiag_vbz	= config.Wdiag_vbz;
+				Wdiag_wx	= config.Wdiag_wx;
+				Wdiag_wy	= config.Wdiag_wy;
+				Wdiag_wz	= config.Wdiag_wz;
+				Wdiag_w1	= config.Wdiag_w1;
+				Wdiag_w2	= config.Wdiag_w2;
+				Wdiag_w3	= config.Wdiag_w3;
+				Wdiag_w4	= config.Wdiag_w4;
+		 }
 		}
 
 	int readDataFromFile(const char* fileName, std::vector<std::vector<double>> &data)
@@ -400,123 +398,94 @@ public:
 
 	void iteration(const crazyflie_controller::CrazyflieStateStampedPtr& msg)
 		{
-		try
-			{
+			try{
+					switch(policy){
 
-			// --- Track trajectory
-			#if TRACK_TRAJ
+					  case Regulation:
+					  {
+					    // Update regulation point
+					    for (k = 0; k < N+1; k++)
+							{
+							  yref_sign[k * NY + 0] = xq_des; // xq
+							  yref_sign[k * NY + 1] = yq_des;	// yq
+							  yref_sign[k * NY + 2] = zq_des;	// zq
+							  yref_sign[k * NY + 3] = 1.00;		// q1
+							  yref_sign[k * NY + 4] = 0.00;		// q2
+							  yref_sign[k * NY + 5] = 0.00;		// q3
+							  yref_sign[k * NY + 6] = 0.00;		// q4
+							  yref_sign[k * NY + 7] = 0.00;		// vbx
+							  yref_sign[k * NY + 8] = 0.00;		// vby
+							  yref_sign[k * NY + 9] = 0.00;		// vbz
+							  yref_sign[k * NY + 10] = 0.00;	// wx
+							  yref_sign[k * NY + 11] = 0.00;	// wy
+							  yref_sign[k * NY + 12] = 0.00;	// wz
+							  yref_sign[k * NY + 13] = uss;		// w1
+							  yref_sign[k * NY + 14] = uss;		// w2
+							  yref_sign[k * NY + 15] = uss;		// w3
+							  yref_sign[k * NY + 16] = uss;		// w4
+					    }
+					    break;
+					  }
 
-			if(iter > N_STEPS)
-				{
-				ROS_INFO_STREAM("Trajectory is over");
-				ros::shutdown();
-				}
+					  case Tracking:
+					  {
+					    if(iter < N_STEPS-N)
+								{
+									// Update reference
+						 			for (k = 0; k < N+1; k++)
+									{
+						 		      yref_sign[k * NY + 0] = precomputed_traj[iter + k][xq];
+								      yref_sign[k * NY + 1] = precomputed_traj[iter + k][yq];
+								      yref_sign[k * NY + 2] = precomputed_traj[iter + k][zq];
+								      yref_sign[k * NY + 3] = precomputed_traj[iter + k][q1];
+								      yref_sign[k * NY + 4] = precomputed_traj[iter + k][q2];
+								      yref_sign[k * NY + 5] = precomputed_traj[iter + k][q3];
+								      yref_sign[k * NY + 6] = precomputed_traj[iter + k][q4];
+								      yref_sign[k * NY + 7] = precomputed_traj[iter + k][vbx];
+								      yref_sign[k * NY + 8] = precomputed_traj[iter + k][vby];
+								      yref_sign[k * NY + 9] = precomputed_traj[iter + k][vbz];
+								      yref_sign[k * NY + 10] = precomputed_traj[iter + k][wx];
+								      yref_sign[k * NY + 11] = precomputed_traj[iter + k][wy];
+								      yref_sign[k * NY + 12] = precomputed_traj[iter + k][wz];
+								      yref_sign[k * NY + 13] = precomputed_traj[iter + k][13];
+								      yref_sign[k * NY + 14] = precomputed_traj[iter + k][14];
+								      yref_sign[k * NY + 15] = precomputed_traj[iter + k][15];
+								      yref_sign[k * NY + 16] = precomputed_traj[iter + k][16];
+					 				}
+									++iter;
+							//cout << iter << endl;
+					    }
+			 	    else policy = Position_Hold;
+				    break;
+					  }
 
-			if(iter >= N_STEPS-N)
-				{
-				for (k = 0; k < N_STEPS-iter; k++)
-					{
-					acados_in.yref[k * NY + 0]  = precomputed_traj[iter + k][xq];
-					acados_in.yref[k * NY + 1]  = precomputed_traj[iter + k][yq];
-					acados_in.yref[k * NY + 2]  = precomputed_traj[iter + k][zq];
-					acados_in.yref[k * NY + 3]  = precomputed_traj[iter + k][q1];
-					acados_in.yref[k * NY + 4]  = precomputed_traj[iter + k][q2];
-					acados_in.yref[k * NY + 5]  = precomputed_traj[iter + k][q3];
-					acados_in.yref[k * NY + 6]  = precomputed_traj[iter + k][q4];
-					acados_in.yref[k * NY + 7]  = precomputed_traj[iter + k][vbx];
-					acados_in.yref[k * NY + 8]  = precomputed_traj[iter + k][vby];
-					acados_in.yref[k * NY + 9]  = precomputed_traj[iter + k][vbz];
-					acados_in.yref[k * NY + 10] = precomputed_traj[iter + k][wx];
-					acados_in.yref[k * NY + 11] = precomputed_traj[iter + k][wy];
-					acados_in.yref[k * NY + 12] = precomputed_traj[iter + k][wz];
-					acados_in.yref[k * NY + 13] = precomputed_traj[iter + k][13];
-					acados_in.yref[k * NY + 14] = precomputed_traj[iter + k][14];
-					acados_in.yref[k * NY + 15] = precomputed_traj[iter + k][15];
-					acados_in.yref[k * NY + 16] = precomputed_traj[iter + k][16];
+					  case Position_Hold:
+					  	{
+						    ROS_INFO("Holding last position of the trajectory.");
+						    // Get last point of tracketory and hold
+						    for (k = 0; k < N+1; k++)
+									{
+								    yref_sign[k * NY + 0] = precomputed_traj[N_STEPS-1][xq];
+								    yref_sign[k * NY + 1] = precomputed_traj[N_STEPS-1][yq];
+								    yref_sign[k * NY + 2] = precomputed_traj[N_STEPS-1][zq];
+								    yref_sign[k * NY + 3] = 1.00;
+								    yref_sign[k * NY + 4] = 0.00;
+								    yref_sign[k * NY + 5] = 0.00;
+								    yref_sign[k * NY + 6] = 0.00;
+								    yref_sign[k * NY + 7] = 0.00;
+								    yref_sign[k * NY + 8] = 0.00;
+								    yref_sign[k * NY + 9] = 0.00;
+								    yref_sign[k * NY + 10] = 0.00;
+								    yref_sign[k * NY + 11] = 0.00;
+								    yref_sign[k * NY + 12] = 0.00;
+								    yref_sign[k * NY + 13] = uss;
+								    yref_sign[k * NY + 14] = uss;
+								    yref_sign[k * NY + 15] = uss;
+								    yref_sign[k * NY + 16] = uss;
+						      }
+					  }
+					  break;
 					}
-				for (k=N_STEPS-iter; k < N+1; k++)
-					{
-					acados_in.yref[k * NY + 0]  = precomputed_traj[N_STEPS][xq];
-					acados_in.yref[k * NY + 1]  = precomputed_traj[N_STEPS][yq];
-					acados_in.yref[k * NY + 2]  = precomputed_traj[N_STEPS][zq];
-					acados_in.yref[k * NY + 3]  = precomputed_traj[N_STEPS][q1];
-					acados_in.yref[k * NY + 4]  = precomputed_traj[N_STEPS][q2];
-					acados_in.yref[k * NY + 5]  = precomputed_traj[N_STEPS][q3];
-					acados_in.yref[k * NY + 6]  = precomputed_traj[N_STEPS][q4];
-					acados_in.yref[k * NY + 7]  = precomputed_traj[N_STEPS][vbx];
-					acados_in.yref[k * NY + 8]  = precomputed_traj[N_STEPS][vby];
-					acados_in.yref[k * NY + 9]  = precomputed_traj[N_STEPS][vbz];
-					acados_in.yref[k * NY + 10] = precomputed_traj[N_STEPS][wx];
-					acados_in.yref[k * NY + 11] = precomputed_traj[N_STEPS][wy];
-					acados_in.yref[k * NY + 12] = precomputed_traj[N_STEPS][wz];
-					acados_in.yref[k * NY + 13] = precomputed_traj[N_STEPS][13];
-					acados_in.yref[k * NY + 14] = precomputed_traj[N_STEPS][14];
-					acados_in.yref[k * NY + 15] = precomputed_traj[N_STEPS][15];
-					acados_in.yref[k * NY + 16] = precomputed_traj[N_STEPS][16];
-					}
-				}
-
-			for (k = 0; k < N+1; k++)
-				{
-				acados_in.yref[k * NY + 0]  = precomputed_traj[iter + k][xq];
-				acados_in.yref[k * NY + 1]  = precomputed_traj[iter + k][yq];
-				acados_in.yref[k * NY + 2]  = precomputed_traj[iter + k][zq];
-				acados_in.yref[k * NY + 3]  = precomputed_traj[iter + k][q1];
-				acados_in.yref[k * NY + 4]  = precomputed_traj[iter + k][q2];
-				acados_in.yref[k * NY + 5]  = precomputed_traj[iter + k][q3];
-				acados_in.yref[k * NY + 6]  = precomputed_traj[iter + k][q4];
-				acados_in.yref[k * NY + 7]  = precomputed_traj[iter + k][vbx];
-				acados_in.yref[k * NY + 8]  = precomputed_traj[iter + k][vby];
-				acados_in.yref[k * NY + 9]  = precomputed_traj[iter + k][vbz];
-				acados_in.yref[k * NY + 10] = precomputed_traj[iter + k][wx];
-				acados_in.yref[k * NY + 11] = precomputed_traj[iter + k][wy];
-				acados_in.yref[k * NY + 12] = precomputed_traj[iter + k][wz];
-				acados_in.yref[k * NY + 13] = precomputed_traj[iter + k][13];
-				acados_in.yref[k * NY + 14] = precomputed_traj[iter + k][14];
-				acados_in.yref[k * NY + 15] = precomputed_traj[iter + k][15];
-				acados_in.yref[k * NY + 16] = precomputed_traj[iter + k][16];
-				}
-			++iter;
-
-			#endif
-
-			// --- Regulation
-			#if REGULATION
-
-			for (k = 0; k < N; k++){
-				acados_in.yref[k * NY + 0] = 0.0;	// xq
-				acados_in.yref[k * NY + 1] = 0.0;	// yq
-				acados_in.yref[k * NY + 2] = 0.4;	// zq
-				acados_in.yref[k * NY + 3] = 1.00;		// q1
-				acados_in.yref[k * NY + 4] = 0.00;		// q2
-				acados_in.yref[k * NY + 5] = 0.00;		// q3
-				acados_in.yref[k * NY + 6] = 0.00;		// q4
-				acados_in.yref[k * NY + 7] = 0.00;		// vbx
-				acados_in.yref[k * NY + 8] = 0.00;		// vby
-				acados_in.yref[k * NY + 9] = 0.00;		// vbz
-				acados_in.yref[k * NY + 10] = 0.00;		// wx
-				acados_in.yref[k * NY + 11] = 0.00;		// wy
-				acados_in.yref[k * NY + 12] = 0.00;		// wz
-				acados_in.yref[k * NY + 13] = uss;		// w1
-				acados_in.yref[k * NY + 14] = uss;		// w2
-				acados_in.yref[k * NY + 15] = uss;		// w3
-				acados_in.yref[k * NY + 16] = uss;		// w4
-			}
-
-			acados_in.yref_e[k * NY + 0]  = xq_des;	// xq
-			acados_in.yref_e[k * NY + 1]  = yq_des;	// yq
-			acados_in.yref_e[k * NY + 2]  = zq_des;	// zq
-			acados_in.yref_e[k * NY + 3]  = 1.00;	// q1
-			acados_in.yref_e[k * NY + 4]  = 0.00;	// q2
-			acados_in.yref_e[k * NY + 5]  = 0.00;	// q3
-			acados_in.yref_e[k * NY + 6]  = 0.00;	// q4
-			acados_in.yref_e[k * NY + 7]  = 0.00;	// vbx
-			acados_in.yref_e[k * NY + 8]  = 0.00;	// vby
-			acados_in.yref_e[k * NY + 9]  = 0.00;	// vbz
-			acados_in.yref_e[k * NY + 10] = 0.00;	// wx
-			acados_in.yref_e[k * NY + 11] = 0.00;	// wy
-			acados_in.yref_e[k * NY + 12] = 0.00;	// wz
-			#endif
 
 			// --- Set Weights
 			for (ii = 0; ii < ((NY)*(NY)); ii++) {
@@ -581,24 +550,20 @@ public:
 			acados_in.x0[wz] = msg->rates.z;
 
 			// --- acados NMPC
-
 			ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "lbx", acados_in.x0);
 			ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "ubx", acados_in.x0);
 
-			// for (i = 0; i < N; i++) {
-				// for (j = 0; j < NY; ++j) {
-					// acados_in.yref[i*NY + j] = yref_sign[i*NY + j];
-				// }
-			// }
-			// for (i = 0; i < NYN; i++) {
-				// acados_in.yref_e[i] = yref_sign[N*NY + i];
-			// }
+			for (i = 0; i < N; i++) {
+	    	for (j = 0; j < NY; ++j) acados_in.yref[i*NY + j] = yref_sign[i*NY + j];
+			}
+
+			for (i = 0; i < NYN; i++) acados_in.yref_e[i] = yref_sign[N*NY + i];
 
 			for (ii = 0; ii < N; ii++)
 				{
 				ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, ii, "yref", acados_in.yref + ii*NY);
 				}
-				ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "yref", acados_in.yref_e);
+			ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "yref", acados_in.yref_e);
 
 			#if SET_WEIGHTS
 			for (ii = 0; ii < N; ii++)
@@ -653,10 +618,10 @@ public:
 
 			// Select the set of optimal states to calculate the real cf control inputs
 			Quaterniond q_acados_out;
-			q_acados_out.w() = acados_out.x1[q1];
-			q_acados_out.x() = acados_out.x1[q2];
-			q_acados_out.y() = acados_out.x1[q3];
-			q_acados_out.z() = acados_out.x1[q4];
+			q_acados_out.w() = acados_out.x2[q1];
+			q_acados_out.x() = acados_out.x2[q2];
+			q_acados_out.y() = acados_out.x2[q3];
+			q_acados_out.z() = acados_out.x2[q4];
 			q_acados_out.normalize();
 
 			// replay input
@@ -666,7 +631,6 @@ public:
 			//q_acados_in.y() = acados_in.x0[q3];
 			//q_acados_in.z() = acados_in.x0[q4];
 			//q_acados_in.normalize();
-
 
 			// Convert acados output quaternion to desired euler angles
 			euler eu_imu;
@@ -683,12 +647,12 @@ public:
 			bodytwist.linear.y  = -rad2Deg(eu_imu.phi);
 			// linear_z -> thrust
 			bodytwist.linear.z  = krpm2pwm(
-				(propellerspeeds.w1+propellerspeeds.w2+propellerspeeds.w3+propellerspeeds.w4)/4
+				(acados_out.u1[w1]+acados_out.u1[w2]+acados_out.u1[w3]+acados_out.u1[w4])/4
 			);
 			// angular_z -> yaw rate
-			bodytwist.angular.z = rad2Deg(acados_out.x1[wz]);
+			bodytwist.angular.z = rad2Deg(acados_out.x2[wz]);
 
-			bodytwist.linear.z = 100;
+			//bodytwist.linear.z = 100;
 			//bodytwist.angular.z = 0;
 
 			p_bodytwist.publish(bodytwist);
