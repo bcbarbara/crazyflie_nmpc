@@ -4,6 +4,10 @@ from export_ode_model import *
 import numpy as np
 import scipy.linalg
 from ctypes import *
+from os.path import dirname, join, abspath
+
+ACADOS_PATH = join(dirname(abspath(__file__)), "../../../acados/")
+
 
 # create render arguments
 ra = acados_ocp_nlp()
@@ -130,8 +134,11 @@ ra.solver_config.nlp_solver_type = 'SQP_RTI'
 #ra.solver_config.nlp_solver_type = 'SQP'
 
 # set header path
-ra.acados_include_path  = '/usr/local/include'
-ra.acados_lib_path      = '/usr/local/lib'
+#ra.acados_include_path  = '/usr/local/include'
+#ra.acados_lib_path      = '/usr/local/lib'
+
+ra.acados_include_path  = f'{ACADOS_PATH}/include'
+ra.acados_lib_path      = f'{ACADOS_PATH}/lib'
 
 acados_solver = generate_solver(model, ra, json_file = 'acados_ocp.json')
 

@@ -624,19 +624,9 @@ public:
 			q_acados_out.z() = acados_out.x2[q4];
 			q_acados_out.normalize();
 
-			// replay input
-			//Quaterniond q_acados_in;
-			//q_acados_in.w() = acados_in.x0[q1];
-			//q_acados_in.x() = acados_in.x0[q2];
-			//q_acados_in.y() = acados_in.x0[q3];
-			//q_acados_in.z() = acados_in.x0[q4];
-			//q_acados_in.normalize();
-
 			// Convert acados output quaternion to desired euler angles
 			euler eu_imu;
 			eu_imu = quatern2euler(&q_acados_out);
-
-			//eu_imu = quatern2euler(&q_acados_in);
 
 			// Publish real control inputs
 			geometry_msgs::Twist bodytwist;
@@ -651,9 +641,6 @@ public:
 			);
 			// angular_z -> yaw rate
 			bodytwist.angular.z = rad2Deg(acados_out.x2[wz]);
-
-			//bodytwist.linear.z = 100;
-			//bodytwist.angular.z = 0;
 
 			p_bodytwist.publish(bodytwist);
 
