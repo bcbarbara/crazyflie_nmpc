@@ -37,7 +37,7 @@ SOURCES = [ 'acados_solver_sfunction_crazyflie.c ', ...
             'crazyflie_model/crazyflie_expl_vde_forw.c ',...
             ];
 
-INC_PATH = '/home/barbara/catkin_ws/src/crazyflie_ros/crazyflie_controller/scripts/crazyflie_full_model/../../../acados/include';
+INC_PATH = '/usr/local/include';
 
 INCS = [ ' -I', INC_PATH, '/blasfeo/include/ ', ...
           '-I', INC_PATH, ' -I', INC_PATH, '/acados/ ', ...
@@ -47,7 +47,7 @@ CFLAGS  = ' -O';
 
 
 
-LIB_PATH = '/home/barbara/catkin_ws/src/crazyflie_ros/crazyflie_controller/scripts/crazyflie_full_model/../../../acados/lib';
+LIB_PATH = '/usr/local/lib';
 
 LIBS = '-lacados -lhpipm -lblasfeo -lqpOASES_e -lm'; 
     

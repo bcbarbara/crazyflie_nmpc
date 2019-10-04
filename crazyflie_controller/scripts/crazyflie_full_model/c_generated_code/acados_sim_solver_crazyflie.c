@@ -76,7 +76,10 @@ int crazyflie_acados_sim_create() {
     sim_forw_vde_casadi->casadi_sparsity_in = &crazyflie_expl_vde_forw_sparsity_in;
     sim_forw_vde_casadi->casadi_sparsity_out = &crazyflie_expl_vde_forw_sparsity_out;
     sim_forw_vde_casadi->casadi_work = &crazyflie_expl_vde_forw_work;
+
+    
     external_function_casadi_create(sim_forw_vde_casadi);
+    
 
     sim_expl_ode_fun_casadi->casadi_fun = &crazyflie_expl_ode_fun;
     sim_expl_ode_fun_casadi->casadi_n_in = &crazyflie_expl_ode_fun_n_in;
@@ -84,7 +87,11 @@ int crazyflie_acados_sim_create() {
     sim_expl_ode_fun_casadi->casadi_sparsity_in = &crazyflie_expl_ode_fun_sparsity_in;
     sim_expl_ode_fun_casadi->casadi_sparsity_out = &crazyflie_expl_ode_fun_sparsity_out;
     sim_expl_ode_fun_casadi->casadi_work = &crazyflie_expl_ode_fun_work;
+
+    
     external_function_casadi_create(sim_expl_ode_fun_casadi);
+    
+
     
 
     // sim plan & config
