@@ -597,7 +597,10 @@ public:
 			ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 1, "x", (void *)acados_out.x1);
 
 			// get stage N = 2 which compensates 15 ms for the delay
-			ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 2, "x", (void *)acados_out.x2);
+			//ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 2, "x", (void *)acados_out.x2);
+
+			// get stage N = 2 which compensates 15 ms for the delay
+			ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 4, "x", (void *)acados_out.x2);
 
 			// publish acados output
 			crazyflie_controller::PropellerSpeedsStamped propellerspeeds;
@@ -632,9 +635,9 @@ public:
 			geometry_msgs::Twist bodytwist;
 
 			// linear_x -> pitch
-			bodytwist.linear.x  = rad2Deg(eu_imu.theta);
+			bodytwist.linear.x  = 1.0*rad2Deg(eu_imu.theta);
 			// linear_y -> roll
-			bodytwist.linear.y  = -rad2Deg(eu_imu.phi);
+			bodytwist.linear.y  = -1.0*rad2Deg(eu_imu.phi);
 			// linear_z -> thrust
 			bodytwist.linear.z  = krpm2pwm(
 				(acados_out.u1[w1]+acados_out.u1[w2]+acados_out.u1[w3]+acados_out.u1[w4])/4
@@ -645,7 +648,7 @@ public:
 			p_bodytwist.publish(bodytwist);
 
 
-			/*ofstream ol_traj("full_log.txt", std::ios_base::app | std::ios_base::out);
+			ofstream ol_traj("full_log.txt", std::ios_base::app | std::ios_base::out);
 
 			if (ol_traj.is_open()){
 
@@ -681,7 +684,7 @@ public:
 			  ol_traj << acados_out.x2[wz] 		<< " ";
 				ol_traj << endl;
 			  ol_traj.close();
-			}*/
+			}
 
 			// --- Publish openloop
 			#if PUB_OPENLOOP_TRAJ
