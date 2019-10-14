@@ -24,8 +24,8 @@
 #include <geometry_msgs/Quaternion.h>
 #include <geometry_msgs/QuaternionStamped.h>
 #include <geometry_msgs/Vector3Stamped.h>
-#include "crazyflie_controller/GenericLogData.h"
-#include "crazyflie_controller/EulerAnglesStamped.h"
+#include <crazyflie_controller/GenericLogData.h>
+#include <crazyflie_controller/EulerAnglesStamped.h>
 #include <crazyflie_controller/CrazyflieStateStamped.h>
 #include <crazyflie_controller/PropellerSpeedsStamped.h>
 
