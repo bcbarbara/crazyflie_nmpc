@@ -253,13 +253,13 @@ public:
 		Wdiag_vbx	= 7e-1  ;
 		Wdiag_vby	= 1.0   ;
 		Wdiag_vbz	= 4.0   ;
-		Wdiag_wx	= 8.0	;
-		Wdiag_wy	= 8.0	;
+		Wdiag_wx	= 1e-5	;
+		Wdiag_wy	= 1e-5	;
 		Wdiag_wz	= 10.0  ;
-		Wdiag_w1	= 0.07  ;
-		Wdiag_w2	= 0.07  ;
-		Wdiag_w3	= 0.07  ;
-		Wdiag_w4	= 0.07  ;
+		Wdiag_w1	= 0.06  ;
+		Wdiag_w2	= 0.06  ;
+		Wdiag_w3	= 0.06  ;
+		Wdiag_w4	= 0.06  ;
 		Wdiag_s		= 10e+6 ;
 		}
 
