@@ -62,19 +62,19 @@ Q[3,3] = 1.0e-3     # q1
 Q[4,4] = 1.0e-3     # q2
 Q[5,5] = 1.0e-3     # q3
 Q[6,6] = 1.0e-3     # q4
-Q[7,7] = 7e-1       # vbx
-Q[8,8] = 1.0        # vby
-Q[9,9] = 4.0        # vbz
+Q[7,7] = 1.0        # vbx
+Q[8,8] = 3.0        # vby
+Q[9,9] = 15.0       # vbz
 Q[10,10] = 1e-5     # wx
 Q[11,11] = 1e-5     # wy
 Q[12,12] = 10.0     # wz
 
 R = np.eye(nu)
-R[0,0] = 0.4    # w1
-R[1,1] = 0.4    # w2
-R[2,2] = 0.4    # w3
-R[3,3] = 0.4    # w4
-R[4,4] = 10e+3   # slack
+R[0,0] = 0.1    # w1
+R[1,1] = 0.1    # w2
+R[2,2] = 0.1    # w3
+R[3,3] = 0.1    # w4
+R[4,4] = 10e+10   # slack
 
 nlp_cost.W = scipy.linalg.block_diag(Q, R)
 
@@ -132,7 +132,7 @@ nlp_con.lbu = np.array([0,0,0,0,0]) # lower bound
 nlp_con.ubu = np.array([+max_thrust,+max_thrust,+max_thrust,+max_thrust,100000]) # upper bound
 nlp_con.idxbu = np.array([0, 1, 2, 3, 4]) # indexes of bounds
 nlp_con.lh = dmin*np.array([1])
-nlp_con.uh = 100000*np.array([1])
+nlp_con.uh = 10000*np.array([1])
 
 # initial state
 nlp_con.x0  = np.array([0.0,0.0,0.0,1,0,0,0,0,0,0,0,0,0])
