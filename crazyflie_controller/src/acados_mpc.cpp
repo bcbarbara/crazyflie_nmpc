@@ -636,9 +636,9 @@ public:
 			geometry_msgs::Twist bodytwist;
 
 			// linear_x -> pitch
-			bodytwist.linear.x  = 1.5*rad2Deg(eu_imu.theta);
+			bodytwist.linear.x  = 1.0*rad2Deg(eu_imu.theta);
 			// linear_y -> roll
-			bodytwist.linear.y  = -1.5*rad2Deg(eu_imu.phi);
+			bodytwist.linear.y  = -1.0*rad2Deg(eu_imu.phi);
 			// linear_z -> thrust
 			bodytwist.linear.z  = krpm2pwm(
 				(acados_out.u1[w1]+acados_out.u1[w2]+acados_out.u1[w3]+acados_out.u1[w4])/4
@@ -683,9 +683,6 @@ public:
 			  ol_traj << acados_out.x4[wx] 		<< " ";
 			  ol_traj << acados_out.x4[wy] 		<< " ";
 			  ol_traj << acados_out.x4[wz] 		<< " ";
-// 			  ol_traj << xq_des 			<< " ";
-// 			  ol_traj << yq_des 		        << " ";
-// 			  ol_traj << zq_des 			<< " ";
 			  ol_traj << precomputed_traj[iter][xq] << " ";
 			  ol_traj << precomputed_traj[iter][yq] << " ";
 			  ol_traj << precomputed_traj[iter][zq] << " ";
