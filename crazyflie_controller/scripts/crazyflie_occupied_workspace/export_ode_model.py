@@ -120,4 +120,3 @@ def export_path_constraint():
     path_constraint.name = 'distance_function'
 
     return path_constraint
-
