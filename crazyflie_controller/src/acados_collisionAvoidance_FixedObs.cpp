@@ -126,7 +126,6 @@ class NMPC
 		double status, KKT_res, cpu_time;
 		double u0[NU];
 		double u1[NU];
-		double x1[NX];
 		double x4[NX];
 		double xi[NU];
 		double ui[NU];
@@ -455,6 +454,7 @@ public:
 								      yref_sign[k * NY + 14] = precomputed_traj[iter + k][14];
 								      yref_sign[k * NY + 15] = precomputed_traj[iter + k][15];
 								      yref_sign[k * NY + 16] = precomputed_traj[iter + k][16];
+											yref_sign[k * NY + 17] = 0.00;
 					 				}
 									++iter;
 							//cout << iter << endl;
@@ -486,6 +486,7 @@ public:
 								    yref_sign[k * NY + 14] = uss;
 								    yref_sign[k * NY + 15] = uss;
 								    yref_sign[k * NY + 16] = uss;
+										yref_sign[k * NY + 17] = 0.00;
 						      }
 					  }
 					  break;
@@ -599,9 +600,9 @@ public:
 			ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 1, "u", (void *)acados_out.u1);
 
 			// get next stage N = 1
-			ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 1, "x", (void *)acados_out.x1);
+			//ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 1, "x", (void *)acados_out.x1);
 
-			// get stage N = 2 which compensates 15 ms for the delay
+			// get stage N = 4 which compensates 60 ms for the delay
 			ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 4, "x", (void *)acados_out.x4);
 
 			// publish acados output

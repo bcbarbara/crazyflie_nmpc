@@ -70,11 +70,17 @@ Q[11,11] = 1e-5     # wy
 Q[12,12] = 10.0     # wz
 
 R = np.eye(nu)
-R[0,0] = 0.25    # w1
-R[1,1] = 0.25    # w2
-R[2,2] = 0.25    # w3
-R[3,3] = 0.25    # w4
-R[4,4] = 1e+10   # slack
+# R[0,0] = 0.25    # w1
+# R[1,1] = 0.25    # w2
+# R[2,2] = 0.25    # w3
+# R[3,3] = 0.25    # w4
+# R[4,4] = 1e+10   # slack
+
+R[0,0] = 0.4    # w1
+R[1,1] = 0.4    # w2
+R[2,2] = 0.4    # w3
+R[3,3] = 0.4    # w4
+R[4,4] = 10e+6   # slack
 
 nlp_cost.W = scipy.linalg.block_diag(Q, R)
 
@@ -122,8 +128,8 @@ Vx_e[12,12] = 1.0
 nlp_cost.Vx_e = Vx_e
 
 # seting references (for regulation)
-nlp_cost.yref   = np.array([1.0, -1.0, 1.0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, hov_w, hov_w, hov_w, hov_w, 0.0])
-nlp_cost.yref_e = np.array([1.0, -1.0, 1.0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+nlp_cost.yref   = np.array([0.0, 0.0, 0.4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, hov_w, hov_w, hov_w, hov_w, 0.0])
+nlp_cost.yref_e = np.array([0.0, 0.0, 0.4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
 # setting bounds
 nlp_con = ra.constraints
@@ -135,7 +141,7 @@ nlp_con.lh = dmin*np.array([1])
 nlp_con.uh = 100000*np.array([1])
 
 # initial state
-nlp_con.x0  = np.array([0.0,0.0,0.4,1,0,0,0,0,0,0,0,0,0])
+nlp_con.x0  = np.array([0.0,0.0,0.0,1,0,0,0,0,0,0,0,0,0])
 
 # set QP solver
 #ra.solver_config.qp_solver = 'FULL_CONDENSING_QPOASES'
@@ -179,7 +185,7 @@ for i in range(Nsim):
     acados_solver.set(0, "lbx", x0)
     acados_solver.set(0, "ubx", x0)
 
-## plot results
+# # plot results
 # import matplotlib.pyplot as plt
 #
 # Tsim = 3
