@@ -128,6 +128,7 @@ class NMPC
 		double u1[NU];
 		double x1[NX];
 		double x2[NX];
+		double x4[NX];
 		double xi[NU];
 		double ui[NU];
 	};
@@ -599,8 +600,8 @@ public:
 			// get stage N = 2 which compensates 15 ms for the delay
 			//ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 2, "x", (void *)acados_out.x2);
 
-			// get stage N = 2 which compensates 15 ms for the delay
-			ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 4, "x", (void *)acados_out.x2);
+			// get stage N = 4 which compensates 60 ms for the delay
+			ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 4, "x", (void *)acados_out.x4);
 
 			// publish acados output
 			crazyflie_controller::PropellerSpeedsStamped propellerspeeds;
@@ -621,10 +622,10 @@ public:
 
 			// Select the set of optimal states to calculate the real cf control inputs
 			Quaterniond q_acados_out;
-			q_acados_out.w() = acados_out.x2[q1];
-			q_acados_out.x() = acados_out.x2[q2];
-			q_acados_out.y() = acados_out.x2[q3];
-			q_acados_out.z() = acados_out.x2[q4];
+			q_acados_out.w() = acados_out.x4[q1];
+			q_acados_out.x() = acados_out.x4[q2];
+			q_acados_out.y() = acados_out.x4[q3];
+			q_acados_out.z() = acados_out.x4[q4];
 			q_acados_out.normalize();
 
 			// Convert acados output quaternion to desired euler angles
@@ -635,15 +636,15 @@ public:
 			geometry_msgs::Twist bodytwist;
 
 			// linear_x -> pitch
-			bodytwist.linear.x  = 1.0*rad2Deg(eu_imu.theta);
+			bodytwist.linear.x  = 1.5*rad2Deg(eu_imu.theta);
 			// linear_y -> roll
-			bodytwist.linear.y  = -1.0*rad2Deg(eu_imu.phi);
+			bodytwist.linear.y  = -1.5*rad2Deg(eu_imu.phi);
 			// linear_z -> thrust
 			bodytwist.linear.z  = krpm2pwm(
 				(acados_out.u1[w1]+acados_out.u1[w2]+acados_out.u1[w3]+acados_out.u1[w4])/4
 			);
 			// angular_z -> yaw rate
-			bodytwist.angular.z = rad2Deg(acados_out.x2[wz]);
+			bodytwist.angular.z = rad2Deg(acados_out.x4[wz]);
 
 			p_bodytwist.publish(bodytwist);
 
@@ -654,35 +655,41 @@ public:
 
 			  ol_traj << bodytwist.linear.y 	<< " ";
 			  ol_traj << bodytwist.linear.x		<< " ";
-			  ol_traj << bodytwist.angular.z  << " ";
-				ol_traj << bodytwist.linear.z   << " ";
-				ol_traj << acados_in.x0[xq] 		<< " ";
-				ol_traj << acados_in.x0[yq] 		<< " ";
-				ol_traj << acados_in.x0[zq] 		<< " ";
-				ol_traj << acados_in.x0[q1] 		<< " ";
-				ol_traj << acados_in.x0[q2] 		<< " ";
-				ol_traj << acados_in.x0[q3] 		<< " ";
-				ol_traj << acados_in.x0[q4] 		<< " ";
-				ol_traj << acados_in.x0[vbx] 	  << " ";
-				ol_traj << acados_in.x0[vby] 	  << " ";
-				ol_traj << acados_in.x0[vbz] 	  << " ";
-				ol_traj << acados_in.x0[wx] 		<< " ";
-				ol_traj << acados_in.x0[wy] 		<< " ";
-				ol_traj << acados_in.x0[wz] 		<< " ";
-			  ol_traj << acados_out.x2[xq] 		<< " ";
-			  ol_traj << acados_out.x2[yq] 		<< " ";
-			  ol_traj << acados_out.x2[zq] 		<< " ";
-			  ol_traj << acados_out.x2[q1] 		<< " ";
-			  ol_traj << acados_out.x2[q2] 		<< " ";
-			  ol_traj << acados_out.x2[q3] 		<< " ";
-			  ol_traj << acados_out.x2[q4] 		<< " ";
-			  ol_traj << acados_out.x2[vbx] 	<< " ";
-			  ol_traj << acados_out.x2[vby] 	<< " ";
-			  ol_traj << acados_out.x2[vbz] 	<< " ";
-			  ol_traj << acados_out.x2[wx] 		<< " ";
-			  ol_traj << acados_out.x2[wy] 		<< " ";
-			  ol_traj << acados_out.x2[wz] 		<< " ";
-				ol_traj << endl;
+			  ol_traj << bodytwist.angular.z  	<< " ";
+			  ol_traj << bodytwist.linear.z   	<< " ";
+			  ol_traj << acados_in.x0[xq] 		<< " ";
+			  ol_traj << acados_in.x0[yq] 		<< " ";
+			  ol_traj << acados_in.x0[zq] 		<< " ";
+			  ol_traj << acados_in.x0[q1] 		<< " ";
+			  ol_traj << acados_in.x0[q2] 		<< " ";
+			  ol_traj << acados_in.x0[q3] 		<< " ";
+			  ol_traj << acados_in.x0[q4] 		<< " ";
+			  ol_traj << acados_in.x0[vbx] 	  	<< " ";
+			  ol_traj << acados_in.x0[vby] 	  	<< " ";
+			  ol_traj << acados_in.x0[vbz] 	  	<< " ";
+			  ol_traj << acados_in.x0[wx] 		<< " ";
+			  ol_traj << acados_in.x0[wy] 		<< " ";
+			  ol_traj << acados_in.x0[wz] 		<< " ";
+			  ol_traj << acados_out.x4[xq] 		<< " ";
+			  ol_traj << acados_out.x4[yq] 		<< " ";
+			  ol_traj << acados_out.x4[zq] 		<< " ";
+			  ol_traj << acados_out.x4[q1] 		<< " ";
+			  ol_traj << acados_out.x4[q2] 		<< " ";
+			  ol_traj << acados_out.x4[q3] 		<< " ";
+			  ol_traj << acados_out.x4[q4] 		<< " ";
+			  ol_traj << acados_out.x4[vbx] 	<< " ";
+			  ol_traj << acados_out.x4[vby] 	<< " ";
+			  ol_traj << acados_out.x4[vbz] 	<< " ";
+			  ol_traj << acados_out.x4[wx] 		<< " ";
+			  ol_traj << acados_out.x4[wy] 		<< " ";
+			  ol_traj << acados_out.x4[wz] 		<< " ";
+// 			  ol_traj << xq_des 			<< " ";
+// 			  ol_traj << yq_des 		        << " ";
+// 			  ol_traj << zq_des 			<< " ";
+			  ol_traj << precomputed_traj[iter][xq] << " ";
+			  ol_traj << precomputed_traj[iter][yq] << " ";
+			  ol_traj << precomputed_traj[iter][zq] << " ";
+			  ol_traj << endl;
 			  ol_traj.close();
 			}
 

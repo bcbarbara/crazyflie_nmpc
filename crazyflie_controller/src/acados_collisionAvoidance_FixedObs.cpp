@@ -649,7 +649,7 @@ public:
 			p_bodytwist.publish(bodytwist);
 
 
-			/*ofstream ol_traj("full_log.txt", std::ios_base::app | std::ios_base::out);
+			ofstream ol_traj("full_log.txt", std::ios_base::app | std::ios_base::out);
 
 			if (ol_traj.is_open()){
 
@@ -685,7 +685,7 @@ public:
 			  ol_traj << acados_out.x2[wz] 		<< " ";
 				ol_traj << endl;
 			  ol_traj.close();
-			}*/
+			}
 
 			// --- Publish openloop
 			#if PUB_OPENLOOP_TRAJ
