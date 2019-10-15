@@ -9,8 +9,8 @@ def export_ode_model():
     Ixx = 1.395e-5   # [Kg.m^2]
     Iyy = 1.395e-5   # [Kg.m^2]
     Izz = 2.173e-5   # [Kg.m^2]
-    Cd  = 1e+6*7.9379e-12 # [N/rpm^2]
-    Ct  = 1e+6*3.1582e-10 # [N/rpm^2]
+    Cd  = 7.9379e-06 # [N/Krpm^2]
+    Ct  = 3.25e-4    # [N/rpm^2]
     dq  = 65e-3      # [m] distance between motors center
     l   = dq/2       # [m] distance between motor center and the axis of rotation
 
