@@ -104,12 +104,7 @@ def export_path_constraint():
     X_obst = DM([bx,by,bz])
 
     crazyflie_model = export_ode_model()
-
-    #distanceF_obs1 = norm_2(crazyflie_model.x[0:3]-o1p)
-    #distanceF_obs2 = norm_2(crazyflie_model.x[0:3]-o2p)
-    #distanceF_obs3 = norm_2(crazyflie_model.x[0:3]-o3p)
-
-    #distance_function = vertcat(distanceF_obs1, distanceF_obs2, distanceF_obs3)
+    
     distance_function = norm_2(crazyflie_model.x[0:3]-X_obst) + crazyflie_model.u[4]
 
     path_constraint = acados_constraint()
