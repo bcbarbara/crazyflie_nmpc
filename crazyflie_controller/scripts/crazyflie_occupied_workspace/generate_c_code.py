@@ -74,7 +74,7 @@ R[0,0] = 0.2    # w1
 R[1,1] = 0.2    # w2
 R[2,2] = 0.2    # w3
 R[3,3] = 0.2    # w4
-R[4,4] = 10e+6   # slack
+R[4,4] = 10   # slack
 
 nlp_cost.W = scipy.linalg.block_diag(Q, R)
 
