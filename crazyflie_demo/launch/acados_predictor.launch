@@ -54,7 +54,8 @@
 	</node-->
 
 	<node name="nmpc" pkg="crazyflie_controller" type="acados_mpc" output="screen" ns="crazyflie">
-		<param name="ref_traj" value="$(find crazyflie_controller)/traj/smooth_step.txt"/>
+		<!--param name="ref_traj" value="$(find crazyflie_controller)/traj/smooth_step.txt"/-->
+		<param name="ref_traj" value="$(find crazyflie_controller)/traj/helix_traj.txt"/>
 	</node>
 
 	<node name="estimator" pkg="crazyflie_controller" type="acados_estimator" output="screen" ns="crazyflie">
