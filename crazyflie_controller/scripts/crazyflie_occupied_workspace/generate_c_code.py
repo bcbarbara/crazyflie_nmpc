@@ -57,7 +57,7 @@ nlp_cost = ra.cost
 Q = np.eye(nx)
 Q[0,0] = 120.0      # x
 Q[1,1] = 100.0      # y
-Q[2,2] = 100.0      # z
+Q[2,2] = 110.0      # z
 Q[3,3] = 1.0e-3     # q1
 Q[4,4] = 1.0e-3     # q2
 Q[5,5] = 1.0e-3     # q3
@@ -74,7 +74,7 @@ R[0,0] = 0.25    # w1
 R[1,1] = 0.25    # w2
 R[2,2] = 0.25    # w3
 R[3,3] = 0.25    # w4
-R[4,4] = 1e+12   # slack
+R[4,4] = 1e+10   # slack
 
 nlp_cost.W = scipy.linalg.block_diag(Q, R)
 
