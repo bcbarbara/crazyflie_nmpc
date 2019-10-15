@@ -34,13 +34,13 @@
 
 	<include file="$(find cortex_stream)/launch/cortex_stream.launch"/>
 
-	<!--node name="acados_plot_state"
+	<node name="acados_plot_state"
 				pkg="rqt_plot"
 				type="rqt_plot"
 				args="
 				/cf_estimator/state_estimate/pos
 				"
-	/-->
+	/>
 
 	<node name="nmpc" pkg="crazyflie_controller" type="acados_collisionAvoidance_FixedObs" output="screen" ns="crazyflie">
 		<param name="ref_traj" value="$(find crazyflie_controller)/traj/smooth_step.txt"/>
@@ -50,7 +50,7 @@
 		<param name="delay" value='0.06'/>
 	</node>
 
-	<node pkg="rqt_reconfigure" name="crazyflie_reconf" type="rqt_reconfigure" output="screen">
-</node>
+	<!--node pkg="rqt_reconfigure" name="crazyflie_reconf" type="rqt_reconfigure" output="screen">
+</node-->
 
 </launch>
