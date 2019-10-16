@@ -244,22 +244,22 @@ public:
 		// Set weight matrix values
 		Wdiag_xq	= 120.0 ;
 		Wdiag_yq	= 100.0 ;
-		Wdiag_zq	= 150.0 ;
+		Wdiag_zq	= 125.0 ;
 		Wdiag_q1	= 1.0e-3;
 		Wdiag_q2	= 1.0e-3;
 		Wdiag_q3	= 1.0e-3;
 		Wdiag_q4	= 1.0e-3;
-		Wdiag_vbx	= 7e-1  ;
-		Wdiag_vby	= 1.0   ;
-		Wdiag_vbz	= 3.0   ;
+		Wdiag_vbx	= 1.0   ;
+		Wdiag_vby	= 3.0   ;
+		Wdiag_vbz	= 15.0  ;
 		Wdiag_wx	= 1e-5	;
 		Wdiag_wy	= 1e-5	;
 		Wdiag_wz	= 10.0  ;
-		Wdiag_w1	= 0.4  ;
-		Wdiag_w2	= 0.4  ;
-		Wdiag_w3	= 0.4  ;
-		Wdiag_w4	= 0.4  ;
-		Wdiag_s		= 10e+6 ;
+		Wdiag_w1	= 0.15  ;
+		Wdiag_w2	= 0.15  ;
+		Wdiag_w3	= 0.15  ;
+		Wdiag_w4	= 0.15  ;
+		Wdiag_s		= 1e+3  ;
 		}
 
 	void run()
