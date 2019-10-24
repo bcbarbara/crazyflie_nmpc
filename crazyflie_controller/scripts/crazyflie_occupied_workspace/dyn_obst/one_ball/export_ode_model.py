@@ -1,7 +1,7 @@
 from acados_template import *
 def export_ode_model():
 
-    model_name = 'crazyflie'
+    model_name = 'crazyflie_one_ball'
 
     # parameters
     g0  = 9.8         # [m.s^2]
@@ -9,8 +9,8 @@ def export_ode_model():
     Ixx = 1.395e-5   # [Kg.m^2]
     Iyy = 1.395e-5   # [Kg.m^2]
     Izz = 2.173e-5   # [Kg.m^2]
-    Cd  = 7.9379e-06 # [N/Krpm^2]
-    Ct  = 3.25e-4    # [N/rpm^2]
+    Cd  = 1e+6*7.9379e-12 # [N/rpm^2]
+    Ct  = 1e+6*3.1582e-10 # [N/rpm^2]
     dq  = 65e-3      # [m] distance between motors center
     l   = dq/2       # [m] distance between motor center and the axis of rotation
 
@@ -96,22 +96,21 @@ def export_ode_model():
     return model
 
 def export_path_constraint():
+    ## Dynamic obstacle case:
+    # obstacle
+    x_obst = SX.sym('X_obst',3)
 
-    # obstacles position
-    bx  = 0.96286
-    by  = -0.9395
-    bz  = 0.9759
-    X_obst = DM([bx,by,bz])
-
+    # import crazyflie dynamic model
     crazyflie_model = export_ode_model()
 
-    distance_function = norm_2(crazyflie_model.x[0:3]-X_obst) + crazyflie_model.u[4]
+    distance_function = norm_2(crazyflie_model.x[0:3]-x_obst) + crazyflie_model.u[4]
 
     path_constraint = acados_constraint()
-    path_constraint.expr = distance_function
     path_constraint.x = crazyflie_model.x
     path_constraint.u = crazyflie_model.u
     path_constraint.nc = 1
-    path_constraint.name = 'distance_function'
+    path_constraint.p = x_obst
+    path_constraint.expr = distance_function
+    path_constraint.name = 'dfunc_one_ball'
 
     return path_constraint
