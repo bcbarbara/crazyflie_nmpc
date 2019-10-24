@@ -42,8 +42,8 @@
 #include "blasfeo/include/blasfeo_d_aux_ext_dep.h"
 
 // crazyflie specific
-#include "crazyflie_model/crazyflie_model.h"
-#include "acados_solver_crazyflie.h"
+#include "crazyflie_fixed_obs_model/crazyflie_fixed_obs_model.h"
+#include "acados_solver_crazyflie_fixed_obs.h"
 
 // global data
 ocp_nlp_in * nlp_in;
@@ -54,7 +54,7 @@ ocp_nlp_plan * nlp_solver_plan;
 ocp_nlp_config * nlp_config;
 ocp_nlp_dims * nlp_dims;
 
-external_function_casadi * forw_vde_casadi;
+external_function_param_casadi * forw_vde_casadi;
 
 using namespace Eigen;
 using std::ofstream;

@@ -12,12 +12,11 @@ find_package(
 find_package(
 	Eigen3 REQUIRED
 )
-
 set(acados_include "${PROJECT_SOURCE_DIR}/../acados/include")
 set(acados_lib "${PROJECT_SOURCE_DIR}/../acados/lib")
-set(full_model_build ${PROJECT_SOURCE_DIR}/scripts/crazyflie_full_model/c_generated_code/)
-set(simple_model_build ${PROJECT_SOURCE_DIR}/scripts/crazyflie_simple_model/c_generated_code/)
-set(collisionAvoidance_model_build ${PROJECT_SOURCE_DIR}/scripts/crazyflie_occupied_workspace/c_generated_code/)
+set(full_model_build ${PROJECT_SOURCE_DIR}/scripts/crazyflie_full_model/c_generated_code)
+set(fixed_obs_model_build ${PROJECT_SOURCE_DIR}/scripts/crazyflie_occupied_workspace/fixed_obst/c_generated_code)
+set(one_ball_model_build ${PROJECT_SOURCE_DIR}/scripts/crazyflie_occupied_workspace/dyn_obst/one_ball/c_generated_code)
 
 generate_dynamic_reconfigure_options(
 	config/crazyflie_params.cfg
@@ -56,8 +55,8 @@ catkin_package(
 include_directories(
 	${catkin_INCLUDE_DIRS}
 	${full_model_build}
-	${full_model_build}
-	${collisionAvoidance_model_build}
+	${fixed_obs_model_build}
+	${one_ball_model_build}
 	${acados_include}
 	${acados_include}/blasfeo/include/
 	${acados_include}/hpipm/include/
@@ -66,16 +65,26 @@ include_directories(
 )
 
 link_directories(${full_model_build})
-link_directories(${simple_model_build})
-link_directories(${collisionAvoidance_model_build})
+link_directories(${fixed_obs_model_build})
+link_directories(${one_ball_model_build})
 
-add_executable(acados_collisionAvoidance_FixedObs src/acados_collisionAvoidance_FixedObs.cpp)
-target_link_libraries(acados_collisionAvoidance_FixedObs
-	${collisionAvoidance_model_build}/libacados_solver_crazyflie.so
+add_executable(acados_fixed_obs src/acados_fixed_obs.cpp)
+target_link_libraries(acados_fixed_obs
+	${fixed_obs_model_build}/libacados_solver_crazyflie_fixed_obs.so
 	${acados_lib}/libacados.so
 	${catkin_LIBRARIES}
 )
-add_dependencies(acados_collisionAvoidance_FixedObs ${PROJECT_NAME}_gencfg)
+add_dependencies(acados_fixed_obs ${PROJECT_NAME}_gencfg)
+add_dependencies(acados_fixed_obs ${PROJECT_NAME}_gencpp)
+
+add_executable(acados_one_ball src/acados_one_ball.cpp)
+target_link_libraries(acados_one_ball
+ 	${one_ball_model_build}/libacados_solver_crazyflie_one_ball.so
+ 	${acados_lib}/libacados.so
+ 	${catkin_LIBRARIES}
+)
+add_dependencies(acados_one_ball ${PROJECT_NAME}_gencfg)
+add_dependencies(acados_one_ball ${PROJECT_NAME}_gencpp)
 
 
 add_executable(acados_mpc src/acados_mpc.cpp)
@@ -85,6 +94,7 @@ target_link_libraries(acados_mpc
 	${catkin_LIBRARIES}
 )
 add_dependencies(acados_mpc ${PROJECT_NAME}_gencfg)
+add_dependencies(acados_mpc ${PROJECT_NAME}_gencpp)
 
 add_executable(acados_estimator src/acados_estimator.cpp)
 target_link_libraries(acados_estimator
@@ -93,4 +103,5 @@ target_link_libraries(acados_estimator
 	${catkin_LIBRARIES}
 )
 add_dependencies(acados_estimator ${PROJECT_NAME}_gencfg)
+add_dependencies(acados_estimator ${PROJECT_NAME}_gencpp)
 
