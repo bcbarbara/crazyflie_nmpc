@@ -1,7 +1,7 @@
 from acados_template import *
 def export_ode_model():
 
-    model_name = 'crazyflie_ca_dynamicObs'
+    model_name = 'crazyflie_three_balls'
 
     # parameters
     g0  = 9.8         # [m.s^2]
@@ -30,15 +30,19 @@ def export_ode_model():
     wz = SX.sym('wz')
     x = vertcat(xq, yq, zq, q1, q2, q3, q4, vbx, vby, vbz, wx, wy, wz)
 
-    # controls
+    # motor speeds
     w1 = SX.sym('w1')
     w2 = SX.sym('w2')
     w3 = SX.sym('w3')
     w4 = SX.sym('w4')
 
-    # slack
-    s  = SX.sym('s')
-    u  = vertcat(w1, w2, w3, w4, s) # motor torques
+    # slacks
+    s1  = SX.sym('s1')
+    s2  = SX.sym('s2')
+    s3  = SX.sym('s3')
+
+    # controls
+    u  = vertcat(w1, w2, w3, w4, s1, s2, s3)
 
     # for f_impl
     xq_dot = SX.sym('xq_dot')
@@ -96,21 +100,28 @@ def export_ode_model():
     return model
 
 def export_path_constraint():
-    ## Dynamic obstacle case:
-    # obstacle
-    x_obst = SX.sym('X_obst',3)
+
+    # obstacles
+    p_b1 = SX.sym('p_b1',3)
+    p_b2 = SX.sym('p_b2',3)
+    p_b3 = SX.sym('p_b3',3)
+    p = vertcat(p_b1, p_b2, p_b3)
 
     # import crazyflie dynamic model
     crazyflie_model = export_ode_model()
 
-    distance_function = norm_2(crazyflie_model.x[0:3]-x_obst) + crazyflie_model.u[4]
+    # distance function
+    dfunc_b1 = norm_2(crazyflie_model.x[0:3]-p_b1) + crazyflie_model.u[4]
+    dfunc_b2 = norm_2(crazyflie_model.x[0:3]-p_b2) + crazyflie_model.u[5]
+    dfunc_b3 = norm_2(crazyflie_model.x[0:3]-p_b3) + crazyflie_model.u[6]
+    distance_function = vertcat(dfunc_b1, dfunc_b2, dfunc_b3)
 
     path_constraint = acados_constraint()
     path_constraint.x = crazyflie_model.x
     path_constraint.u = crazyflie_model.u
-    path_constraint.nc = 1
-    path_constraint.p = x_obst
+    path_constraint.nc = 3
+    path_constraint.p = p
     path_constraint.expr = distance_function
-    path_constraint.name = 'dist_func_dynamicObs'
+    path_constraint.name = 'dfunc_three_balls'
 
     return path_constraint

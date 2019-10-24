@@ -236,16 +236,22 @@ public:
 		// steady state prop speed (kRPM)
 		uss = sqrt((mq*g0)/(4*Ct));
 
-		const char * c = ref_traj.c_str();
-		
 		// Pre-load the trajectory
+		const char * c = ref_traj.c_str();
 		N_STEPS = readDataFromFile(c, precomputed_traj);
 		if (N_STEPS == 0){
-			ROS_WARN("Cannot load CasADi optimal trajectory!");
+			ROS_WARN("Cannot load CasADi optimal trajectory for [CRAZYFLIE]!");
 		}
-		else{
-			ROS_INFO_STREAM("Number of steps: " << N_STEPS << endl);
+		else ROS_INFO_STREAM("Number of steps of [CRAZYFLIE] referency trajectory: " << N_STEPS << endl);
+		
+		// Pre-load all the ballistic trajectory
+		const char * b1 = b1_traj.c_str();
+		int nsteps_b1 = readDataFromFile(b1,B1_traj);
+		if (nsteps_b1 == 0){
+			ROS_WARN("Cannot load CasADi optimal trajectory for [VIRTUAL BALL]!");
 		}
+		else ROS_INFO_STREAM("Number of steps of [VIRTUAL BALL] referency trajectory: " << nsteps_b1 << endl);
+
 		// Initialize dynamic reconfigure options
 		xq_des = 0;
 		yq_des = 0;
@@ -273,11 +279,7 @@ public:
 		Wdiag_w3	= 0.15  ;
 		Wdiag_w4	= 0.15  ;
 		Wdiag_s		= 1e+3  ;
-		
-		// Pre-load all the ballistic trajectory
-		const char * b1 = b1_traj.c_str();
-		int nsteps_b1 = readDataFromFile(b1,B1_traj);
-		
+	
 		}
 
 	void run()
@@ -363,7 +365,6 @@ public:
 			}
 
 			file.close();
-			cout << num_of_steps << endl;
 			}
 		else
 			{

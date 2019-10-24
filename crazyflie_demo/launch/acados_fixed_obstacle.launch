@@ -42,7 +42,7 @@
 				"
 	/-->
 
-	<node name="nmpc" pkg="crazyflie_controller" type="acados_collisionAvoidance_fixedObs" output="screen" ns="crazyflie">
+	<node name="nmpc" pkg="crazyflie_controller" type="acados_fixed_obs" output="screen" ns="crazyflie">
 		<param name="ref_traj" value="$(find crazyflie_controller)/traj/smooth_step.txt"/>
 	</node>
 
