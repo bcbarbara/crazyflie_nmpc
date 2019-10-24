@@ -42,8 +42,9 @@
 				"
 	/-->
 
-	<node name="nmpc" pkg="crazyflie_controller" type="acados_collisionAvoidance_dynamicObs" output="screen" ns="crazyflie">
-		<param name="ref_traj" value="$(find crazyflie_controller)/traj/smooth_step.txt"/>
+	<node name="nmpc" pkg="crazyflie_controller" type="acados_one_ball" output="screen" ns="crazyflie">
+		<param name="ref_traj" value="$(find crazyflie_controller)/traj/crazyflie_ref_traj.txt"/>
+		<param name="b1_traj" value="$(find crazyflie_controller)/traj/ball1.txt"/>
 	</node>
 
 	<node name="estimator" pkg="crazyflie_controller" type="acados_estimator" output="screen" ns="crazyflie">

@@ -42,8 +42,8 @@
 #include "blasfeo/include/blasfeo_d_aux_ext_dep.h"
 
 // crazyflie specific
-#include "crazyflie_ca_dynamicObs_model/crazyflie_ca_dynamicObs_model.h"
-#include "acados_solver_crazyflie_ca_dynamicObs.h"
+#include "crazyflie_one_ball_model/crazyflie_one_ball_model.h"
+#include "acados_solver_crazyflie_one_ball.h"
 
 // global data
 ocp_nlp_in * nlp_in;
@@ -76,6 +76,8 @@ using std::showpos;
 #define NY 18
 // Number of measurements/references on node N
 #define NYN 13
+// Number of parameters on nodes 0..N-1
+#define NP 3
 // Constants
 #define pi  3.14159265358979323846
 #define g0 9.80665
@@ -85,10 +87,6 @@ using std::showpos;
 #define FIXED_U0 0
 #define CONTROLLER 1
 #define PUB_OPENLOOP_TRAJ 0
-
-#define OBS1_ACTIVE 0
-#define OBS2_ACTIVE 0
-#define OBS3_ACTIVE 0
 
 
 class NMPC
@@ -115,6 +113,24 @@ class NMPC
 		w3 = 2,
 		w4 = 3
 	};
+	
+	enum axis{
+		x = 0,
+		y = 1,
+		z = 2
+	};
+	
+	enum param_list{
+		xb1 = 0,
+		yb1 = 1,
+		zb1 = 2,
+		xb2 = 3,
+		yb2 = 4,
+		zb2 = 5,
+		xb3 = 6,
+		yb3 = 7,
+		zb3 = 8
+	};
 
 	enum reference_mode{
 		Regulation = 0,
@@ -122,10 +138,10 @@ class NMPC
 		Position_Hold = 2
 	};
 	
-	struct obs_traj{
-		std::vector<std::vector<double>> B1;
-		std::vector<std::vector<double>> B2;
-		std::vector<std::vector<double>> B3;
+	struct b_traj{
+	  std::vector<std::vector<double>> ball1;
+	  std::vector<std::vector<double>> ball2;
+	  std::vector<std::vector<double>> ball3;
 	};
 
 	struct euler{
@@ -194,9 +210,10 @@ class NMPC
 	int acados_status;
 	
 	// struct for balls ballistic trajectory
-	obs_traj ballistic_traj;
-	bool trigger_balls;
-
+	double p_vector[NP];
+	b_traj virtual_traj;
+	
+	// variable to trigger the state of the quadrotor (hovering, tracking, holding pos)
 	reference_mode policy;
 
 	// Variable for storing the optimal trajectory
@@ -209,8 +226,8 @@ public:
 	     const std::string& ref_traj, 
 	     const std::string& b1_traj,
 	     const std::string& b2_traj,
-	     const std::string& b3_traj,
-	     int num_dyn_obs)
+	     const std::string& b3_traj
+	    )
 		{
 
 		int status = 0;
@@ -246,16 +263,36 @@ public:
 		// steady state prop speed (kRPM)
 		uss = sqrt((mq*g0)/(4*Ct));
 
-		const char * c = ref_traj.c_str();
-		
 		// Pre-load the trajectory
+		const char * c = ref_traj.c_str();
 		N_STEPS = readDataFromFile(c, precomputed_traj);
 		if (N_STEPS == 0){
-			ROS_WARN("Cannot load CasADi optimal trajectory!");
+			ROS_WARN("Cannot load CasADi optimal trajectory for [CRAZYFLIE]!");
 		}
-		else{
-			ROS_INFO_STREAM("Number of steps: " << N_STEPS << endl);
+		else ROS_INFO_STREAM("Number of steps of [CRAZYFLIE] referency trajectory: " << N_STEPS);
+		
+		// Pre-load all the ballistic trajectory
+		const char * b1 = b1_traj.c_str();
+		int nsteps_b1 = readDataFromFile(b1,virtual_traj.ball1);
+		if (nsteps_b1 == 0){
+			ROS_WARN("Cannot load CasADi optimal trajectory for [VIRTUAL BALL #1]!");
 		}
+		else ROS_INFO_STREAM("Number of steps of [VIRTUAL BALL #1] referency trajectory: " << nsteps_b1);
+		
+		const char * b2 = b2_traj.c_str();
+		int nsteps_b2 = readDataFromFile(b2,virtual_traj.ball2);
+		if (nsteps_b2 == 0){
+			ROS_WARN("Cannot load CasADi optimal trajectory for [VIRTUAL BALL #2]!");
+		}
+		else ROS_INFO_STREAM("Number of steps of [VIRTUAL BALL #2] referency trajectory: " << nsteps_b1);
+		
+		const char * b3 = b3_traj.c_str();
+		int nsteps_b3 = readDataFromFile(b3,virtual_traj.ball3);
+		if (nsteps_b3 == 0){
+			ROS_WARN("Cannot load CasADi optimal trajectory for [VIRTUAL BALL #3]!");
+		}
+		else ROS_INFO_STREAM("Number of steps of [VIRTUAL BALL #3] referency trajectory: " << nsteps_b1);
+
 		// Initialize dynamic reconfigure options
 		xq_des = 0;
 		yq_des = 0;
@@ -283,20 +320,7 @@ public:
 		Wdiag_w3	= 0.15  ;
 		Wdiag_w4	= 0.15  ;
 		Wdiag_s		= 1e+3  ;
-		
-		// Pre-load all the ballistic trajectories
-		const char * b1 = b1_traj.c_str();
-		const char * b2 = b2_traj.c_str();
-		const char * b3 = b3_traj.c_str();
-		int nsteps_b1 = readDataFromFile(b1,ballistic_traj.B1);
-		int nsteps_b2 = readDataFromFile(b2,ballistic_traj.B2);
-		int nsteps_b3 = readDataFromFile(b3,ballistic_traj.B3);
-		
-		// Get number of dynamic obstacles considered in the experiment (1 to 3)
-		setSelectedObstacles(num_dyn_obs);
-		
-		// Do not trigger balls until tracker is triggered
-		trigger_balls = 0;	
+	
 		}
 
 	void run()
@@ -360,32 +384,6 @@ public:
 				Wdiag_s 	= config.Wdiag_s;
 		 }
 		}
-	
-	void setSelectedObstacles(int number_of_selected_obs)
-		{
-		  if(number_of_selected_obs = 3)
-		  {
-		    OBS1_ACTIVE == 1;
-		    OBS2_ACTIVE == 1;
-		    OBS3_ACTIVE == 1;
-
-		    ROS_INFO("All three obstacles have been activated.");
-		    
-		  }else if(number_of_selected_obs = 2)
-		    {
-		      OBS1_ACTIVE == 1;
-		      OBS2_ACTIVE == 0;
-		      OBS3_ACTIVE == 1;
-		      ROS_INFO("Obstacles #1 and #3 have been activated.");
-		      
-		    }else if(number_of_selected_obs = 1)
-		      {
-			OBS1_ACTIVE == 1;
-			OBS2_ACTIVE == 0;
-			OBS3_ACTIVE == 0;
-			ROS_INFO("Obstacles #1 has been activated.");
-		      }
-		}
 
 	int readDataFromFile(const char* fileName, std::vector<std::vector<double>> &data)
 		{
@@ -408,7 +406,6 @@ public:
 			}
 
 			file.close();
-			cout << num_of_steps << endl;
 			}
 		else
 			{
@@ -429,13 +426,13 @@ public:
 		double R32 = 2*(q->y()*q->z()-q->w()*q->x());
 		double R33 = 2*(q->w()*q->w()+q->z()*q->z())-1;
 
-		double phi	 = atan2(R32, R33);
-		double theta = -asin(R31);
-		double psi	 = atan2(R21, R11);
+		double phi	= atan2(R32, R33);
+		double theta 	= -asin(R31);
+		double psi	= atan2(R21, R11);
 
-		angle.phi		 = phi;
-		angle.theta  = theta;
-		angle.psi	   = psi;
+		angle.phi	= phi;
+		angle.theta  	= theta;
+		angle.psi	= psi;
 
 		return angle;
 		}
@@ -473,8 +470,8 @@ public:
 				  for (k = 0; k < N+1; k++)
 				  {
 					yref_sign[k * NY + 0] = xq_des; 	// xq
-					yref_sign[k * NY + 1] = yq_des;	// yq
-					yref_sign[k * NY + 2] = zq_des;	// zq
+					yref_sign[k * NY + 1] = yq_des;		// yq
+					yref_sign[k * NY + 2] = zq_des;		// zq
 					yref_sign[k * NY + 3] = 1.00;		// q1
 					yref_sign[k * NY + 4] = 0.00;		// q2
 					yref_sign[k * NY + 5] = 0.00;		// q3
@@ -482,14 +479,16 @@ public:
 					yref_sign[k * NY + 7] = 0.00;		// vbx
 					yref_sign[k * NY + 8] = 0.00;		// vby
 					yref_sign[k * NY + 9] = 0.00;		// vbz
-					yref_sign[k * NY + 10] = 0.00;	// wx
-					yref_sign[k * NY + 11] = 0.00;	// wy
-					yref_sign[k * NY + 12] = 0.00;	// wz
+					yref_sign[k * NY + 10] = 0.00;		// wx
+					yref_sign[k * NY + 11] = 0.00;		// wy
+					yref_sign[k * NY + 12] = 0.00;		// wz
 					yref_sign[k * NY + 13] = uss;		// w1
 					yref_sign[k * NY + 14] = uss;		// w2
 					yref_sign[k * NY + 15] = uss;		// w3
 					yref_sign[k * NY + 16] = uss;		// w4
-					yref_sign[k * NY + 17] = 0.00;	// s
+					yref_sign[k * NY + 17] = 0.00;		// s1
+					yref_sign[k * NY + 18] = 0.00;		// s2
+					yref_sign[k * NY + 19] = 0.00;		// s3
 				  }
 				  break;
 				}
@@ -498,7 +497,7 @@ public:
 				{
 				  if(iter < N_STEPS-N)
 				    {
-				      // Update reference
+				      // update reference
 				      for (k = 0; k < N+1; k++)
 				      {
 					  yref_sign[k * NY + 0] = precomputed_traj[iter + k][xq];
@@ -518,10 +517,28 @@ public:
 					  yref_sign[k * NY + 14] = precomputed_traj[iter + k][14];
 					  yref_sign[k * NY + 15] = precomputed_traj[iter + k][15];
 					  yref_sign[k * NY + 16] = precomputed_traj[iter + k][16];
-					  yref_sign[k * NY + 17] = 0.00;
+					  yref_sign[k * NY + 17] = precomputed_traj[iter + k][17];
+					  yref_sign[k * NY + 18] = precomputed_traj[iter + k][18];
+					  yref_sign[k * NY + 19] = precomputed_traj[iter + k][19];
 				      }
+				      // trigger ballistic trajectory
+				      // -- pass current position of virtual ball
+				      for (k = 0; k < N; k++){
+					  p_vector[xb1] = virtual_traj.ball1[iter + k][x];
+					  p_vector[yb1] = virtual_traj.ball1[iter + k][y];
+					  p_vector[zb1] = virtual_traj.ball1[iter + k][z];
+					  p_vector[xb2] = virtual_traj.ball2[iter + k][x];
+					  p_vector[yb2] = virtual_traj.ball2[iter + k][y];
+					  p_vector[zb2] = virtual_traj.ball2[iter + k][z];
+					  p_vector[xb3] = virtual_traj.ball3[iter + k][x];
+					  p_vector[yb3] = virtual_traj.ball3[iter + k][y];
+					  p_vector[zb3] = virtual_traj.ball3[iter + k][z];
+					  forw_vde_casadi[k].set_param(forw_vde_casadi+k, p_vector);
+					  h_constraint[k].set_param(h_constraint+k, p_vector);
+				      }  
+				      
+				      // increment trajectory stepper counter
 				      ++iter;
-				      trigger_balls = 1; // once tracker is trigger, trigger balls as well
 				  }
 				else policy = Position_Hold;
 				break;
@@ -530,7 +547,7 @@ public:
 				case Position_Hold:
 				{
 					  ROS_INFO("Holding last position of the trajectory.");
-					  // Get last point of tracketory and hold
+					  // get last point of tracketory and hold
 					  for (k = 0; k < N+1; k++)
 					    {
 					      yref_sign[k * NY + 0] = precomputed_traj[N_STEPS-1][xq];
@@ -647,32 +664,6 @@ public:
 				ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "lbu", acados_out.u1);
 				ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "ubu", acados_out.u1);
 			#endif
-				
-			// get current possition of active obstacles
-				
-			// get current position of 1st ball if actived and triggered	  
-			if(OBS1_ACTIVE & trigger_balls){
-			  for (ii = 0; ii < N; ii++)
-			  {
-			    ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, ii, "B1", ballistic_traj.B1);
-			  }	  
-			}
-			
-			// get current position of 2nd ball if actived and triggered	  
-			if(OBS2_ACTIVE & trigger_balls){
-			  for (ii = 0; ii < N; ii++)
-			  {
-			    ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, ii, "B2", ballistic_traj.B2);
-			  }
-			}
-			
-			// get current position of 2nd ball if actived and triggered	  
-			if(OBS2_ACTIVE & trigger_balls){
-			  for (ii = 0; ii < N; ii++)
-			  {
-			    ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, ii, "B3", ballistic_traj.B3);
-			  }				
-			 }
 
 			// call solver
 			acados_status = acados_solve();
@@ -839,25 +830,22 @@ int main(int argc, char **argv)
 	// reference trajectory for the crazyflie
 	std::string ref_traj;
 	n.getParam("ref_traj", ref_traj);
-	// reference trajectory for 1st virtual ball
+	// reference trajectory for virtual ball
 	std::string ball1_ref_traj;
 	n.getParam("b1_traj", ball1_ref_traj);
-	// reference trajectory for 2nd virtual ball
+	// reference trajectory for virtual ball
 	std::string ball2_ref_traj;
-	n.getParam("b2_traj", ball2_ref_traj);
-	// reference trajectory for 3rd virtual ball
+	n.getParam("b1_traj", ball2_ref_traj);
+	// reference trajectory for virtual ball
 	std::string ball3_ref_traj;
-	n.getParam("b3_traj", ball3_ref_traj);
-	// number of balls considered in the experiment (1 to 3)
-	int num_dyn_obs;
-	n.getParam("num_dyn_obs", num_dyn_obs);
+	n.getParam("b1_traj", ball3_ref_traj);
 
 	NMPC nmpc(n,
 		  ref_traj,
 		  ball1_ref_traj,
 		  ball2_ref_traj,
-		  ball3_ref_traj,
-		  num_dyn_obs);
+		  ball3_ref_traj
+ 		);
 	
 	nmpc.run();
 
