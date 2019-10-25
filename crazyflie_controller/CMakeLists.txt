@@ -17,6 +17,7 @@ set(acados_lib "${PROJECT_SOURCE_DIR}/../acados/lib")
 set(full_model_build ${PROJECT_SOURCE_DIR}/scripts/crazyflie_full_model/c_generated_code)
 set(fixed_obs_model_build ${PROJECT_SOURCE_DIR}/scripts/crazyflie_occupied_workspace/fixed_obst/c_generated_code)
 set(one_ball_model_build ${PROJECT_SOURCE_DIR}/scripts/crazyflie_occupied_workspace/dyn_obst/one_ball/c_generated_code)
+set(three_balls_model_build ${PROJECT_SOURCE_DIR}/scripts/crazyflie_occupied_workspace/dyn_obst/three_balls/c_generated_code)
 
 generate_dynamic_reconfigure_options(
 	config/crazyflie_params.cfg
@@ -58,6 +59,7 @@ include_directories(
 	${full_model_build}
 	${fixed_obs_model_build}
 	${one_ball_model_build}
+	${three_balls_model_build}
 	${acados_include}
 	${acados_include}/blasfeo/include/
 	${acados_include}/hpipm/include/
@@ -68,6 +70,7 @@ include_directories(
 link_directories(${full_model_build})
 link_directories(${fixed_obs_model_build})
 link_directories(${one_ball_model_build})
+link_directories(${three_balls_model_build})
 
 add_executable(acados_fixed_obs src/acados_fixed_obs.cpp)
 target_link_libraries(acados_fixed_obs
@@ -86,6 +89,15 @@ target_link_libraries(acados_one_ball
 )
 add_dependencies(acados_one_ball ${PROJECT_NAME}_gencfg)
 add_dependencies(acados_one_ball ${PROJECT_NAME}_gencpp)
+
+add_executable(acados_three_balls src/acados_three_balls.cpp)
+target_link_libraries(acados_three_balls
+ 	${three_balls_model_build}/libacados_solver_crazyflie_three_balls.so
+ 	${acados_lib}/libacados.so
+ 	${catkin_LIBRARIES}
+)
+add_dependencies(acados_three_balls ${PROJECT_NAME}_gencfg)
+add_dependencies(acados_three_balls ${PROJECT_NAME}_gencpp)
 
 
 add_executable(acados_mpc src/acados_mpc.cpp)
