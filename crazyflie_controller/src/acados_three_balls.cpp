@@ -18,7 +18,7 @@
 #include <boost/thread.hpp>
 #include "boost/thread/mutex.hpp"
 // crazyflie
-#include <crazyflie_controller/crazyflie_paramsCollisionAvoidanceConfig.h>
+#include <crazyflie_controller/crazyflie_params_three_ballsConfig.h>
 
 // Matrices and vectors
 #include <eigen3/Eigen/Dense>
@@ -71,9 +71,9 @@ using std::showpos;
 // Number of differential state variables
 #define NX 13
 // Number of control inputs
-#define NU 5
+#define NU 7
 // Number of measurements/references on nodes 0..N-1
-#define NY 18
+#define NY 20
 // Number of measurements/references on node N
 #define NYN 13
 // Number of parameters on nodes 0..N-1
@@ -201,7 +201,7 @@ class NMPC
 	double Wdiag_vbx,Wdiag_vby,Wdiag_vbz;
 	double Wdiag_wx,Wdiag_wy,Wdiag_wz;
 	double Wdiag_w1,Wdiag_w2,Wdiag_w3,Wdiag_w4;
-	double Wdiag_s;
+	double Wdiag_s1,Wdiag_s2,Wdiag_s3;
 	double WN_factor;
 
 	// acados struct
@@ -319,7 +319,9 @@ public:
 		Wdiag_w2	= 0.15  ;
 		Wdiag_w3	= 0.15  ;
 		Wdiag_w4	= 0.15  ;
-		Wdiag_s		= 1e+3  ;
+		Wdiag_s1	= 1e+3  ;
+		Wdiag_s2	= 1e+3  ;
+		Wdiag_s3	= 1e+3  ;
 	
 		}
 
@@ -327,15 +329,15 @@ public:
 		{
 		ROS_DEBUG("Setting up the dynamic reconfigure panel and server");
 
-			dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsCollisionAvoidanceConfig> server;
-			dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsCollisionAvoidanceConfig>::CallbackType f;
+			dynamic_reconfigure::Server<crazyflie_controller::crazyflie_params_three_ballsConfig> server;
+			dynamic_reconfigure::Server<crazyflie_controller::crazyflie_params_three_ballsConfig>::CallbackType f;
 			f = boost::bind(&NMPC::callback_dynamic_reconfigure, this, _1, _2);
 			server.setCallback(f);
 
 		ros::spin();
 		}
 
-	void callback_dynamic_reconfigure(crazyflie_controller::crazyflie_paramsCollisionAvoidanceConfig &config, uint32_t level)
+	void callback_dynamic_reconfigure(crazyflie_controller::crazyflie_params_three_ballsConfig &config, uint32_t level)
 		{
 		if (level && CONTROLLER)
 			{
@@ -381,7 +383,9 @@ public:
 				Wdiag_w2	= config.Wdiag_w2;
 				Wdiag_w3	= config.Wdiag_w3;
 				Wdiag_w4	= config.Wdiag_w4;
-				Wdiag_s 	= config.Wdiag_s;
+				Wdiag_s1 	= config.Wdiag_s1;
+				Wdiag_s2 	= config.Wdiag_s2;
+				Wdiag_s3 	= config.Wdiag_s3;
 		 }
 		}
 
@@ -568,6 +572,8 @@ public:
 					      yref_sign[k * NY + 15] = uss;
 					      yref_sign[k * NY + 16] = uss;
 					      yref_sign[k * NY + 17] = 0.00;
+					      yref_sign[k * NY + 18] = 0.00;
+					      yref_sign[k * NY + 19] = 0.00;
 					    }
 				    }
 				break;
@@ -598,7 +604,9 @@ public:
 			acados_in.W[14+14*(NU+NX)] = Wdiag_w2;
 			acados_in.W[15+15*(NU+NX)] = Wdiag_w3;
 			acados_in.W[16+16*(NU+NX)] = Wdiag_w4;
-			acados_in.W[17+17*(NU+NX)] = Wdiag_s;
+			acados_in.W[17+17*(NU+NX)] = Wdiag_s1;
+			acados_in.W[18+18*(NU+NX)] = Wdiag_s2;
+			acados_in.W[19+19*(NU+NX)] = Wdiag_s3;
 
 			acados_in.WN[0+0*(NX)]   = Wdiag_xq*WN_factor;
 			acados_in.WN[1+1*(NX)]   = Wdiag_yq*WN_factor;
@@ -678,9 +686,6 @@ public:
 
 			// get solution at stage N = 1
 			ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 1, "u", (void *)acados_out.u1);
-
-			// get next stage N = 1
-			//ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 1, "x", (void *)acados_out.x1);
 
 			// get stage N = 4 which compensates 60 ms for the delay
 			ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 4, "x", (void *)acados_out.x4);
@@ -835,10 +840,10 @@ int main(int argc, char **argv)
 	n.getParam("b1_traj", ball1_ref_traj);
 	// reference trajectory for virtual ball
 	std::string ball2_ref_traj;
-	n.getParam("b1_traj", ball2_ref_traj);
+	n.getParam("b2_traj", ball2_ref_traj);
 	// reference trajectory for virtual ball
 	std::string ball3_ref_traj;
-	n.getParam("b1_traj", ball3_ref_traj);
+	n.getParam("b3_traj", ball3_ref_traj);
 
 	NMPC nmpc(n,
 		  ref_traj,

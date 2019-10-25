@@ -18,7 +18,7 @@
 #include <boost/thread.hpp>
 #include "boost/thread/mutex.hpp"
 // crazyflie
-#include <crazyflie_controller/crazyflie_paramsCollisionAvoidanceConfig.h>
+#include <crazyflie_controller/crazyflie_params_one_ballConfig.h>
 
 // Matrices and vectors
 #include <eigen3/Eigen/Dense>
@@ -286,15 +286,15 @@ public:
 		{
 		ROS_DEBUG("Setting up the dynamic reconfigure panel and server");
 
-			dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsCollisionAvoidanceConfig> server;
-			dynamic_reconfigure::Server<crazyflie_controller::crazyflie_paramsCollisionAvoidanceConfig>::CallbackType f;
+			dynamic_reconfigure::Server<crazyflie_controller::crazyflie_params_one_ballConfig> server;
+			dynamic_reconfigure::Server<crazyflie_controller::crazyflie_params_one_ballConfig>::CallbackType f;
 			f = boost::bind(&NMPC::callback_dynamic_reconfigure, this, _1, _2);
 			server.setCallback(f);
 
 		ros::spin();
 		}
 
-	void callback_dynamic_reconfigure(crazyflie_controller::crazyflie_paramsCollisionAvoidanceConfig &config, uint32_t level)
+	void callback_dynamic_reconfigure(crazyflie_controller::crazyflie_params_one_ballConfig &config, uint32_t level)
 		{
 		if (level && CONTROLLER)
 			{
