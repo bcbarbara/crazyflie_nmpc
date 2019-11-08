@@ -6,4 +6,5 @@
 	url = https://github.com/whoenig/crazyflie_tools
 [submodule "acados"]
 	path = acados
-	url = https://github.com/acados/acados
+	url = https://github.com/tmmsartor/acados
+	branch = crazyflie
