@@ -6,8 +6,9 @@ import scipy.linalg
 from ctypes import *
 from os.path import dirname, join, abspath
 
-ACADOS_PATH = join(dirname(abspath(__file__)), "../../../acados/")
+ACADOS_PATH = join(dirname(abspath(__file__)), "../../../acados")
 
+export_cmd = f"export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{ACADOS_PATH}/lib/"
 
 # create render arguments
 ra = acados_ocp_nlp()
@@ -16,7 +17,7 @@ ra = acados_ocp_nlp()
 model = export_ode_model()
 
 # set model_name
-ra.model_name = model.name
+# ra.model_name = model.name
 
 Tf = 0.75
 N = 50
@@ -123,15 +124,15 @@ nlp_con.x0  = np.array([0,0,0,1,0,0,0,0,0,0,0,0,0])
 nlp_con.idxbu = np.array([0, 1, 2, 3])
 
 ## set QP solver
-#ra.solver_config.qp_solver = 'FULL_CONDENSING_QPOASES'
-ra.solver_config.qp_solver = 'PARTIAL_CONDENSING_HPIPM'
-ra.solver_config.hessian_approx = 'GAUSS_NEWTON'
-ra.solver_config.integrator_type = 'ERK'
+#ra.solver_options.qp_solver = 'FULL_CONDENSING_QPOASES'
+ra.solver_options.qp_solver = 'PARTIAL_CONDENSING_HPIPM'
+ra.solver_options.hessian_approx = 'GAUSS_NEWTON'
+ra.solver_options.integrator_type = 'ERK'
 
 # set prediction horizon
-ra.solver_config.tf = Tf
-ra.solver_config.nlp_solver_type = 'SQP_RTI'
-#ra.solver_config.nlp_solver_type = 'SQP'
+ra.solver_options.tf = Tf
+ra.solver_options.nlp_solver_type = 'SQP_RTI'
+#ra.solver_options.nlp_solver_type = 'SQP'
 
 # set header path
 #ra.acados_include_path  = '/usr/local/include'
@@ -140,6 +141,8 @@ ra.solver_config.nlp_solver_type = 'SQP_RTI'
 ra.acados_include_path  = f'{ACADOS_PATH}/include'
 ra.acados_lib_path      = f'{ACADOS_PATH}/lib'
 
-acados_solver = generate_solver(model, ra, json_file = 'acados_ocp.json')
+ra.model = model
+
+acados_solver = generate_solver(ra, json_file = 'acados_ocp.json')
 
 print('>> NMPC exported')
