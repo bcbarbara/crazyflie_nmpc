@@ -20,3 +20,6 @@ slprj/
 *.cmake
 *.o
 *.so
+
+# C tags
+tags
