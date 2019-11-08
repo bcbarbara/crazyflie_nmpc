@@ -108,9 +108,9 @@ def export_path_constraint():
     path_constraint = acados_constraint()
     path_constraint.x = crazyflie_model.x
     path_constraint.u = crazyflie_model.u
-    path_constraint.nc = 1
+    path_constraint.nh = 1
     path_constraint.p = x_obst
-    path_constraint.expr = distance_function
+    path_constraint.con_h_expr = distance_function
     path_constraint.name = 'dfunc_one_ball'
 
     return path_constraint

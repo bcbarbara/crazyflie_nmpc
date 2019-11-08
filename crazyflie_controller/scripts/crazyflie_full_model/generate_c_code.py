@@ -8,6 +8,7 @@ from os.path import dirname, join, abspath
 
 ACADOS_PATH = join(dirname(abspath(__file__)), "../../../acados")
 
+
 export_cmd = f"export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{ACADOS_PATH}/lib/"
 
 # create render arguments
