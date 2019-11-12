@@ -108,10 +108,10 @@ def export_path_constraint():
     distance_function = norm_2(crazyflie_model.x[0:3]-X_obst) + crazyflie_model.u[4]
 
     path_constraint = acados_constraint()
-    path_constraint.expr = distance_function
+    path_constraint.con_h_expr = distance_function
     path_constraint.x = crazyflie_model.x
     path_constraint.u = crazyflie_model.u
-    path_constraint.nc = 1
+    path_constraint.nh = 1
     path_constraint.name = 'dfunc_fixed_obs'
 
     return path_constraint
