@@ -21,6 +21,7 @@ set(three_balls_model_build ${PROJECT_SOURCE_DIR}/scripts/crazyflie_occupied_wor
 
 generate_dynamic_reconfigure_options(
 	config/crazyflie_params.cfg
+	config/crazyflie_params_fixed_obs.cfg
 	config/crazyflie_estimator.cfg
 	config/crazyflie_params_one_ball.cfg
 	config/crazyflie_params_three_balls.cfg
@@ -117,4 +118,3 @@ target_link_libraries(acados_estimator
 )
 add_dependencies(acados_estimator ${PROJECT_NAME}_gencfg)
 add_dependencies(acados_estimator ${PROJECT_NAME}_gencpp)
-
