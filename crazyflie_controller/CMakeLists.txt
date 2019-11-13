@@ -12,16 +12,18 @@ find_package(
 find_package(
 	Eigen3 REQUIRED
 )
+
 set(acados_include "${PROJECT_SOURCE_DIR}/../acados/include")
 set(acados_lib "${PROJECT_SOURCE_DIR}/../acados/lib")
+
 set(full_model_build ${PROJECT_SOURCE_DIR}/scripts/crazyflie_full_model/c_generated_code)
-set(fixed_obs_model_build ${PROJECT_SOURCE_DIR}/scripts/crazyflie_occupied_workspace/fixed_obst/c_generated_code)
-set(one_ball_model_build ${PROJECT_SOURCE_DIR}/scripts/crazyflie_occupied_workspace/dyn_obst/one_ball/c_generated_code)
-set(three_balls_model_build ${PROJECT_SOURCE_DIR}/scripts/crazyflie_occupied_workspace/dyn_obst/three_balls/c_generated_code)
+set(fixed_obst_model_build ${PROJECT_SOURCE_DIR}/scripts/crazyflie_fixed_obst/c_generated_code)
+set(one_ball_model_build ${PROJECT_SOURCE_DIR}/scripts/crazyflie_one_ball/c_generated_code)
+set(three_balls_model_build ${PROJECT_SOURCE_DIR}/scripts/crazyflie_three_balls/c_generated_code)
 
 generate_dynamic_reconfigure_options(
 	config/crazyflie_params.cfg
-	config/crazyflie_params_fixed_obs.cfg
+	config/crazyflie_params_fixed_obst.cfg
 	config/crazyflie_estimator.cfg
 	config/crazyflie_params_one_ball.cfg
 	config/crazyflie_params_three_balls.cfg
@@ -58,7 +60,7 @@ catkin_package(
 include_directories(
 	${catkin_INCLUDE_DIRS}
 	${full_model_build}
-	${fixed_obs_model_build}
+	${fixed_obst_model_build}
 	${one_ball_model_build}
 	${three_balls_model_build}
 	${acados_include}
@@ -69,18 +71,18 @@ include_directories(
 )
 
 link_directories(${full_model_build})
-link_directories(${fixed_obs_model_build})
+link_directories(${fixed_obst_model_build})
 link_directories(${one_ball_model_build})
 link_directories(${three_balls_model_build})
 
-add_executable(acados_fixed_obs src/acados_fixed_obs.cpp)
-target_link_libraries(acados_fixed_obs
-	${fixed_obs_model_build}/libacados_solver_crazyflie_fixed_obs.so
+add_executable(acados_fixed_obst src/acados_fixed_obs.cpp)
+target_link_libraries(acados_fixed_obst
+	${fixed_obst_model_build}/libacados_solver_crazyflie_fixed_obst.so
 	${acados_lib}/libacados.so
 	${catkin_LIBRARIES}
 )
-add_dependencies(acados_fixed_obs ${PROJECT_NAME}_gencfg)
-add_dependencies(acados_fixed_obs ${PROJECT_NAME}_gencpp)
+add_dependencies(acados_fixed_obst ${PROJECT_NAME}_gencfg)
+add_dependencies(acados_fixed_obst ${PROJECT_NAME}_gencpp)
 
 add_executable(acados_one_ball src/acados_one_ball.cpp)
 target_link_libraries(acados_one_ball

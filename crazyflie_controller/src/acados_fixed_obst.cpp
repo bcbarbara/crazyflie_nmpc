@@ -18,8 +18,7 @@
 #include <boost/thread.hpp>
 #include "boost/thread/mutex.hpp"
 // crazyflie
-#include <crazyflie_controller/crazyflie_params_fixed_obsConfig.h>
-// #include <crazyflie_controller/crazyflie_params_fixed_obsConfig.h>
+#include <crazyflie_controller/crazyflie_params_fixed_obstConfig.h>
 
 // Matrices and vectors
 #include <eigen3/Eigen/Dense>
@@ -43,8 +42,8 @@
 #include "blasfeo/include/blasfeo_d_aux_ext_dep.h"
 
 // crazyflie specific
-#include "crazyflie_fixed_obs_model/crazyflie_fixed_obs_model.h"
-#include "acados_solver_crazyflie_fixed_obs.h"
+#include "crazyflie_fixed_obst_model/crazyflie_fixed_obst_model.h"
+#include "acados_solver_crazyflie_fixed_obst.h"
 
 // global data
 ocp_nlp_in * nlp_in;
@@ -267,15 +266,15 @@ public:
 		{
 		ROS_DEBUG("Setting up the dynamic reconfigure panel and server");
 
-			dynamic_reconfigure::Server<crazyflie_controller::crazyflie_params_fixed_obsConfig> server;
-			dynamic_reconfigure::Server<crazyflie_controller::crazyflie_params_fixed_obsConfig>::CallbackType f;
+			dynamic_reconfigure::Server<crazyflie_controller::crazyflie_params_fixed_obstConfig> server;
+			dynamic_reconfigure::Server<crazyflie_controller::crazyflie_params_fixed_obstConfig>::CallbackType f;
 			f = boost::bind(&NMPC::callback_dynamic_reconfigure, this, _1, _2);
 			server.setCallback(f);
 
 		ros::spin();
 		}
 
-	void callback_dynamic_reconfigure(crazyflie_controller::crazyflie_params_fixed_obsConfig &config, uint32_t level)
+	void callback_dynamic_reconfigure(crazyflie_controller::crazyflie_params_fixed_obstConfig &config, uint32_t level)
 		{
 		if (level && CONTROLLER)
 			{
