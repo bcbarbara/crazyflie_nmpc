@@ -75,7 +75,7 @@ link_directories(${fixed_obst_model_build})
 link_directories(${one_ball_model_build})
 link_directories(${three_balls_model_build})
 
-add_executable(acados_fixed_obst src/acados_fixed_obs.cpp)
+add_executable(acados_fixed_obst src/acados_fixed_obst.cpp)
 target_link_libraries(acados_fixed_obst
 	${fixed_obst_model_build}/libacados_solver_crazyflie_fixed_obst.so
 	${acados_lib}/libacados.so

@@ -1,7 +1,7 @@
 from acados_template import *
 def export_ode_model():
 
-    model_name = 'crazyflie_fixed_obs'
+    model_name = 'crazyflie_fixed_obst'
 
     # parameters
     g0  = 9.8         # [m.s^2]

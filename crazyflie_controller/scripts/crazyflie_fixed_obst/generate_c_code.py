@@ -6,7 +6,7 @@ import scipy.linalg
 from ctypes import *
 from os.path import dirname, join, abspath
 
-ACADOS_PATH = join(dirname(abspath(__file__)), "../../../../acados")
+ACADOS_PATH = join(dirname(abspath(__file__)), "../../../acados")
 
 # create render arguments
 ra = acados_ocp_nlp()
