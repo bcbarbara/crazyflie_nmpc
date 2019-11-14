@@ -67,7 +67,7 @@
 
 #define RECONFIGURE 0
 
-external_function_casadi * forw_vde_casadi;
+external_function_param_casadi * forw_vde_casadi;
 using namespace Eigen;
 using std::ofstream;
 using std::cout;
