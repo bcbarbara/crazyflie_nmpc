@@ -54,7 +54,7 @@ ocp_nlp_plan * nlp_solver_plan;
 ocp_nlp_config * nlp_config;
 ocp_nlp_dims * nlp_dims;
 
-external_function_casadi * forw_vde_casadi;
+external_function_param_casadi * forw_vde_casadi;
 
 using namespace Eigen;
 using std::ofstream;
