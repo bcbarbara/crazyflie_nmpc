@@ -3,15 +3,19 @@
 	<arg name="uri" default="radio://0/80/2M" />
 	<arg name="frame" default="/mocap" />
 
-	<include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
-	</include>
+	<node pkg="crazyflie_driver"
+		type="crazyflie_server"
+		name="crazyflie_server"
+		launch-prefix="$(find crazyflie_demo)/scripts/tmux_openinpane 1"
+		output="screen"
+	/>
 
 	<group ns="crazyflie">
 		<node name="crazyflie_add"
 			pkg="crazyflie_driver"
 			type="crazyflie_add"
 			output="screen"
-			launch-prefix="$(find crazyflie_demo)/scripts/tmux_openinpane 4"
+			launch-prefix="$(find crazyflie_demo)/scripts/tmux_openinpane 2"
 		>
 			<param name="uri" value="$(arg uri)" />
       <param name="tf_prefix" value="/crazyflie" />
@@ -38,7 +42,7 @@
 	<node name="fake_pos"
 				pkg="crazyflie_demo"
 				type="publish_external_position_fake.py"
-				launch-prefix="$(find crazyflie_demo)/scripts/tmux_openinpane 1"
+				launch-prefix="$(find crazyflie_demo)/scripts/tmux_openinpane 3"
 	/>
 
 	<!-- <node name="crazy_euler_angles" -->
@@ -83,7 +87,7 @@
 		type="acados_mpc"
 		output="screen"
 		ns="crazyflie"
-		launch-prefix="$(find crazyflie_demo)/scripts/tmux_openinpane 2"
+		launch-prefix="$(find crazyflie_demo)/scripts/tmux_openinpane 4"
 	>
 		<param name="ref_traj" value="$(find crazyflie_controller)/traj/smooth_step.txt"/>
 	</node>
@@ -92,7 +96,7 @@
 		pkg="crazyflie_controller"
 		type="acados_estimator"
 		output="screen" ns="crazyflie"
-		launch-prefix="$(find crazyflie_demo)/scripts/tmux_openinpane 3"
+		launch-prefix="$(find crazyflie_demo)/scripts/tmux_openinpane 5"
 	>
 		<param name="delay" value='0.06'/>
 	</node>
