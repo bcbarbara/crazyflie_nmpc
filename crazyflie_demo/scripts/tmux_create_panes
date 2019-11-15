@@ -1,0 +1,40 @@
+#!/bin/sh
+
+session=`tmux display-message -p '#S'`
+window=${session}:0
+
+# first exit from existing panes
+
+num=`tmux list-panes -t "$window" | wc -l`
+num=$(( num-1 ))
+
+while [ $num  -gt 0 ]
+do
+
+  for n in `seq 0 $num`
+  do
+    pane=${window}.$n
+    tmux send-keys -t "$pane" C-c
+    tmux send-keys -t "$pane" C-z "exit" Enter
+  done
+
+  num=`tmux list-panes -t "$window" | wc -l`
+  num=$(( num-1 ))
+
+done
+
+panel_num=$1
+start_dir=$HOME
+
+tmux select-window -t $window
+tmux split-window -h -c $start_dir bash
+tmux split-window -v -t 0 -c $start_dir bash
+tmux split-window -v -t 1 -c $start_dir bash
+tmux split-window -v -t 0 -c $start_dir bash
+
+tmux split-window -v -t 4 -c $start_dir bash
+tmux split-window -v -t 4 -c $start_dir bash
+tmux split-window -v -t 6 -c $start_dir bash
+
+tmux split-window -v -t 0 -c $start_dir bash
+# tmux split-window -h -t 0 -c $start_dir bash

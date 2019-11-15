@@ -1,0 +1,14 @@
+#!/bin/sh
+
+session=`tmux display-message -p "#S"`
+window=${session}:0
+pane=${window}.$1
+
+tmux send-keys -t "$pane" C-c
+tmux send-keys -t "$pane" C-z "$2 $3 $4 $5 $6 $7 $8 $9 $10" Enter
+
+# tmux select-pane -t "$pane"
+# tmux select-window -t "$window"
+# tmux attach-session -t "$session"
+
+# tmux split-window -h 

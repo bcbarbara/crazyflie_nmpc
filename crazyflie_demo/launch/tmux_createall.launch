@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+
+	<arg name="panel_num" default="8" />
+
+  <node
+		name="createall"
+		pkg="crazyflie_demo"
+		type="tmux_create_panes"
+		args="$(arg panel_num)"
+	/>
+
+</launch>
+
