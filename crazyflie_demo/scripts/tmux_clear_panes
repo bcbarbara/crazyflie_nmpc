@@ -1,0 +1,13 @@
+#!/bin/sh
+
+session=`tmux display-message -p '#S'`
+window=${session}:0
+
+num=`tmux list-panes -t "$window" | wc -l`
+num=$(( num-1 ))
+for n in `seq 0 $num`
+do
+  pane=${window}.$n
+  tmux send-keys -t "$pane" C-c
+  tmux send-keys -t "$pane" clear Enter
+done

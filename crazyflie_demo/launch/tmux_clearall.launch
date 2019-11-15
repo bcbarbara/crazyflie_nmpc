@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<launch>
+
+	<node
+		name="clearall"
+		pkg="crazyflie_demo"
+		type="tmux_clear_panes"
+	/>
+
+</launch>
+
