@@ -133,9 +133,6 @@ ra.solver_options.nlp_solver_type = 'SQP_RTI'
 #ra.solver_options.nlp_solver_type = 'SQP'
 
 # set header path
-#ra.acados_include_path  = '/usr/local/include'
-#ra.acados_lib_path      = '/usr/local/lib'
-
 ra.acados_include_path  = f'{ACADOS_PATH}/include'
 ra.acados_lib_path      = f'{ACADOS_PATH}/lib'
 
