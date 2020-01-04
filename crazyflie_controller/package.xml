@@ -1,15 +1,12 @@
 <?xml version="1.0"?>
 <package>
   <name>crazyflie_controller</name>
-  <version>0.0.1</version>
-  <description>Controller to fly a Crazyflie in a space with location feedback (such as motion capture).</description>
+  <version>1.0.0</version>
+  <description>NMPC controller for the Crazyflie 2.1</description>
 
   <maintainer email="barros@diag.uniroma1.it">Barbara Barros Carlos</maintainer>
 
   <license>MIT</license>
-
-  <url type="website">http://ros.org/wiki/crazyflie</url>
-  <url type="bugtracker">https://github.com/whoenig/crazyflie_ros/issues</url>
 
   <author email="barros@diag.uniroma1.it">Barbara Barros Carlos</author>
 
@@ -19,11 +16,12 @@
   <build_depend>tf</build_depend>
   <build_depend>dynamic_reconfigure</build_depend>
   <build_depend>message_generation</build_depend>
+  <build_depend>crazyflie_demo</build_depend>
 
   <run_depend>tf</run_depend>
   <run_depend>dynamic_reconfigure</run_depend>
   <run_depend>message_generation</run_depend>
-
   <run_depend>message_runtime</run_depend>
   <run_depend>std_msgs</run_depend>
+  <run_depend>crazyflie_demo</run_depend>
 </package>

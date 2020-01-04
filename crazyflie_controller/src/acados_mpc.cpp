@@ -91,10 +91,10 @@ class NMPC
 		xq = 0,
 		yq = 1,
 		zq = 2,
-		q1 = 3,
-		q2 = 4,
-		q3 = 5,
-		q4 = 6,
+		qw = 3,
+		qx = 4,
+		qy = 5,
+		qz = 6,
 		vbx = 7,
 		vby = 8,
 		vbz = 9,
@@ -170,7 +170,7 @@ class NMPC
 
 	// Variables for dynamic reconfigure
 	double Wdiag_xq,Wdiag_yq,Wdiag_zq;
-	double Wdiag_q1,Wdiag_q2,Wdiag_q3,Wdiag_q4;
+	double Wdiag_qw,Wdiag_qx,Wdiag_qy,Wdiag_qz;
 	double Wdiag_vbx,Wdiag_vby,Wdiag_vbz;
 	double Wdiag_wx,Wdiag_wy,Wdiag_wz;
 	double Wdiag_w1,Wdiag_w2,Wdiag_w3,Wdiag_w4;
@@ -220,19 +220,20 @@ public:
 		// Steady-state control input value
 		// (Kg)
 		mq = 33e-3;
-		// (N/kRPM**2)
+		// (N/kRPM^2)
 		Ct = 3.25e-4;
 		// steady state prop speed (kRPM)
 		uss = sqrt((mq*g0)/(4*Ct));
 
 		const char * c = ref_traj.c_str();
+
 		// Pre-load the trajectory
 		N_STEPS = readDataFromFile(c, precomputed_traj);
 		if (N_STEPS == 0){
 			ROS_WARN("Cannot load CasADi optimal trajectory!");
 		}
 		else{
-			ROS_INFO_STREAM("Number of steps: " << N_STEPS << endl);
+			ROS_INFO_STREAM("Number of steps of selected trajectory: " << N_STEPS << endl);
 		}
 		// Initialize dynamic reconfigure options
 		xq_des = 0;
@@ -246,10 +247,10 @@ public:
 		Wdiag_xq	= 120.0 ;
 		Wdiag_yq	= 100.0 ;
 		Wdiag_zq	= 100.0 ;
-		Wdiag_q1	= 1.0e-3;
-		Wdiag_q2	= 1.0e-3;
-		Wdiag_q3	= 1.0e-3;
-		Wdiag_q4	= 1.0e-3;
+		Wdiag_qw	= 1.0e-3;
+		Wdiag_qx	= 1.0e-3;
+		Wdiag_qy	= 1.0e-3;
+		Wdiag_qz	= 1.0e-3;
 		Wdiag_vbx	= 7e-1  ;
 		Wdiag_vby	= 1.0   ;
 		Wdiag_vbz	= 4.0   ;
@@ -306,10 +307,10 @@ public:
 				Wdiag_xq	= config.Wdiag_xq;
 				Wdiag_yq	= config.Wdiag_yq;
 				Wdiag_zq	= config.Wdiag_zq;
-				Wdiag_q1	= config.Wdiag_q1;
-				Wdiag_q2	= config.Wdiag_q2;
-				Wdiag_q3	= config.Wdiag_q3;
-				Wdiag_q4	= config.Wdiag_q4;
+				Wdiag_qw	= config.Wdiag_qw;
+				Wdiag_qx	= config.Wdiag_qx;
+				Wdiag_qy	= config.Wdiag_qy;
+				Wdiag_qz	= config.Wdiag_qz;
 				Wdiag_vbx	= config.Wdiag_vbx;
 				Wdiag_vby	= config.Wdiag_vby;
 				Wdiag_vbz	= config.Wdiag_vbz;
@@ -344,7 +345,6 @@ public:
 			}
 
 			file.close();
-			cout << num_of_steps << endl;
 			}
 		else
 			{
@@ -410,10 +410,10 @@ public:
 							  yref_sign[k * NY + 0] = xq_des; // xq
 							  yref_sign[k * NY + 1] = yq_des;	// yq
 							  yref_sign[k * NY + 2] = zq_des;	// zq
-							  yref_sign[k * NY + 3] = 1.00;		// q1
-							  yref_sign[k * NY + 4] = 0.00;		// q2
-							  yref_sign[k * NY + 5] = 0.00;		// q3
-							  yref_sign[k * NY + 6] = 0.00;		// q4
+							  yref_sign[k * NY + 3] = 1.00;		// qw
+							  yref_sign[k * NY + 4] = 0.00;		// qx
+							  yref_sign[k * NY + 5] = 0.00;		// qy
+							  yref_sign[k * NY + 6] = 0.00;		// qz
 							  yref_sign[k * NY + 7] = 0.00;		// vbx
 							  yref_sign[k * NY + 8] = 0.00;		// vby
 							  yref_sign[k * NY + 9] = 0.00;		// vbz
@@ -438,10 +438,10 @@ public:
 						 		      yref_sign[k * NY + 0] = precomputed_traj[iter + k][xq];
 								      yref_sign[k * NY + 1] = precomputed_traj[iter + k][yq];
 								      yref_sign[k * NY + 2] = precomputed_traj[iter + k][zq];
-								      yref_sign[k * NY + 3] = precomputed_traj[iter + k][q1];
-								      yref_sign[k * NY + 4] = precomputed_traj[iter + k][q2];
-								      yref_sign[k * NY + 5] = precomputed_traj[iter + k][q3];
-								      yref_sign[k * NY + 6] = precomputed_traj[iter + k][q4];
+								      yref_sign[k * NY + 3] = precomputed_traj[iter + k][qw];
+								      yref_sign[k * NY + 4] = precomputed_traj[iter + k][qx];
+								      yref_sign[k * NY + 5] = precomputed_traj[iter + k][qy];
+								      yref_sign[k * NY + 6] = precomputed_traj[iter + k][qz];
 								      yref_sign[k * NY + 7] = precomputed_traj[iter + k][vbx];
 								      yref_sign[k * NY + 8] = precomputed_traj[iter + k][vby];
 								      yref_sign[k * NY + 9] = precomputed_traj[iter + k][vbz];
@@ -499,10 +499,10 @@ public:
 			acados_in.W[0+0*(NU+NX)]   = Wdiag_xq;
 			acados_in.W[1+1*(NU+NX)]   = Wdiag_yq;
 			acados_in.W[2+2*(NU+NX)]   = Wdiag_zq;
-			acados_in.W[3+3*(NU+NX)]   = Wdiag_q1;
-			acados_in.W[4+4*(NU+NX)]   = Wdiag_q2;
-			acados_in.W[5+5*(NU+NX)]   = Wdiag_q3;
-			acados_in.W[6+6*(NU+NX)]   = Wdiag_q4;
+			acados_in.W[3+3*(NU+NX)]   = Wdiag_qw;
+			acados_in.W[4+4*(NU+NX)]   = Wdiag_qx;
+			acados_in.W[5+5*(NU+NX)]   = Wdiag_qy;
+			acados_in.W[6+6*(NU+NX)]   = Wdiag_qz;
 			acados_in.W[7+7*(NU+NX)]   = Wdiag_vbx;
 			acados_in.W[8+8*(NU+NX)]   = Wdiag_vby;
 			acados_in.W[9+9*(NU+NX)]   = Wdiag_vbz;
@@ -517,10 +517,10 @@ public:
 			acados_in.WN[0+0*(NX)]   = Wdiag_xq*WN_factor;
 			acados_in.WN[1+1*(NX)]   = Wdiag_yq*WN_factor;
 			acados_in.WN[2+2*(NX)]   = Wdiag_zq*WN_factor;
-			acados_in.WN[3+3*(NX)]   = Wdiag_q1*WN_factor;
-			acados_in.WN[4+4*(NX)]   = Wdiag_q2*WN_factor;
-			acados_in.WN[5+5*(NX)]   = Wdiag_q3*WN_factor;
-			acados_in.WN[6+6*(NX)]   = Wdiag_q4*WN_factor;
+			acados_in.WN[3+3*(NX)]   = Wdiag_qw*WN_factor;
+			acados_in.WN[4+4*(NX)]   = Wdiag_qx*WN_factor;
+			acados_in.WN[5+5*(NX)]   = Wdiag_qy*WN_factor;
+			acados_in.WN[6+6*(NX)]   = Wdiag_qz*WN_factor;
 			acados_in.WN[7+7*(NX)]   = Wdiag_vbx*WN_factor;
 			acados_in.WN[8+8*(NX)]   = Wdiag_vby*WN_factor;
 			acados_in.WN[9+9*(NX)]   = Wdiag_vbz*WN_factor;
@@ -535,10 +535,10 @@ public:
 			acados_in.x0[zq] = msg->pos.z;
 
 			// quaternion
-			acados_in.x0[q1] = msg->quat.w;
-			acados_in.x0[q2] = msg->quat.x;
-			acados_in.x0[q3] = msg->quat.y;
-			acados_in.x0[q4] = msg->quat.z;
+			acados_in.x0[qw] = msg->quat.w;
+			acados_in.x0[qx] = msg->quat.x;
+			acados_in.x0[qy] = msg->quat.y;
+			acados_in.x0[qz] = msg->quat.z;
 
 			// body velocities
 			acados_in.x0[vbx] = msg->vel.x;
@@ -594,13 +594,7 @@ public:
 			// get solution at stage N = 1
 			ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 1, "u", (void *)acados_out.u1);
 
-			// get next stage N = 1
-			ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 1, "x", (void *)acados_out.x1);
-
-			// get stage N = 2 which compensates 15 ms for the delay
-			//ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 2, "x", (void *)acados_out.x2);
-
-			// get stage N = 4 which compensates 60 ms for the delay
+			// get solution at stage N = 4 which compensates 60 ms delay
 			ocp_nlp_out_get(nlp_config, nlp_dims, nlp_out, 4, "x", (void *)acados_out.x4);
 
 			// publish acados output
@@ -622,10 +616,10 @@ public:
 
 			// Select the set of optimal states to calculate the real cf control inputs
 			Quaterniond q_acados_out;
-			q_acados_out.w() = acados_out.x4[q1];
-			q_acados_out.x() = acados_out.x4[q2];
-			q_acados_out.y() = acados_out.x4[q3];
-			q_acados_out.z() = acados_out.x4[q4];
+			q_acados_out.w() = acados_out.x4[qw];
+			q_acados_out.x() = acados_out.x4[qx];
+			q_acados_out.y() = acados_out.x4[qy];
+			q_acados_out.z() = acados_out.x4[qz];
 			q_acados_out.normalize();
 
 			// Convert acados output quaternion to desired euler angles
@@ -648,48 +642,6 @@ public:
 
 			p_bodytwist.publish(bodytwist);
 
-
-			ofstream ol_traj("full_log.txt", std::ios_base::app | std::ios_base::out);
-
-			if (ol_traj.is_open()){
-
-			  ol_traj << bodytwist.linear.y 	<< " ";
-			  ol_traj << bodytwist.linear.x		<< " ";
-			  ol_traj << bodytwist.angular.z  	<< " ";
-			  ol_traj << bodytwist.linear.z   	<< " ";
-			  ol_traj << acados_in.x0[xq] 		<< " ";
-			  ol_traj << acados_in.x0[yq] 		<< " ";
-			  ol_traj << acados_in.x0[zq] 		<< " ";
-			  ol_traj << acados_in.x0[q1] 		<< " ";
-			  ol_traj << acados_in.x0[q2] 		<< " ";
-			  ol_traj << acados_in.x0[q3] 		<< " ";
-			  ol_traj << acados_in.x0[q4] 		<< " ";
-			  ol_traj << acados_in.x0[vbx] 	  	<< " ";
-			  ol_traj << acados_in.x0[vby] 	  	<< " ";
-			  ol_traj << acados_in.x0[vbz] 	  	<< " ";
-			  ol_traj << acados_in.x0[wx] 		<< " ";
-			  ol_traj << acados_in.x0[wy] 		<< " ";
-			  ol_traj << acados_in.x0[wz] 		<< " ";
-			  ol_traj << acados_out.x4[xq] 		<< " ";
-			  ol_traj << acados_out.x4[yq] 		<< " ";
-			  ol_traj << acados_out.x4[zq] 		<< " ";
-			  ol_traj << acados_out.x4[q1] 		<< " ";
-			  ol_traj << acados_out.x4[q2] 		<< " ";
-			  ol_traj << acados_out.x4[q3] 		<< " ";
-			  ol_traj << acados_out.x4[q4] 		<< " ";
-			  ol_traj << acados_out.x4[vbx] 	<< " ";
-			  ol_traj << acados_out.x4[vby] 	<< " ";
-			  ol_traj << acados_out.x4[vbz] 	<< " ";
-			  ol_traj << acados_out.x4[wx] 		<< " ";
-			  ol_traj << acados_out.x4[wy] 		<< " ";
-			  ol_traj << acados_out.x4[wz] 		<< " ";
-			  ol_traj << precomputed_traj[iter][xq] << " ";
-			  ol_traj << precomputed_traj[iter][yq] << " ";
-			  ol_traj << precomputed_traj[iter][zq] << " ";
-			  ol_traj << endl;
-			  ol_traj.close();
-			}
-
 			// --- Publish openloop
 			#if PUB_OPENLOOP_TRAJ
 
@@ -711,18 +663,18 @@ public:
 				crazyflie_state.vel.x    = acados_out.xi[vbx];
 				crazyflie_state.vel.y    = acados_out.xi[vby];
 				crazyflie_state.vel.z    = acados_out.xi[vbz];
-				crazyflie_state.quat.w   = acados_out.xi[q1];
-				crazyflie_state.quat.x   = acados_out.xi[q2];
-				crazyflie_state.quat.y   = acados_out.xi[q3];
-				crazyflie_state.quat.z   = acados_out.xi[q4];
+				crazyflie_state.quat.w   = acados_out.xi[qw];
+				crazyflie_state.quat.x   = acados_out.xi[qx];
+				crazyflie_state.quat.y   = acados_out.xi[qy];
+				crazyflie_state.quat.z   = acados_out.xi[qz];
 				crazyflie_state.rates.x  = acados_out.xi[wx];
 				crazyflie_state.rates.y  = acados_out.xi[wy];
 				crazyflie_state.rates.z  = acados_out.xi[wz];
 
-				crazyflie_control.w1 = acados_out.ui[0];
-				crazyflie_control.w2 = acados_out.ui[1];
-				crazyflie_control.w3 = acados_out.ui[2];
-				crazyflie_control.w4 = acados_out.ui[3];
+				crazyflie_control.w1 = acados_out.ui[w1];
+				crazyflie_control.w2 = acados_out.ui[w2];
+				crazyflie_control.w3 = acados_out.ui[w3];
+				crazyflie_control.w4 = acados_out.ui[w4];
 
 				traj_msg.states.push_back(crazyflie_state);
 				traj_msg.controls.push_back(crazyflie_control);
@@ -734,7 +686,7 @@ public:
 
 		catch (int acados_status)
 			{
-			ROS_INFO_STREAM("An exception occurred. Exception Nr. ");
+			ROS_INFO_STREAM("An exception occurred. Exception Nr. " << acados_status << endl);
 			}
 		}
 	};
