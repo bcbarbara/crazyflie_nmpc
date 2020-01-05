@@ -5,10 +5,12 @@
   <description>NMPC controller for the Crazyflie 2.1</description>
 
   <maintainer email="barros@diag.uniroma1.it">Barbara Barros Carlos</maintainer>
+  <maintainer email="tommaso.sartor@imtek.uni-freiburg.de">Tommaso Sartor</maintainer>
 
   <license>MIT</license>
 
   <author email="barros@diag.uniroma1.it">Barbara Barros Carlos</author>
+  <author email="tommaso.sartor@imtek.uni-freiburg.de">Tommaso Sartor</author>
 
   <buildtool_depend>catkin</buildtool_depend>
 

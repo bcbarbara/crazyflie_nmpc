@@ -4,6 +4,8 @@
   <description>ROS integration for Crazyflie Nano Quadcopter from Bitcraze</description>
 
   <maintainer email="whoenig@usc.edu">Wolfgang Hoenig</maintainer>
+  <maintainer email="barros@diag.uniroma1.it">Barbara Barros Carlos</maintainer>
+  <maintainer email="tommaso.sartor@imtek.uni-freiburg.de">Tommaso Sartor</maintainer>
 
   <license>MIT</license>
 
@@ -11,6 +13,8 @@
   <url type="bugtracker">https://github.com/whoenig/crazyflie_ros/issues</url>
 
   <author email="whoenig@usc.edu">Wolfgang Hoenig</author>
+  <author email="barros@diag.uniroma1.it">Barbara Barros Carlos</author>
+  <author email="tommaso.sartor@imtek.uni-freiburg.de">Tommaso Sartor</author>
 
   <!-- Dependencies which this package needs to build itself. -->
   <buildtool_depend>catkin</buildtool_depend>
