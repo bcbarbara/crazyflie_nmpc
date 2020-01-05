@@ -64,6 +64,7 @@ include_directories(
 
 link_directories(${full_model_build})
 
+# NMPC node
 add_executable(acados_mpc src/acados_mpc.cpp)
 target_link_libraries(acados_mpc
 	${full_model_build}/libacados_solver_crazyflie.so
@@ -73,6 +74,7 @@ target_link_libraries(acados_mpc
 add_dependencies(acados_mpc ${PROJECT_NAME}_gencfg)
 add_dependencies(acados_mpc ${PROJECT_NAME}_gencpp)
 
+# Estimator node
 add_executable(acados_estimator src/acados_estimator.cpp)
 target_link_libraries(acados_estimator
 	${full_model_build}/libacados_solver_crazyflie.so
@@ -81,3 +83,15 @@ target_link_libraries(acados_estimator
 )
 add_dependencies(acados_estimator ${PROJECT_NAME}_gencfg)
 add_dependencies(acados_estimator ${PROJECT_NAME}_gencpp)
+
+# IMU node
+add_executable(crazyflie_imu src/crazyflie_imu.cpp)
+target_link_libraries(crazyflie_imu
+  ${catkin_LIBRARIES}
+)
+
+# NMPC state vector node
+add_executable(measurements_vector src/measurements_vector.cpp)
+target_link_libraries(measurements_vector
+  ${catkin_LIBRARIES}
+)
