@@ -1,68 +1,32 @@
-crazyflie_ros
+crazyflie_nmpc
 =============
+![gem](https://img.shields.io/badge/ver -1.0.0-blue)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 
 ROS stack for [Bitcraze Crazyflie](http://www.bitcraze.se/), with the following features:
 
-* Support Crazyflie 2.1
-* Publishes on-board sensors in ROS standard message formats
-* Includes external controller for waypoint navigation (if motion capture system is available)
-* No dependency to the Bitcraze SDK (Driver and Controller written in C++)
+* Support for Crazyflie 2.1
+* Compatible with ROS Kinetic
+* Publishes onboard sensors data in ROS standard message formats
+* Includes NMPC controller for regulation and trajectory tracking (if motion capture system is available)
 
-## Installation - Ubuntu 16.04 LTS with ROS Kinetic
-1. Install ROS Kinetic (recommended: “Desktop-Full Install”) following [these instructions](http://wiki.ros.org/kinetic/Installation/Ubuntu).
-2. We work with Catkin Command Line Tools to build packages in the workspace. They can be installed with apt-get following [these instructions](https://catkin-tools.readthedocs.io/en/latest/installing.html#installing-on-ubuntu-with-apt-get).
-> **Note** `catkin build​` instead of ​`catkin_mak​e`
+Check the [wiki]() for more informations. Installation instructions for ROS Kinetic can be found [here]().
 
-3. Setup your catkin workspace:
-```
-$ mkdir -p ~/catkin_ws/src
-$ cd ~/catkin_ws/src
-$ catkin_init_workspace
-$ cd ~/catkin_ws/
-$ catkin build
-$ source devel/setup.bash
-$ echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
-$ source ~/.bashrc
-```
+## Packages
 
-4. Download [acados](https://github.com/acados/acados.git). You need to compile and install acados with `qpOASES` solver to be able to use its interface:
-```
-$ mkdir -p ~/acados/build
-$ cd build
-$ cmake -DACADOS_WITH_QPOASES=ON .. & make install
-```
+There are seven packages included: acados, crazyflie_cpp, crazyflie_driver, crazyflie_tools, crazyflie_description, crazyflie_controller, and crazyflie_demo.
 
-5. Clone the package into your catkin workspace:
-```
-$ cd ~/catkin_ws/src
-$ git clone https://github.com/bcbarbara/crazyflie_ros.git
-$ cd crazyflie_ros
-$ git submodule init
-$ git submodule update
-```
-
-6. Compile the shared library for the NMPC solver and place it in the system's path:
-```
-$ cd ~/catkin_ws/src/crazyflie_ros/crazyflie_controller/include/c_generated_code
-$ make shared_lib
-```
-
-7. Use `catkin build` on your workspace to compile.
-
-## Usage
-
-There are six packages included: crazyflie_cpp, crazyflie_driver, crazyflie_tools, crazyflie_description, crazyflie_controller, and crazyflie_demo.
-
-### Crazyflie_Cpp
+#### Crazyflie_Cpp
 
 This package contains a cpp library for the Crazyradio and Crazyflie. It can be used independently of ROS.
 
-### Crazyflie_driver
+#### Crazyflie_driver
 
 This package contains the driver. In order to support multiple Crazyflies with a single Crazyradio, there is crazyflie_server (communicating with all Crazyflies) and crazyflie_add to dynamically add Crazyflies.
 The server does not communicate to any Crazyflie initially, hence crazyflie_add needs to be used.
 
-### Crazyflie_tools
+#### Crazyflie_tools
 
 This package contains tools which are helpful, but not required for normal operation. So far, it just support one tool for scanning for a Crazyflie.
 
@@ -71,18 +35,18 @@ You can find connected Crazyflies using:
 rosrun crazyflie_tools scan
 ```
 
-### Crazyflie_description
+#### Crazyflie_description
 
 This package contains a 3D model of the Crazyflie (1.0). This is for visualization purposes in rviz.
 
-### Crazyflie_controller
+#### Crazyflie_controller
 
 This package contains an efficient and modular implementation of a Nonlinear Model Predictive Control (NMPC) tailored for the Crazyflie's online trajectory generation and tracking problem. A Real-Time Iteration (RTI) scheme through a Sequential Quadratic Programming (SQP) online algorithm is used in order to solve the Nonlinear Program (NLP).
 
 The package also contains a simple PID controller for hovering or waypoint navigation, which has been develop by Wolfgang Honig, and can be used with external motion capture systems, such as VICON.
 
 
-### Crazyflie_demo
+#### Crazyflie_demo
 
 For teleoperation using a joystick, use:
 ```
