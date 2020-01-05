@@ -39,44 +39,41 @@ using std::fixed;
 using std::showpos;
 
 
-class NMPC
+class IMU
 {
 public:
 
-    NMPC(const ros::NodeHandle& n){
+    IMU(const ros::NodeHandle& n){
 
        ros::NodeHandle nh;
-	     m_imu_sub 	 = nh.subscribe("/crazyflie/imu", 1000, &NMPC::imuCallback, this);
-
+	     s_imu     = nh.subscribe("/crazyflie/imu", 1000, &IMU::imuCallback, this);
     }
 
 private:
 
     void imuCallback(const sensor_msgs::Imu::ConstPtr& msg){
 
-    	p  = msg->angular_velocity.x;
-    	q  = msg->angular_velocity.y;
-    	r  = msg->angular_velocity.z;
+    	actual_wx  = msg->angular_velocity.x;
+    	actual_wy  = msg->angular_velocity.y;
+    	actual_wz  = msg->angular_velocity.z;
 
-    	abx = msg->linear_acceleration.x;
-    	aby = msg->linear_acceleration.y;
-    	abz = msg->linear_acceleration.z;
+    	actual_ax = msg->linear_acceleration.x;
+    	actual_ay = msg->linear_acceleration.y;
+    	actual_az = msg->linear_acceleration.z;
 
     	ROS_INFO_STREAM(fixed << showpos << "\nQuad flight data at time [" << msg->header.stamp << "s "<< "]" << endl
-    		        << "Gyro [p,q,r] = [" << p << ", " << q << ", " << r << "]" << endl
-    		        << "Acc [abx,aby,abz] = [" << abx << ", " << aby << ", " << abz << "]" << endl);
+    		        << "Gyro [wx,wy,wz] = [" << actual_wx << ", " << actual_wy << ", " << actual_wz << "]" << endl
+    		        << "Acce [ax,ay,az] = [" << actual_ax << ", " << actual_ay << ", " << actual_az << "]" << endl);
     }
 
 private:
 
-    ros::Subscriber m_imu_sub;
+    ros::Subscriber s_imu;
 
     // Variables for reading the IMU data
-    float p;
-    float q;
-    float r;
-    float abx,aby,abz;
-    float t;
+    double actual_wx,actual_wy,actual_wz;
+    double actual_ax,actual_ay,actual_az;
+    double t;
 };
 
 int main(int argc, char **argv)
@@ -85,7 +82,7 @@ int main(int argc, char **argv)
 
   ros::NodeHandle n("~");
 
-  NMPC nmpc(n);
+  IMU imu(n);
   ros::spin();
 
   return 0;

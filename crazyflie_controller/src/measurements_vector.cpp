@@ -36,6 +36,7 @@
 
 
 #include "crazyflie_controller/GenericLogData.h"
+#include <crazyflie_controller/CrazyflieStateStamped.h>
 
 // standard
 #include <iostream>
@@ -92,14 +93,12 @@ class meas_vec
     w4 = 3
   };
 
-  ros::Subscriber m_imu_sub;
-  ros::Subscriber m_euler_sub;
-  ros::Subscriber m_eRaptor_sub;
-  ros::Subscriber m_motors;
+  ros::Subscriber s_imu;
+	ros::Subscriber s_eRaptor;
+	ros::Subscriber s_euler;
+	ros::Subscriber s_motors;
 
-  ros::Publisher m_quat_pub;
-  ros::Publisher m_lvb_pub;
-  ros::Publisher m_avb_pub;
+  ros::Publisher p_cf_state;
 
   // Variables for reading the IMU data
   double actual_wx,actual_wy,actual_wz;
@@ -127,21 +126,17 @@ public:
   meas_vec(const ros::NodeHandle& n){
 
       ros::NodeHandle nh;
-    	// subscriber for the motion capture system position
-    	m_eRaptor_sub  	 	= nh.subscribe("/crazyflie/external_position", 5, &meas_vec::eRaptorCallback, this);
-    	// publisher for the IMU stabilizer euler angles
-    	m_euler_sub		= nh.subscribe("/crazyflie/euler_angles", 5, &meas_vec::eulerCallback, this);
-    	// subscriber for the IMU linear acceleration and angular velocities from acc and gyro
-    	m_imu_sub		= nh.subscribe("/crazyflie/imu", 5, &meas_vec::imuCallback, this);
-    	// publisher for the current value of the quaternion
-    	m_quat_pub 		= nh.advertise<geometry_msgs::Quaternion>("/crazyflie/quat",1);
-    	// publisher for the current value of the linear velocities
-    	m_lvb_pub 		= nh.advertise<geometry_msgs::Vector3>("/crazyflie/linear_velo",1);
-    	// publisher for the current value of the angular velocities
-    	m_avb_pub 		= nh.advertise<geometry_msgs::Vector3>("/crazyflie/angular_velo",1);
-    	// subscriber fro the motors rpm
-    	m_motors 		= nh.subscribe("/crazyflie/log1", 5, &meas_vec::motorsCallback, this);
-
+      // publish crazyflie state
+      p_cf_state = nh.advertise<crazyflie_controller::CrazyflieStateStamped>(
+        "/cf_estimator/state_estimate",1);
+      // subscriber for the motion capture system position
+    	s_eRaptor = nh.subscribe("/crazyflie/external_position", 5, &meas_vec::eRaptorCallback, this);
+    	/// subscriber for the IMU stabilizer euler angles
+  		s_euler   = nh.subscribe("/crazyflie/euler_angles", 5, &meas_vec::eulerCallback, this);
+      // subscriber for the IMU linear acceleration and angular velocities from acc and gyro
+  		s_imu     = nh.subscribe("/crazyflie/imu", 5, &meas_vec::imuCallback, this);
+      // subscriber fro the motors rpm
+    	s_motors  = nh.subscribe("/crazyflie/log1", 5, &meas_vec::motorsCallback, this);
 
     	// Set initial value of the linear velocities to zero
     	vx = 0.0;
@@ -220,13 +215,13 @@ public:
 
   void imuCallback(const sensor_msgs::Imu::ConstPtr& msg){
 
-    	// Gyro angular rates
-    	actual_wx  = msg->angular_velocity.x;
-    	actual_wy  = msg->angular_velocity.y;
-    	actual_wz  = msg->angular_velocity.z;
+  	// Gyro angular rates
+  	actual_wx  = msg->angular_velocity.x;
+  	actual_wy  = msg->angular_velocity.y;
+  	actual_wz  = msg->angular_velocity.z;
   }
 
-  double linearVelocity(std::vector <double> q_samples, std::vector <double> dq_samples, double Ts, double elapsed_time) {
+  double linearVelocityLPF(std::vector <double> q_samples, std::vector <double> dq_samples, double Ts, double elapsed_time) {
 
   	double dq = 0;
     if (elapsed_time > 1.0)
@@ -257,9 +252,9 @@ public:
 	  z_samples[3] = z_samples[4];
 	  z_samples[4] = actual_z;
 
-	  vearth[0] = linearVelocity(x_samples, vx_filter_samples, dt, delta);
-	  vearth[1] = linearVelocity(y_samples, vy_filter_samples, dt, delta);
-	  vearth[2] = linearVelocity(z_samples, vz_filter_samples, dt, delta);
+	  vearth[0] = linearVelocityLPF(x_samples, vx_filter_samples, dt, delta);
+	  vearth[1] = linearVelocityLPF(y_samples, vy_filter_samples, dt, delta);
+	  vearth[2] = linearVelocityLPF(z_samples, vz_filter_samples, dt, delta);
 
 	  vx_filter_samples[0] = vx_filter_samples[1];
 	  vx_filter_samples[1] = vx_filter_samples[2];
@@ -282,19 +277,21 @@ public:
 
   Vector3d rotateLinearVeloE2B(Quaterniond* q, Vector3d v_inertial){
 
-   	 Matrix3d Sq;
-   	 Vector3d vb;
+    // This is the convertion between
+    // quaternion orientation to rotation matrix
+    // from EARTH to BODY (considering ZYX euler sequence)
+    Matrix3d Sq;
+    Vector3d vb;
 
-  	 double S11 = 2*(q->w()*q->w()+q->x()*q->x())-1;
-  	 double S12 = 2*(q->x()*q->y()+q->w()*q->z());
-  	 double S13 = 2*(q->x()*q->z()-q->w()*q->y());
-  	 double S21 = 2*(q->x()*q->y()-q->w()*q->z());
-  	 double S22 = 2*(q->w()*q->w()+q->y()*q->y())-1;
-  	 double S23 = 2*(q->y()*q->z()+q->w()*q->x());
-  	 double S31 = 2*(q->x()*q->z()+q->w()*q->y());
-  	 double S32 = 2*(q->y()*q->z()-q->w()*q->x());
-  	 double S33 = 2*(q->w()*q->w()+q->z()*q->z())-1;
-
+    double S11 = 2*(q->w()*q->w()+q->x()*q->x())-1;
+    double S12 = 2*(q->x()*q->y()+q->w()*q->z());
+    double S13 = 2*(q->x()*q->z()-q->w()*q->y());
+    double S21 = 2*(q->x()*q->y()-q->w()*q->z());
+    double S22 = 2*(q->w()*q->w()+q->y()*q->y())-1;
+    double S23 = 2*(q->y()*q->z()+q->w()*q->x());
+    double S31 = 2*(q->x()*q->z()+q->w()*q->y());
+    double S32 = 2*(q->y()*q->z()-q->w()*q->x());
+    double S33 = 2*(q->w()*q->w()+q->z()*q->z())-1;
 
   	 Sq << S11,S12,S13,
   	       S21,S22,S23,
@@ -307,25 +304,30 @@ public:
 
   Quaterniond euler2quatern(euler angle){
 
-      Quaterniond q;
+    Quaterniond q;
 
-      double cosPhi = cos(angle.phi*0.5);
-      double sinPhi = sin(angle.phi*0.5);
+		double cosPhi = cos(angle.phi*0.5);
+		double sinPhi = sin(angle.phi*0.5);
 
-      double cosTheta = cos(angle.theta*0.5);
-      double sinTheta = sin(angle.theta*0.5);
+		double cosTheta = cos(angle.theta*0.5);
+		double sinTheta = sin(angle.theta*0.5);
 
-      double cosPsi = cos(angle.psi*0.5);
-      double sinPsi = sin(angle.psi*0.5);
+		double cosPsi = cos(angle.psi*0.5);
+		double sinPsi = sin(angle.psi*0.5);
 
-      // Convention according the firmware of the crazyflie
-      q.w() = cosPsi*cosTheta*cosPhi + sinPsi*sinTheta*sinPhi;
-      q.x() = cosPsi*cosTheta*sinPhi - sinPsi*sinTheta*cosPhi;
-      q.y() = cosPsi*sinTheta*cosPhi + sinPsi*cosTheta*sinPhi;
-      q.z() = sinPsi*cosTheta*cosPhi - cosPsi*sinTheta*sinPhi;
+		q.w() = cosPhi*cosTheta*cosPsi + sinPhi*sinTheta*sinPsi;
+		q.x() = -(cosPsi*cosTheta*sinPhi - sinPsi*sinTheta*cosPhi);
+		q.y() = -(cosPsi*sinTheta*cosPhi + sinPsi*cosTheta*sinPhi);
+		q.z() = -(sinPsi*cosTheta*cosPhi - cosPsi*sinTheta*sinPhi);
 
-      return q;
-    }
+		if(q.w() < 0)
+		  {
+		  q.w() = -q.w();
+		  q.vec() = -q.vec();
+		  }
+
+		return q;
+  }
 
   void iteration(const ros::TimerEvent& e){
 
@@ -371,27 +373,24 @@ public:
     x0_sign[wy] = actual_wy;
     x0_sign[wz] = actual_wz;
 
+    // publish state
+    crazyflie_controller::CrazyflieStateStamped crazyflie_state;
 
-    // Up to this point we already stored the 13 states required for the NMPC. So advertise them!
-    geometry_msgs::Quaternion cf_st_quat; // publisher for quaternion
-    geometry_msgs::Vector3    cf_st_lvb;  // publisher for the linear velocities w.r.t. the body frame
-    geometry_msgs::Vector3    cf_st_avb;  // publisher for the angular velocities w.r.t. the body frame
+    crazyflie_state.header.stamp = ros::Time::now();
 
-
-    cf_st_quat.w = x0_sign[qw];
-    cf_st_quat.x = x0_sign[qx];
-    cf_st_quat.y = x0_sign[qy];
-    cf_st_quat.z = x0_sign[qz];
-    cf_st_lvb.x  = x0_sign[vbx];
-    cf_st_lvb.y  = x0_sign[vby];
-    cf_st_lvb.z  = x0_sign[vbz];
-    cf_st_avb.x  = x0_sign[wx];
-    cf_st_avb.y  = x0_sign[wy];
-    cf_st_avb.z  = x0_sign[wz];
-
-    m_quat_pub.publish(cf_st_quat);
-    m_lvb_pub.publish(cf_st_lvb);
-    m_avb_pub.publish(cf_st_avb);
+    crazyflie_state.pos.x    = x0_sign[xq];
+    crazyflie_state.pos.y    = x0_sign[yq];
+    crazyflie_state.pos.z    = x0_sign[zq];
+    crazyflie_state.vel.x    = x0_sign[vbx];
+    crazyflie_state.vel.y    = x0_sign[vby];
+    crazyflie_state.vel.z    = x0_sign[vbz];
+    crazyflie_state.quat.w   = x0_sign[qw];
+    crazyflie_state.quat.x   = x0_sign[qx];
+    crazyflie_state.quat.y   = x0_sign[qy];
+    crazyflie_state.quat.z   = x0_sign[qz];
+    crazyflie_state.rates.x  = x0_sign[wx];
+    crazyflie_state.rates.y  = x0_sign[wy];
+    crazyflie_state.rates.z  = x0_sign[wz];
 
     }
 };
