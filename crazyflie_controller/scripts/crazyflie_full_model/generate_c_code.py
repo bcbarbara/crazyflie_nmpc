@@ -39,9 +39,6 @@ ra = acados_ocp_nlp()
 # export model
 model = export_ode_model()
 
-# set model_name
-# ra.model_name = model.name
-
 Tf = 0.75
 N = 50
 nx = model.x.size()[0]
@@ -61,9 +58,9 @@ nlp_dims.nu  = model.u.size()[0]
 nlp_dims.N   = N
 
 # parameters
-g0  = 9.8066    # [m.s^2]
-mq  = 33e-3     # [Kg] with one marker
-Ct  = 3.25e-4   # [N/Krpm^2]
+g0  = 9.8066    # [m.s^2] accerelation of gravity
+mq  = 33e-3     # [kg] total mass (with one marker)
+Ct  = 3.25e-4   # [N/krpm^2] Thrust coef
 
 # bounds
 hov_w = np.sqrt((mq*g0)/(4*Ct))
@@ -75,10 +72,10 @@ Q = np.eye(nx)
 Q[0,0] = 120.0      # x
 Q[1,1] = 100.0      # y
 Q[2,2] = 100.0      # z
-Q[3,3] = 1.0e-3     # q1
-Q[4,4] = 1.0e-3     # q2
-Q[5,5] = 1.0e-3     # q3
-Q[6,6] = 1.0e-3     # q4
+Q[3,3] = 1.0e-3     # qw
+Q[4,4] = 1.0e-3     # qx
+Q[5,5] = 1.0e-3     # qy
+Q[6,6] = 1.0e-3     # qz
 Q[7,7] = 7e-1       # vbx
 Q[8,8] = 1.0        # vby
 Q[9,9] = 4.0        # vbz

@@ -95,3 +95,5 @@ add_executable(measurements_vector src/measurements_vector.cpp)
 target_link_libraries(measurements_vector
   ${catkin_LIBRARIES}
 )
+add_dependencies(measurements_vector ${PROJECT_NAME}_gencfg)
+add_dependencies(measurements_vector ${PROJECT_NAME}_gencpp)

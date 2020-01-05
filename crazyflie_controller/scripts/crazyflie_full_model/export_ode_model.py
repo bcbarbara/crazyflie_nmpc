@@ -29,15 +29,15 @@ def export_ode_model():
     model_name = 'crazyflie'
 
     # parameters
-    g0  = 9.8066     # [m.s^2]
-    mq  = 33e-3      # [Kg] with one marker
-    Ixx = 1.395e-5   # [Kg.m^2]
-    Iyy = 1.395e-5   # [Kg.m^2]
-    Izz = 2.173e-5   # [Kg.m^2]
-    Cd  = 7.9379e-06 # [N/Krpm^2]
-    Ct  = 3.25e-4     # [N/Krpm^2]
-    dq  = 65e-3      # [m] distance between motors center
-    l   = dq/2       # [m] distance between motor center and the axis of rotation
+    g0  = 9.8066     # [m.s^2] accerelation of gravity
+    mq  = 33e-3      # [kg] total mass (with one marker)
+    Ixx = 1.395e-5   # [kg.m^2] Inertia moment around x-axis
+    Iyy = 1.395e-5   # [kg.m^2] Inertia moment around y-axis
+    Izz = 2.173e-5   # [kg.m^2] Inertia moment around z-axis
+    Cd  = 7.9379e-06 # [N/krpm^2] Drag coef
+    Ct  = 3.25e-4    # [N/krpm^2] Thrust coef
+    dq  = 65e-3      # [m] distance between motors' center
+    l   = dq/2       # [m] distance between motors' center and the axis of rotation
 
     # states (f_exp)
     xq = SX.sym('xq')
@@ -60,7 +60,7 @@ def export_ode_model():
     w2 = SX.sym('w2')
     w3 = SX.sym('w3')
     w4 = SX.sym('w4')
-    u = vertcat(w1, w2, w3, w4) # motor torques
+    u = vertcat(w1, w2, w3, w4) # motor speed
 
     # for f_impl
     xq_dot = SX.sym('xq_dot')
