@@ -1,9 +1,9 @@
 /*
+* The MIT License (MIT)
+*
 * Copyright 2020 Barbara Barros Carlos, Tommaso Sartor
 *
 * This file is part of crazyflie_nmpc.
-*
-* The MIT License (MIT)
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
