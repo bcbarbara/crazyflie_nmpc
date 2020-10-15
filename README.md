@@ -16,7 +16,7 @@ If you use this project, we would appreciate it if you give us the credit by cit
 
 ```
 @inproceedings{barroscarlos2020,
-  author     = {Carlos Barros, B\'arbara and
+  author     = {Barros Carlos, B\'arbara and
                 Sartor, Tommaso and
                 Zanelli, Andrea and
                 Frison, Gianluca and
@@ -30,6 +30,10 @@ If you use this project, we would appreciate it if you give us the credit by cit
 }
 
 ```
+Watch our YouTube video showing the experiments done in this work:
+
+[![video](https://user-images.githubusercontent.com/50755258/96165708-40c43200-0f1d-11eb-84fa-159b6a37f391.png)](https://youtu.be/xZLVQ7BdUHA)
+
 
 ## Installation
 
