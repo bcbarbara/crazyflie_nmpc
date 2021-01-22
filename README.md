@@ -15,8 +15,8 @@ ROS stack containing an efficient real-time NMPC for the [Crazyflie](http://www.
 If you use this project, we would appreciate it if you give us the credit by citing this work
 
 ```
-@article{barroscarlos2020,
-  author      = {Barros Carlos, B\'arbara and
+@inproceedings{barroscarlos2020,
+  author      = {Carlos, B\'arbara Barros and
                  Sartor, Tommaso and
                  Zanelli, Andrea and
                  Frison, Gianluca and
@@ -24,12 +24,15 @@ If you use this project, we would appreciate it if you give us the credit by cit
                  Diehl, Moritz and
                  Oriolo, Giuseppe},
   title       = {An Efficient Real-Time {NMPC} for Quadrotor Position Control under Communication Time-Delay},
-  url         = {https://arxiv.org/abs/2010.11264},
+  booktitle   = {2020 16th International Conference on Control, Automation, Robotics and Vision (ICARCV)},
+  pages       = {982--989},
   year        = {2020}
 }
 
 ```
-Watch our YouTube video showing the experiments done in this work:
+The arxiv file can be found [here](https://arxiv.org/abs/2010.11264).
+
+Watch our YouTube video showing the experiments:
 
 [![video](https://user-images.githubusercontent.com/50755258/96165708-40c43200-0f1d-11eb-84fa-159b6a37f391.png)](https://youtu.be/xZLVQ7BdUHA)
 
