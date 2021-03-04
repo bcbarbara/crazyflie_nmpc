@@ -68,7 +68,7 @@ link_directories(${full_model_build})
 add_executable(acados_mpc src/acados_mpc.cpp)
 target_link_libraries(acados_mpc
 	${full_model_build}/libacados_solver_crazyflie.so
-	${acados_lib}/libacados.a
+	${acados_lib}/libacados.so
 	${catkin_LIBRARIES}
 )
 add_dependencies(acados_mpc ${PROJECT_NAME}_gencfg)
@@ -78,7 +78,7 @@ add_dependencies(acados_mpc ${PROJECT_NAME}_gencpp)
 add_executable(acados_estimator src/acados_estimator.cpp)
 target_link_libraries(acados_estimator
 	${full_model_build}/libacados_solver_crazyflie.so
-	${acados_lib}/libacados.a
+	${acados_lib}/libacados.so
 	${catkin_LIBRARIES}
 )
 add_dependencies(acados_estimator ${PROJECT_NAME}_gencfg)
