@@ -12,7 +12,7 @@ ROS stack containing an efficient real-time NMPC for the [Crazyflie](http://www.
 ## Citing this work
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-If you use this project, we would appreciate it if you give us the credit by citing this work
+If you use this project, give us the credit by citing this work:
 
 ```
 @inproceedings{barroscarlos2020,
@@ -24,13 +24,13 @@ If you use this project, we would appreciate it if you give us the credit by cit
                  Diehl, Moritz and
                  Oriolo, Giuseppe},
   title       = {An Efficient Real-Time {NMPC} for Quadrotor Position Control under Communication Time-Delay},
-  booktitle   = {2020 16th International Conference on Control, Automation, Robotics and Vision (ICARCV)},
+  booktitle   = {16th International Conference on Control, Automation, Robotics and Vision (ICARCV)},
   pages       = {982--989},
   year        = {2020}
 }
 
 ```
-The arxiv file can be found [here](https://arxiv.org/abs/2010.11264).
+The paper can be found [here](https://ieeexplore.ieee.org/document/9305513), while the arxiv file is available [here](https://arxiv.org/abs/2010.11264).
 
 Watch our YouTube video showing the experiments:
 
@@ -74,7 +74,7 @@ This package contains a 3D model of the Crazyflie 1.0 for visualization purposes
 
 #### crazyflie_controller
 
-This package contains an efficient and modular implementation of a nonlinear model predictive controller (NMPC) tailored to the Crazyflie with time-delay compensation. The NMPC is implementend using the high-performance software package acados, which solves optimal control problems and implements a real-time iteration (RTI) variant of a sequential quadratic programming (SQP) scheme with Gauss-Newton Hessian approximation. The quadratic subproblems (QP) arising in the SQP scheme are solved with HPIPM, an interior-point method solver, built on top of the linear algebra library BLASFEO, finely tuned for multiple CPU architectures. We use a recently proposed Hessian condesing algorithm, particularly suitable for partial condensing, to further speed-up solution times.  
+This package contains an efficient and modular implementation of a nonlinear model predictive controller (NMPC) tailored to the Crazyflie with time-delay compensation. The NMPC is implementend using the high-performance software package acados, which solves optimal control problems and implements a real-time iteration (RTI) variant of a sequential quadratic programming (SQP) scheme with Gauss-Newton Hessian approximation. The quadratic subproblems (QP) arising in the SQP scheme are solved with HPIPM, an interior-point method solver, built on top of the linear algebra library BLASFEO, finely tuned for multiple CPU architectures. We use a recently proposed Hessian condesing algorithm, particularly suitable for partial condensing, to further speed up solution times.  
 
 The package also contains a PID controller for waypoint navigation developed by Wolfgang Honig.
 
