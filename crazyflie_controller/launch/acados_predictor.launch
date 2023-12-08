@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 	<arg name="uri" default="radio://0/80/2M" />
-	<arg name="frame" default="/mocap" />
+	<arg name="frame" default="/world" />
 
 	<include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
 	</include>
@@ -24,15 +24,15 @@
 			<param name="enable_logging_temperature" value="False" />
 		</node>
 
-		<node
+		<!-- <node
 			name="pose"
 			pkg="crazyflie_demo"
 			type="publish_external_position_eraptor.py"
 			output="screen">
-		</node>
+		</node> -->
 	</group>
 
-	<include file="$(find cortex_stream)/launch/cortex_stream.launch"/>
+	<!-- <include file="$(find cortex_stream)/launch/cortex_stream.launch"/> -->
 
 	<!--node name="acados_plot_state"
 				pkg="rqt_plot"
@@ -54,8 +54,8 @@
 	</node-->
 
 	<node name="nmpc" pkg="crazyflie_controller" type="acados_mpc" output="screen" ns="crazyflie">
-		<!--param name="ref_traj" value="$(find crazyflie_controller)/traj/smooth_step.txt"/-->
-		<param name="ref_traj" value="$(find crazyflie_controller)/traj/helix_traj.txt"/>
+		<!-- <param name="ref_traj" value="$(find crazyflie_controller)/traj/smooth_step.txt"/> -->
+		<param name="ref_traj" value="$(find crazyflie_controller)/traj/hover.txt"/>
 	</node>
 
 	<node name="estimator" pkg="crazyflie_controller" type="acados_estimator" output="screen" ns="crazyflie">
@@ -63,6 +63,6 @@
 	</node>
 
 	<node pkg="rqt_reconfigure" name="crazyflie_reconf" type="rqt_reconfigure" output="screen">
-</node>
+	</node>
 
 </launch>
