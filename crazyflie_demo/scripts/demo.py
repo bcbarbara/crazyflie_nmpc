@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 
 import rospy
 import math
@@ -11,8 +11,9 @@ from geometry_msgs.msg import PoseStamped
 class Demo():
     def __init__(self, goals):
         rospy.init_node('demo', anonymous=True)
-        self.worldFrame = rospy.get_param("~worldFrame", "/world")
-        self.frame = rospy.get_param("~frame")
+        self.worldFrame = "/world"
+        # self.frame = rospy.get_param("~frame")
+        self.frame = "/Robot_1/base_link"
         self.pubGoal = rospy.Publisher('goal', PoseStamped, queue_size=1)
         self.listener = TransformListener()
         self.goals = goals

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 
 import rospy
 import tf
@@ -6,6 +6,7 @@ from crazyflie_driver.msg import Hover
 from std_msgs.msg import Empty
 from crazyflie_driver.srv import UpdateParams
 from threading import Thread
+import time
 
 class Crazyflie:
     def __init__(self, prefix):
@@ -34,9 +35,9 @@ class Crazyflie:
     # determine direction of speed based on distance
     def getSpeed(self, distance):
         if distance > 0:
-            return 0.1
+            return 0.2
         elif distance < 0:
-            return -0.1
+            return -0.2
         else:
             return 0
 
@@ -159,17 +160,25 @@ class Crazyflie:
         self.stop_pub.publish(self.stop_msg)
 
 def handler(cf):
+    rospy.loginfo("take off")
     cf.takeOff(0.4)
-    cf.goTo(0.4, 0.1, 0.2, 0)
+    rospy.loginfo("goto")
+    cf.goTo(0.4, 0.0, 0.4, 0)
+    rospy.loginfo("exiting go to")
+    # time sleep plis
+    # rospy.loginfo("entering time")
+    # #time.sleep(5)
+    rospy.loginfo("entering land")
     cf.land()
+    rospy.loginfo("land")
 
 if __name__ == '__main__':
     rospy.init_node('hover', anonymous=True)
 
     cf1 = Crazyflie("cf1")
-    cf2 = Crazyflie("cf2")
+    # cf2 = Crazyflie("cf2")
 
     t1 = Thread(target=handler, args=(cf1,))
-    t2 = Thread(target=handler, args=(cf2,))
+    # t2 = Thread(target=handler, args=(cf2,))
     t1.start()
-    t2.start()
+    # t2.start()
