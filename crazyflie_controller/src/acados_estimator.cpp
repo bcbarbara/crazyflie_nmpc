@@ -44,7 +44,7 @@
 #include <std_srvs/Empty.h>
 // msg
 #include <std_msgs/String.h>
-#include <geometry_msgs/PointStamped.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Twist.h>
 #include <std_msgs/String.h>
 #include <sensor_msgs/Imu.h>
@@ -480,12 +480,12 @@ class ESTIMATOR
 		actual_m4 = msg->values[3];
 		}
 
-	void eRaptorCallback(const geometry_msgs::PointStampedConstPtr& msg)
+	void eRaptorCallback(const geometry_msgs::PoseStampedConstPtr& msg)
 		{
 		// Position of crazyflie marker
-		actual_x = msg->point.x;
-		actual_y = msg->point.y;
-		actual_z = msg->point.z;
+		actual_x = msg->pose.position.x;
+		actual_y = msg->pose.position.y;
+		actual_z = msg->pose.position.z;
 		}
 
 	void eulerCallback(const geometry_msgs::Vector3StampedPtr& msg)

@@ -27,7 +27,6 @@
 #include "geometry_msgs/Twist.h"
 #include "geometry_msgs/TwistStamped.h"
 #include "geometry_msgs/QuaternionStamped.h"
-#include "geometry_msgs/PointStamped.h"
 #include "geometry_msgs/Vector3Stamped.h"
 #include "geometry_msgs/PoseStamped.h"
 #include "sensor_msgs/Imu.h"
@@ -391,9 +390,9 @@ void cmdPositionSetpoint(
   }
 
   void positionMeasurementChanged(
-    const geometry_msgs::PointStamped::ConstPtr& msg)
+    const geometry_msgs::PoseStamped::ConstPtr& msg)
   {
-    m_cf.sendExternalPositionUpdate(msg->point.x, msg->point.y, msg->point.z);
+    m_cf.sendExternalPositionUpdate(msg->pose.position.x, msg->pose.position.y, msg->pose.position.z);
     m_sentExternalPosition = true;
   }
 
