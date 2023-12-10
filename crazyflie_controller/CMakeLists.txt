@@ -97,3 +97,10 @@ target_link_libraries(measurements_vector
 )
 add_dependencies(measurements_vector ${PROJECT_NAME}_gencfg)
 add_dependencies(measurements_vector ${PROJECT_NAME}_gencpp)
+
+catkin_install_python(PROGRAMS src/map_gen.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+catkin_install_python(PROGRAMS src/rrt_client.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)

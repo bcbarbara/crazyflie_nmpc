@@ -1,0 +1,5 @@
+# TODO: Fix the map_path loading for yaml-cpp. Currently it does not like getting path from ROS params
+# map_path: "/home/devansh/airlab/mpc_ws/src/subcanopy_flight/rrt_planner/config/map.yaml"
+numOfDOFs: 2
+epsilon: 0.5
+sample_resolution: 0.1

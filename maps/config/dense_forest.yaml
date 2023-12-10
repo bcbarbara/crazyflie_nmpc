@@ -1,0 +1,657 @@
+num_obstacles: 130
+x_min: -30.0
+x_max: 30.0
+y_min: -30.0
+y_max: 30.0
+
+obstacles:
+  0:
+    model_name: Tree 4
+    r: 0.45
+    x: -4.09676
+    y: -1.48081
+  1:
+    model_name: Tree 4_clone
+    r: 0.45
+    x: -5.99458
+    y: 4.40763
+  2:
+    model_name: Tree 4_clone_0
+    r: 0.45
+    x: 0.59282
+    y: 3.79577
+  3:
+    model_name: Tree 4_clone_1
+    r: 0.45
+    x: 4.05214
+    y: -3.45088
+  4:
+    model_name: Tree 4_clone_2
+    r: 0.45
+    x: 5.65986
+    y: 3.50511
+  5:
+    model_name: Tree 4_clone_3
+    r: 0.45
+    x: -3.0868
+    y: -7.84555
+  6:
+    model_name: Tree 4_clone_4
+    r: 0.45
+    x: -2.67992
+    y: 6.55404
+  7:
+    model_name: Tree 4_clone_5
+    r: 0.45
+    x: 7.09997
+    y: 7.95608
+  8:
+    model_name: Tree 4_clone_6
+    r: 0.45
+    x: -0.50347
+    y: -2.90306
+  9:
+    model_name: Tree 4_clone_7
+    r: 0.45
+    x: 8.91411
+    y: -0.942577
+  10:
+    model_name: Tree 4_clone_8
+    r: 0.45
+    x: 6.25927
+    y: -8.22753
+  11:
+    model_name: Tree 3
+    r: 0.25
+    x: 1.90396
+    y: 1.47093
+  12:
+    model_name: Tree 3_clone
+    r: 0.25
+    x: -4.18722
+    y: 0.997077
+  13:
+    model_name: Tree 3_clone_0
+    r: 0.25
+    x: 0.506339
+    y: 7.77262
+  14:
+    model_name: Tree 3_clone_1
+    r: 0.25
+    x: 1.81337
+    y: 6.98511
+  15:
+    model_name: Tree 5
+    r: 0.2
+    x: 1.53215
+    y: -6.59967
+  16:
+    model_name: Tree 5_clone
+    r: 0.2
+    x: 5.29143
+    y: -5.28726
+  17:
+    model_name: Tree 5_clone_0
+    r: 0.2
+    x: 6.12243
+    y: -4.07602
+  18:
+    model_name: Tree 5_clone_1
+    r: 0.2
+    x: 6.86464
+    y: 2.02302
+  19:
+    model_name: Tree 5_clone_2
+    r: 0.2
+    x: -7.42578
+    y: -4.99475
+  20:
+    model_name: Tree 5_clone_3
+    r: 0.2
+    x: -7.18349
+    y: 1.96175
+  21:
+    model_name: Tree 1
+    r: 0.5
+    x: -0.845654
+    y: -9.10169
+  22:
+    model_name: Tree 2
+    r: 0.1
+    x: -0.483105
+    y: -1.86968
+  23:
+    model_name: Tree 5_0
+    r: 0.2
+    x: 2.44768
+    y: -4.87592
+  24:
+    model_name: Tree 9
+    r: 0.1
+    x: 2.86217
+    y: -0.651587
+  25:
+    model_name: Tree 9_clone
+    r: 0.1
+    x: -0.40374
+    y: 1.71359
+  26:
+    model_name: Tree 9_clone_0
+    r: 0.1
+    x: -2.46652
+    y: -0.27951
+  27:
+    model_name: Tree 9_clone_1
+    r: 0.1
+    x: -4.32318
+    y: 3.97464
+  28:
+    model_name: Tree 7
+    r: 0.1
+    x: 0.823122
+    y: -5.1089
+  29:
+    model_name: Tree 9_clone_2
+    r: 0.1
+    x: -4.79688
+    y: -5.89147
+  30:
+    model_name: Tree 7_clone
+    r: 0.1
+    x: 0.781234
+    y: -4.42722
+  31:
+    model_name: Tree 7_clone_0
+    r: 0.1
+    x: 1.63078
+    y: -4.3459
+  32:
+    model_name: Tree 7_clone_0_clone
+    r: 0.1
+    x: -6.6339
+    y: -0.059562
+  33:
+    model_name: Bush 2
+    r: 0.3
+    x: 0.761908
+    y: -2.56617
+  34:
+    model_name: Bush 3
+    r: 0.5
+    x: -0.168829
+    y: -3.26505
+  35:
+    model_name: Bush 5
+    r: 0.25
+    x: -3.16499
+    y: -3.93963
+  36:
+    model_name: Bush 5_0
+    r: 0.25
+    x: -2.83965
+    y: -3.48064
+  37:
+    model_name: Bush 0
+    r: 0.3
+    x: 0.485426
+    y: 2.65857
+  38:
+    model_name: Bush 0_0
+    r: 0.3
+    x: 2.97356
+    y: -7.76599
+  39:
+    model_name: Bush 0_1
+    r: 0.3
+    x: 4.51754
+    y: 0.086489
+  40:
+    model_name: Bush 4
+    r: 0.5
+    x: 8.47235
+    y: -5.13504
+  41:
+    model_name: Bush 3_0
+    r: 0.5
+    x: 8.94884
+    y: -5.79851
+  42:
+    model_name: Bush 2_0
+    r: 0.3
+    x: 8.93563
+    y: 7.46367
+  43:
+    model_name: Bush 2_1
+    r: 0.3
+    x: 5.20701
+    y: 7.24724
+  44:
+    model_name: Tree 9_0
+    r: 0.1
+    x: 8.38905
+    y: -8.02463
+  45:
+    model_name: Tree 9_1
+    r: 0.1
+    x: 9.66007
+    y: -8.36648
+  46:
+    model_name: Tree 4_0
+    r: 0.45
+    x: -6.81235
+    y: 8.72099
+  47:
+    model_name: Bush 5_1
+    r: 0.25
+    x: 1.09545
+    y: -9.17195
+  48:
+    model_name: Tree 2_0
+    r: 0.1
+    x: -8.80251
+    y: -0.34066
+  49:
+    model_name: Tree 9_2
+    r: 0.1
+    x: 10.6908
+    y: 3.38344
+  50:
+    model_name: Bush 3_1
+    r: 0.5
+    x: 8.51901
+    y: 2.75911
+  51:
+    model_name: Bush 2_2
+    r: 0.3
+    x: 10.6857
+    y: 1.14009
+  52:
+    model_name: Bush 5_2
+    r: 0.25
+    x: -1.70941
+    y: 8.93815
+  53:
+    model_name: Bush 2_3
+    r: 0.3
+    x: -1.44595
+    y: 9.09246
+  54:
+    model_name: Bush 3_2
+    r: 0.5
+    x: -3.14555
+    y: 9.37749
+  55:
+    model_name: Tree 3_0
+    r: 0.25
+    x: 7.02994
+    y: -2.12178
+  56:
+    model_name: Tree 3_1
+    r: 0.25
+    x: 4.72316
+    y: -9.8562
+  57:
+    model_name: Tree 3_2
+    r: 0.25
+    x: -8.02105
+    y: -12.1285
+  58:
+    model_name: Tree 1_0
+    r: 0.5
+    x: -6.36833
+    y: -11.4651
+  59:
+    model_name: Tree 2_1
+    r: 0.1
+    x: -3.89184
+    y: -11.2176
+  60:
+    model_name: Tree 3_3
+    r: 0.25
+    x: -12.5101
+    y: 8.86548
+  61:
+    model_name: Tree 9_3
+    r: 0.1
+    x: 1.36155
+    y: -12.4766
+  62:
+    model_name: Tree 7_0
+    r: 0.1
+    x: 2.64961
+    y: -12.8306
+  63:
+    model_name: Tree 4_1
+    r: 0.45
+    x: -0.3332
+    y: -15.5438
+  64:
+    model_name: Tree 7_clone_0_clone_0
+    r: 0.1
+    x: 5.44728
+    y: -13.5503
+  65:
+    model_name: Tree 4_1_clone
+    r: 0.45
+    x: 6.73288
+    y: -16.8246
+  66:
+    model_name: Tree 4_1_clone_0
+    r: 0.45
+    x: 1.61386
+    y: 14.7792
+  67:
+    model_name: Tree 4_1_clone_1
+    r: 0.45
+    x: -4.0
+    y: 15.0
+  68:
+    model_name: Tree 4_1_clone_2
+    r: 0.45
+    x: -7.45442
+    y: 14.2209
+  69:
+    model_name: Tree 4_1_clone_3
+    r: 0.45
+    x: -3.42497
+    y: 12.6632
+  70:
+    model_name: Tree 4_1_clone_4
+    r: 0.45
+    x: -10.0138
+    y: 4.29817
+  71:
+    model_name: Tree 4_1_clone_5
+    r: 0.45
+    x: -11.256
+    y: -8.13053
+  72:
+    model_name: Tree 4_1_clone_6
+    r: 0.45
+    x: 5.92289
+    y: 12.8099
+  73:
+    model_name: Tree 4_1_clone_7
+    r: 0.45
+    x: 5.99735
+    y: 21.326
+  74:
+    model_name: Tree 4_1_clone_8
+    r: 0.45
+    x: 0.298571
+    y: 22.1312
+  75:
+    model_name: Tree 4_1_clone_9
+    r: 0.45
+    x: -7.45172
+    y: 20.9719
+  76:
+    model_name: Tree 4_1_clone_10
+    r: 0.45
+    x: -11.5138
+    y: 14.7752
+  77:
+    model_name: Tree 4_1_clone_11
+    r: 0.45
+    x: 9.02427
+    y: -13.6979
+  78:
+    model_name: Tree 4_1_clone_12
+    r: 0.45
+    x: 13.2176
+    y: -3.4257
+  79:
+    model_name: Tree 3_clone_2
+    r: 0.25
+    x: 1.20207
+    y: 11.7727
+  80:
+    model_name: Tree 3_clone_3
+    r: 0.25
+    x: -1.77144
+    y: 17.6557
+  81:
+    model_name: Tree 3_clone_4
+    r: 0.25
+    x: -1.1713
+    y: 16.2028
+  82:
+    model_name: Tree 3_clone_5
+    r: 0.25
+    x: -2.87369
+    y: 18.5827
+  83:
+    model_name: Tree 3_clone_6
+    r: 0.25
+    x: -6.89529
+    y: 11.8135
+  84:
+    model_name: Tree 3_clone_7
+    r: 0.25
+    x: -6.21502
+    y: 13.1051
+  85:
+    model_name: Tree 3_clone_8
+    r: 0.25
+    x: -10.0026
+    y: 12.5594
+  86:
+    model_name: Tree 3_clone_9
+    r: 0.25
+    x: -10.7466
+    y: 17.5438
+  87:
+    model_name: Tree 3_clone_10
+    r: 0.25
+    x: -8.67734
+    y: -8.75003
+  88:
+    model_name: Tree 5_clone_2_clone
+    r: 0.2
+    x: -9.107
+    y: -3.30673
+  89:
+    model_name: Tree 5_clone_2_clone_0
+    r: 0.2
+    x: 4.63636
+    y: 11.7118
+  90:
+    model_name: Tree 5_clone_2_clone_1
+    r: 0.2
+    x: -1.29027
+    y: 12.4832
+  91:
+    model_name: Tree 5_clone_2_clone_2
+    r: 0.2
+    x: 5.71972
+    y: 16.5378
+  92:
+    model_name: Tree 5_clone_2_clone_3
+    r: 0.2
+    x: 3.42434
+    y: 19.5783
+  93:
+    model_name: Tree 5_clone_2_clone_4
+    r: 0.2
+    x: 12.1278
+    y: 12.8074
+  94:
+    model_name: Tree 5_clone_2_clone_5
+    r: 0.2
+    x: 11.3262
+    y: 16.8811
+  95:
+    model_name: Tree 5_clone_2_clone_6
+    r: 0.2
+    x: 12.0084
+    y: 8.07083
+  96:
+    model_name: Bush 0_1_clone
+    r: 0.3
+    x: 3.85346
+    y: 10.3641
+  97:
+    model_name: Bush 0_1_clone_0
+    r: 0.3
+    x: 7.79421
+    y: 11.4631
+  98:
+    model_name: Bush 0_1_clone_1
+    r: 0.3
+    x: 1.75843
+    y: 17.948
+  99:
+    model_name: Bush 0_1_clone_2
+    r: 0.3
+    x: -4.81076
+    y: 10.5832
+  100:
+    model_name: Bush 0_1_clone_3
+    r: 0.3
+    x: -10.9388
+    y: 7.38385
+  101:
+    model_name: Bush 0_1_clone_4
+    r: 0.3
+    x: -11.7265
+    y: 0.479194
+  102:
+    model_name: Bush 0_1_clone_5
+    r: 0.3
+    x: -10.9185
+    y: -5.8042
+  103:
+    model_name: Bush 0_1_clone_6
+    r: 0.3
+    x: 3.35749
+    y: -11.6755
+  104:
+    model_name: Bush 0_1_clone_7
+    r: 0.3
+    x: 3.04504
+    y: -16.4227
+  105:
+    model_name: Tree 7_clone_0_clone_0_clone
+    r: 0.1
+    x: 8.57491
+    y: -12.002
+  106:
+    model_name: Tree 7_clone_0_clone_0_clone_0
+    r: 0.1
+    x: 8.82003
+    y: 13.5856
+  107:
+    model_name: Tree 7_clone_0_clone_0_clone_1
+    r: 0.1
+    x: 3.68539
+    y: 14.5919
+  108:
+    model_name: Tree 9_clone_3
+    r: 0.1
+    x: -0.250946
+    y: 6.26561
+  109:
+    model_name: Tree 9_clone_4
+    r: 0.1
+    x: -0.693355
+    y: 7.19419
+  110:
+    model_name: Tree 9_clone_5
+    r: 0.1
+    x: 2.39117
+    y: 9.75393
+  111:
+    model_name: Tree 9_clone_6
+    r: 0.1
+    x: 2.82424
+    y: 10.614
+  112:
+    model_name: Tree 9_clone_7
+    r: 0.1
+    x: 0.207473
+    y: 19.9974
+  113:
+    model_name: Tree 9_clone_8
+    r: 0.1
+    x: -0.890004
+    y: 20.2781
+  114:
+    model_name: Tree 9_clone_9
+    r: 0.1
+    x: -1.94974
+    y: 20.394
+  115:
+    model_name: Tree 9_clone_10
+    r: 0.1
+    x: -5.03242
+    y: 19.1141
+  116:
+    model_name: Tree 9_clone_11
+    r: 0.1
+    x: 9.33452
+    y: 17.9918
+  117:
+    model_name: Tree 9_clone_12
+    r: 0.1
+    x: 13.2926
+    y: 17.845
+  118:
+    model_name: Tree 5_clone_0_clone
+    r: 0.2
+    x: 6.41154
+    y: -11.6716
+  119:
+    model_name: Tree 5_clone_0_clone_0
+    r: 0.2
+    x: 11.4044
+    y: -10.4093
+  120:
+    model_name: Bush 5_0_clone
+    r: 0.25
+    x: -2.78399
+    y: 11.0473
+  121:
+    model_name: Bush 5_0_clone_0
+    r: 0.25
+    x: -2.61224
+    y: 11.6589
+  122:
+    model_name: Bush 5_0_clone_1
+    r: 0.25
+    x: -2.15949
+    y: 11.4495
+  123:
+    model_name: Tree 7_clone_0_clone_1
+    r: 0.1
+    x: 11.0078
+    y: 10.6901
+  124:
+    model_name: Bush 5_0_clone_2
+    r: 0.25
+    x: 9.59407
+    y: 11.3363
+  125:
+    model_name: Bush 5_0_clone_3
+    r: 0.25
+    x: 9.90848
+    y: 12.3477
+  126:
+    model_name: Bush 0_1_clone_0_clone
+    r: 0.3
+    x: -9.6702
+    y: 1.50731
+  127:
+    model_name: Bush 0_1_clone_0_clone_0
+    r: 0.3
+    x: -10.444
+    y: 1.97531
+  128:
+    model_name: Tree 2_1_clone
+    r: 0.1
+    x: 10.3352
+    y: 5.92263
+  129:
+    model_name: Tree 2_1_clone_0
+    r: 0.1
+    x: 11.8818
+    y: 6.48609
