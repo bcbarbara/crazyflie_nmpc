@@ -41,7 +41,7 @@ class MapGenerator:
         'num_obstacles': len(self.obstacles),
         'x_min': -0.5,
         'x_max': 1.5,
-        'y_min': -2.5,
+        'y_min': -1.8,
         'y_max': 0.5,
         'obstacles': {obstacle['id']: {key: val for key, val in obstacle.items() if key != 'id'} for obstacle in self.obstacles}
     }

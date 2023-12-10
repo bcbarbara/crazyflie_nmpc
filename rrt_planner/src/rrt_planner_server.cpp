@@ -98,7 +98,7 @@ int main(int argc, char **argv)
     // ros::ServiceClient client = nh.serviceClient<std_srvs::Empty>("generate_map");
     // std_srvs::Empty srv;
     std::string map_path;
-    pnh.param<std::string>("/rrt_planner_server/map_path", map_path, "/home/ved/acsi_ws/src/acsi_crazyflie_nmpc/maps/config/map.yaml");
+    pnh.param<std::string>("/rrt_planner_server/map_path", map_path, "/home/aneesh/acsi_ws/src/acsi_crazyflie_nmpc/maps/config/map.yaml");
     numOfDOFs = pnh.param<int>("numOfDOFs", 2);
     epsilon = pnh.param<double>("epsilon", 1.0);
     sample_resolution = pnh.param<double>("sample_resolution", 0.1);

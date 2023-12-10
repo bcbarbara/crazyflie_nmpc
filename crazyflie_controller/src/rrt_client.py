@@ -17,8 +17,10 @@ def generate_trajectory_for_poses(plan, step, filename):
     if not plan or len(plan.poses) <= 1:
         print("Invalid or empty plan.")
         return
-
+    for pose in plan.poses:
+        pose.pose.position.z = 0.6
     current_pose = plan.poses[0]
+    current_pose.pose.position.z = 0.0
     is_first_call = True
     for next_pose in plan.poses[1:]:
         start = [current_pose.pose.position.x, current_pose.pose.position.y, current_pose.pose.position.z]
@@ -84,8 +86,8 @@ if __name__ == '__main__':
     start_pose.pose.position.y = 0.0
 
     goal_pose = PoseStamped()
-    goal_pose.pose.position.x = 1.5
-    goal_pose.pose.position.y = 1.0
+    goal_pose.pose.position.x = 0.0
+    goal_pose.pose.position.y = -1.6
 
     # Optional: Specify obstacle IDs
     obstacle_ids = [1,2,3]
@@ -100,7 +102,7 @@ if __name__ == '__main__':
         
         # Generate trajectories for the plan
         step_size = 0.001  # Define your desired step size here
-        trajectory_filename = "/home/ved/acsi_ws/src/acsi_crazyflie_nmpc/crazyflie_controller/traj/trajectory.txt"  # Define your filename here
+        trajectory_filename = "/home/aneesh/acsi_ws/src/acsi_crazyflie_nmpc/crazyflie_controller/traj/trajectory.txt"  # Define your filename here
         generate_trajectory_for_poses(plan, step_size, trajectory_filename)
     else:
         print("Failed to retrieve a valid plan.")
