@@ -39,10 +39,10 @@ class MapGenerator:
     def gen_map(self):
         map_data = {
         'num_obstacles': len(self.obstacles),
-        'x_min': -5.0,
-        'x_max': 10.0,
-        'y_min': -5.0,
-        'y_max': 10.0,
+        'x_min': -0.5,
+        'x_max': 1.5,
+        'y_min': -2.5,
+        'y_max': 0.5,
         'obstacles': {obstacle['id']: {key: val for key, val in obstacle.items() if key != 'id'} for obstacle in self.obstacles}
     }
         filename='/home/aneesh/acsi_ws/src/acsi_crazyflie_nmpc/maps/config/map.yaml'
