@@ -4,13 +4,14 @@
 #include <std_msgs/Int16MultiArray.h>
 #include <std_msgs/String.h>
 #include <std_srvs/Trigger.h>
+#include <crazyflie_controller/PathGen.h>
 #include <cmath>
 #include <fstream>
 #include <vector>
 
 void generateOrAddTrajectory(const std::vector<double>& start, const std::vector<double>& goal, double step, const std::string& filename, bool isFirstCall);
 
-void generateTrajectoryForPoses(nav_msgs::Path& plan, double step, const std::string& filename);
+void generateTrajectoryForPoses(nav_msgs::Path& plan, double step, const std::string& filename, float height);
 
 void generateTrajectoryFile(const std::vector<double>& start, const std::vector<double>& goal, double step, const std::string& filename);
 
@@ -19,19 +20,17 @@ void addTrajectoryFile(const std::vector<double>& start, const std::vector<doubl
 nav_msgs::Path callRRTPlannerService(geometry_msgs::PoseStamped& startPose, geometry_msgs::PoseStamped& goalPose, std::vector<int>& obstacleIds, std::string& mapFilename);
 
 std::string callGenerateMapService();
-
-int main(int argc, char** argv) {
-    ros::init(argc, argv, "rrt_planner_client");
-    ros::NodeHandle nh;
-
+bool handle_path_gen(crazyflie_controller::PathGen::Request& req,
+                     crazyflie_controller::PathGen::Response& res)
+{
     // Define start and goal poses
     geometry_msgs::PoseStamped startPose;
-    startPose.pose.position.x = 0.0;
-    startPose.pose.position.y = 0.0;
+    startPose.pose.position.x = req.start.pose.position.x;
+    startPose.pose.position.y = req.start.pose.position.y;
 
     geometry_msgs::PoseStamped goalPose;
-    goalPose.pose.position.x = 0.0;
-    goalPose.pose.position.y = -1.6;
+    goalPose.pose.position.x = req.goal.pose.position.x;
+    goalPose.pose.position.y = req.goal.pose.position.y;
 
     // Optional: Specify obstacle IDs
     std::vector<int> obstacleIds = {};
@@ -39,7 +38,7 @@ int main(int argc, char** argv) {
 
     // Call the RRT planner service
     nav_msgs::Path plan = callRRTPlannerService(startPose, goalPose, obstacleIds, mapFilename);
-
+    float height=req.height.data;
     // Print the plan
     if (!plan.poses.empty()) {
         for (const auto& pose : plan.poses) {
@@ -49,10 +48,24 @@ int main(int argc, char** argv) {
         // Generate trajectories for the plan
         double stepSize = 0.001;  // Define your desired step size here
         std::string trajectoryFilename = "/home/aneesh/acsi_ws/src/acsi_crazyflie_nmpc/crazyflie_controller/traj/trajectory.txt";  // Define your filename here
-        generateTrajectoryForPoses(plan, stepSize, trajectoryFilename);
+        generateTrajectoryForPoses(plan, stepSize, trajectoryFilename, height);
     } else {
         std::cout << "Failed to retrieve a valid plan." << std::endl;
     }
+
+    res.result.data = "Success!";
+
+    
+
+    return true;
+}
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, "rrt_planner_client");
+    ros::NodeHandle nh;
+    ros::ServiceServer service = nh.advertiseService("path_gen_service", handle_path_gen);
+
+    ros::spin();
 
     return 0;
 }
@@ -80,16 +93,16 @@ void generateOrAddTrajectory(const std::vector<double>& start, const std::vector
     }
 }
 
-void generateTrajectoryForPoses(nav_msgs::Path& plan, double step, const std::string& filename) {
+void generateTrajectoryForPoses(nav_msgs::Path& plan, double step, const std::string& filename, float height) {
     if (plan.poses.empty()) {
         std::cout << "Invalid or empty plan." << std::endl;
         return;
     }
 
     for (auto& pose : plan.poses) {
-        pose.pose.position.z = 0.6;
+        pose.pose.position.z = height;
     }
-
+    plan.poses.front().pose.position.z = height;
     geometry_msgs::PoseStamped currentPose = plan.poses.front();
     currentPose.pose.position.z = 0.0;
     bool isFirstCall = true;

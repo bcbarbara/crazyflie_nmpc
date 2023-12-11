@@ -36,6 +36,11 @@ add_message_files(
 	CrazyflieOpenloopTraj.msg
 )
 
+add_service_files(
+  FILES
+  PathGen.srv
+)
+
 generate_messages(
 	DEPENDENCIES
 	std_msgs
