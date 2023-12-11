@@ -1,4 +1,5 @@
 #include <ros/ros.h>
+#include <ros/package.h>
 #include <nav_msgs/Path.h>
 #include <rrt_planner/rrt_planner.h>
 #include <rrt_planner/GetRRTPlan.h>
@@ -6,6 +7,7 @@
 #include "ros/ros.h"
 
 Map* env_map;
+std::string maps_package_path;
 std::string map_path;
 int numOfDOFs;
 double epsilon;
@@ -13,6 +15,16 @@ double sample_resolution;
 
 bool rrt_planner_callback(rrt_planner::GetRRTPlan::Request  &req, rrt_planner::GetRRTPlan::Response &res)
 {
+
+    // If map_filename is specified, then load the map again
+    if (req.map_filename.data != ""){
+        // Load map
+        std::string map_path = maps_package_path + "/config/" + req.map_filename.data;
+        Map temp_map = Map(map_path);
+        env_map = &temp_map;
+        ROS_INFO("Server called with new map file. Loaded map from %s", map_path.c_str());
+    }
+
     // Start and goal points
     double* start_point = (double*)malloc(numOfDOFs*sizeof(double));
     double* goal_point = (double*)malloc(numOfDOFs*sizeof(double));
@@ -98,10 +110,14 @@ int main(int argc, char **argv)
     // ros::ServiceClient client = nh.serviceClient<std_srvs::Empty>("generate_map");
     // std_srvs::Empty srv;
     std::string map_path;
-    pnh.param<std::string>("/rrt_planner_server/map_path", map_path, "/home/aneesh/acsi_ws/src/acsi_crazyflie_nmpc/maps/config/map.yaml");
+    // pnh.param<std::string>("/rrt_planner_server/map_path", map_path, "/home/devanshdhrafani/acsi_ws/src/acsi_crazyflie_nmpc/maps/config/map.yaml");
     numOfDOFs = pnh.param<int>("numOfDOFs", 2);
     epsilon = pnh.param<double>("epsilon", 1.0);
     sample_resolution = pnh.param<double>("sample_resolution", 0.1);
+
+    // find map_path from maps package
+    maps_package_path = ros::package::getPath("maps");
+    map_path = maps_package_path + "/config/map.yaml";
 
     // Load map
     Map temp_map = Map(map_path);
