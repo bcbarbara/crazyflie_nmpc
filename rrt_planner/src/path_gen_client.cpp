@@ -199,7 +199,7 @@ nav_msgs::Path callRRTPlannerService(geometry_msgs::PoseStamped& startPose,
     srv.request.start = startPose;
     srv.request.goal = goalPose;
     srv.request.obstacle_ids.data = obstacleIdsMsg.data;
-    // srv.request.map_filename.data = mapFilenameMsg.data;
+    srv.request.map_filename.data = mapFilenameMsg.data;
 
     if (rrtPlannerClient.call(srv)) {
         return srv.response.plan;
