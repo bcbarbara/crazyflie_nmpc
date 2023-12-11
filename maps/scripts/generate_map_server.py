@@ -11,7 +11,7 @@ class MapGenerator:
             'id': -1,
             'x': 0.0,
             'y': 0.0,
-            'r': 0.05  # radius, adjust as needed
+            'r': 0.15  # radius, adjust as needed
         }
         self.obstacles = [obstacle, obstacle]
         self.num_obstacles = 0
@@ -37,7 +37,7 @@ class MapGenerator:
             'id': 0,
             'x': data.pose.position.x,
             'y': data.pose.position.z,
-            'r': 0.05  # radius, adjust as needed
+            'r': 0.15  # radius, adjust as needed
         }
         if self.is_valid_pose(obstacle):
             self.obstacles[0]=obstacle
@@ -48,7 +48,7 @@ class MapGenerator:
             'id': 1,
             'x': data.pose.position.x,
             'y': data.pose.position.z,
-            'r': 0.05  # radius, adjust as needed
+            'r': 0.15  # radius, adjust as needed
         }
         if self.is_valid_pose(obstacle):
             self.obstacles[1]=obstacle
