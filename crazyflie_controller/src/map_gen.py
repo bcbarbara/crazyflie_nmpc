@@ -3,7 +3,6 @@ import numpy as np
 import math
 import yaml
 from geometry_msgs.msg import PoseStamped
-from std_srvs.srv import Empty, EmptyResponse
 from std_srvs.srv import Trigger, TriggerResponse
 import datetime
 class MapGenerator:

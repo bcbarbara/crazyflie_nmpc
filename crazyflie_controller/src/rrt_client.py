@@ -3,7 +3,8 @@
 import rospy
 from geometry_msgs.msg import PoseStamped
 from rrt_planner.srv import GetRRTPlan
-from std_msgs.msg import Int16MultiArray
+from std_msgs.msg import Int16MultiArray, String
+from std_srvs.srv import Trigger
 import numpy as np
 import math
 
@@ -58,24 +59,26 @@ def add_trajectory_file(start, goal, step, filename):
             line = f"{x_values[i]:.4f} {y_values[i]:.4f} {z_values[i]:.4f} 1.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 15.7777 15.7777 15.7777 15.7777\n"
             f.write(line)
 
-def call_rrt_planner_service(start_pose, goal_pose, obstacle_ids=[]):
+def call_rrt_planner_service(start_pose, goal_pose, obstacle_ids=[],map_filename=""):
     rospy.wait_for_service('rrt_planner_server')
     try:
         rrt_planner_service = rospy.ServiceProxy('rrt_planner_server', GetRRTPlan)
 
-        # Prepare the request
-        request = GetRRTPlan()
-        request.start = start_pose
-        request.goal = goal_pose
-        request.obstacle_ids = Int16MultiArray(data=obstacle_ids)
-
-        # Call the service
-        response = rrt_planner_service(start_pose,goal_pose,Int16MultiArray(data=obstacle_ids))
+        response = rrt_planner_service(start_pose,goal_pose,Int16MultiArray(data=obstacle_ids),String(data=f"{map_filename}"))
 
         return response.plan
 
     except rospy.ServiceException as e:
         print(f"Service call failed: {e}")
+
+def call_generate_map_service():
+    rospy.wait_for_service('generate_map')
+    try:
+        generate_map = rospy.ServiceProxy('generate_map', Trigger)
+        resp = generate_map()
+        return resp.message
+    except rospy.ServiceException as e:
+        print("Service call failed: %s" % e)
 
 if __name__ == '__main__':
     rospy.init_node('rrt_planner_client', anonymous=True)
@@ -91,9 +94,9 @@ if __name__ == '__main__':
 
     # Optional: Specify obstacle IDs
     obstacle_ids = [1,2,3]
-
+    map_filename = call_generate_map_service()
     # Call the RRT planner service
-    plan = call_rrt_planner_service(start_pose, goal_pose, obstacle_ids)
+    plan = call_rrt_planner_service(start_pose, goal_pose, obstacle_ids, map_filename)
 
     # Print the plan
     if plan:
