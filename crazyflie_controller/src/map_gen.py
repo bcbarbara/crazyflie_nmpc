@@ -3,10 +3,9 @@ import numpy as np
 import math
 import yaml
 from geometry_msgs.msg import PoseStamped
-from collections import OrderedDict
 from std_srvs.srv import Empty, EmptyResponse
 from std_srvs.srv import Trigger, TriggerResponse
-import os
+import datetime
 class MapGenerator:
     def __init__(self):
         obstacle = {
@@ -70,23 +69,16 @@ class MapGenerator:
         'y_max': 0.5,
         'obstacles': {obstacle['id']: {key: val for key, val in obstacle.items() if key != 'id'} for obstacle in self.obstacles if obstacle['id'] != -1}
     }
-        if os.path.exists('/home/aneesh/acsi_ws/src/acsi_crazyflie_nmpc/maps/config/counter.txt'):
-            with open('/home/aneesh/acsi_ws/src/acsi_crazyflie_nmpc/maps/config/counter.txt', 'r') as f:
-                counter = int(f.read())
-        else:
-            counter = 0
-
-        counter += 1
-        filename = f'/home/aneesh/acsi_ws/src/acsi_crazyflie_nmpc/maps/config/map{counter}.yaml'
-
+        
+        curr_time = datetime.datetime.now().strftime('%d_%H_%M_%S')
+        filename = f'/home/aneesh/acsi_ws/src/acsi_crazyflie_nmpc/maps/config/map_{curr_time}.yaml'
         # filename='/home/aneesh/acsi_ws/src/acsi_crazyflie_nmpc/maps/config/map.yaml'
         with open(filename, 'w') as f:
             yaml.dump(map_data, f, sort_keys=False)
 
-        with open('/home/aneesh/acsi_ws/src/acsi_crazyflie_nmpc/maps/config/counter.txt', 'w') as f:
-            f.write(str(counter))
         
-        return f"map{counter}.yaml"
+        
+        return f"map_{curr_time}.yaml"
 
 if __name__ == '__main__':
     MapGenerator()
