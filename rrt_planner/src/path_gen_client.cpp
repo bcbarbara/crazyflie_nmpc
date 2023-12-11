@@ -1,10 +1,11 @@
 #include <ros/ros.h>
+#include <ros/package.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <rrt_planner/GetRRTPlan.h>
+#include <rrt_planner/PathGen.h>
 #include <std_msgs/Int16MultiArray.h>
 #include <std_msgs/String.h>
 #include <std_srvs/Trigger.h>
-#include <crazyflie_controller/PathGen.h>
 #include <cmath>
 #include <fstream>
 #include <vector>
@@ -20,8 +21,8 @@ void addTrajectoryFile(const std::vector<double>& start, const std::vector<doubl
 nav_msgs::Path callRRTPlannerService(geometry_msgs::PoseStamped& startPose, geometry_msgs::PoseStamped& goalPose, std::vector<int>& obstacleIds, std::string& mapFilename);
 
 std::string callGenerateMapService();
-bool handle_path_gen(crazyflie_controller::PathGen::Request& req,
-                     crazyflie_controller::PathGen::Response& res)
+bool handle_path_gen(rrt_planner::PathGen::Request& req,
+                     rrt_planner::PathGen::Response& res)
 {
     // Define start and goal poses
     geometry_msgs::PoseStamped startPose;
@@ -47,7 +48,8 @@ bool handle_path_gen(crazyflie_controller::PathGen::Request& req,
 
         // Generate trajectories for the plan
         double stepSize = 0.001;  // Define your desired step size here
-        std::string trajectoryFilename = "/home/aneesh/acsi_ws/src/acsi_crazyflie_nmpc/crazyflie_controller/traj/trajectory.txt";  // Define your filename here
+        
+        std::string trajectoryFilename = ros::package::getPath("crazyflie_controller") + "/traj/trajectory.txt";
         generateTrajectoryForPoses(plan, stepSize, trajectoryFilename, height);
     } else {
         std::cout << "Failed to retrieve a valid plan." << std::endl;
