@@ -66,6 +66,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_service_files(
   FILES
   GetRRTPlan.srv
+  PathGen.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -139,6 +140,9 @@ target_link_libraries(rrt_planner_node ${catkin_LIBRARIES} rrt_planner)
 add_executable(rrt_planner_server src/rrt_planner_server.cpp)
 add_dependencies(rrt_planner_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(rrt_planner_server ${catkin_LIBRARIES} rrt_planner)
+
+add_executable(path_gen_client src/path_gen_client.cpp)
+target_link_libraries(path_gen_client ${catkin_LIBRARIES})
 
 # target_link_libraries(${PROJECT_NAME} yaml-cpp)
 

@@ -91,9 +91,6 @@ target_link_libraries(crazyflie_imu
   ${catkin_LIBRARIES}
 )
 
-add_executable(path_gen_client src/path_gen_client.cpp)
-target_link_libraries(path_gen_client ${catkin_LIBRARIES})
-
 # NMPC state vector node
 add_executable(measurements_vector src/measurements_vector.cpp)
 target_link_libraries(measurements_vector
