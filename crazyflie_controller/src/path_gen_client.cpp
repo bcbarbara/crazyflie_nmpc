@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
     goalPose.pose.position.y = -1.6;
 
     // Optional: Specify obstacle IDs
-    std::vector<int> obstacleIds = {1, 2, 3};
+    std::vector<int> obstacleIds = {};
     std::string mapFilename = callGenerateMapService();
 
     // Call the RRT planner service
