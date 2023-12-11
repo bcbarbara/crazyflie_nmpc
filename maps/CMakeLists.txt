@@ -210,3 +210,7 @@ target_link_libraries(map_parser yaml-cpp)
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+catkin_install_python(PROGRAMS scripts/generate_map_server.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
