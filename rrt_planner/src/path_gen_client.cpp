@@ -193,12 +193,13 @@ nav_msgs::Path callRRTPlannerService(geometry_msgs::PoseStamped& startPose,
     std_msgs::String mapFilenameMsg;
     mapFilenameMsg.data = mapFilename;
     // Populate the data field with obstacleIds
-    obstacleIdsMsg.data.insert(obstacleIdsMsg.data.end(), obstacleIds.begin(), obstacleIds.end());
+    std::vector<short> obstacleIdsShort(obstacleIds.begin(), obstacleIds.end());
+    obstacleIdsMsg.data=obstacleIdsShort;
     rrt_planner::GetRRTPlan srv;
     srv.request.start = startPose;
     srv.request.goal = goalPose;
     srv.request.obstacle_ids.data = obstacleIdsMsg.data;
-    srv.request.map_filename.data = mapFilenameMsg.data;
+    // srv.request.map_filename.data = mapFilenameMsg.data;
 
     if (rrtPlannerClient.call(srv)) {
         return srv.response.plan;
