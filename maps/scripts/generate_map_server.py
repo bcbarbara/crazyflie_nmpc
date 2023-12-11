@@ -23,6 +23,7 @@ class MapGenerator:
 
     def handle_generate_map(self, request):
         rospy.loginfo('Received generate map request')
+        self.num_obstacles = 0
         if len(self.obstacles) >= 2:  # number of obstacles, adjust as needed
             filename=self.gen_map()
             rospy.loginfo(f'Generated map {filename}')
