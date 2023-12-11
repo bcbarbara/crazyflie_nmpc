@@ -6,7 +6,6 @@
 #include "std_srvs/Empty.h"
 #include "ros/ros.h"
 
-Map* env_map;
 std::string maps_package_path;
 std::string map_path;
 int numOfDOFs;
@@ -17,13 +16,11 @@ bool rrt_planner_callback(rrt_planner::GetRRTPlan::Request  &req, rrt_planner::G
 {
 
     // If map_filename is specified, then load the map again
-    if (req.map_filename.data != ""){
-        // Load map
-        std::string map_path = maps_package_path + "/config/" + req.map_filename.data;
-        Map temp_map = Map(map_path);
-        env_map = &temp_map;
-        ROS_INFO("Server called with new map file. Loaded map from %s", map_path.c_str());
-    }
+    // Load map
+    std::string map_path = maps_package_path + "/config/" + req.map_filename.data;
+    Map map_temp = Map(map_path);
+    Map* env_map = &map_temp;
+    ROS_INFO("Loaded map from %s", map_path.c_str());
 
     // Start and goal points
     double* start_point = (double*)malloc(numOfDOFs*sizeof(double));
@@ -120,8 +117,8 @@ int main(int argc, char **argv)
     map_path = maps_package_path + "/config/map.yaml";
 
     // Load map
-    Map temp_map = Map(map_path);
-    env_map = &temp_map;
+    // Map temp_map = Map(map_path);
+    // env_map = &temp_map;
 
     ros::ServiceServer service = nh.advertiseService("rrt_planner_server", rrt_planner_callback);
 
