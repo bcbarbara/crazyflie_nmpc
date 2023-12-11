@@ -109,7 +109,7 @@ int main(int argc, char **argv)
     std::string map_path;
     // pnh.param<std::string>("/rrt_planner_server/map_path", map_path, "/home/devanshdhrafani/acsi_ws/src/acsi_crazyflie_nmpc/maps/config/map.yaml");
     numOfDOFs = pnh.param<int>("numOfDOFs", 2);
-    epsilon = pnh.param<double>("epsilon", 0.5);
+    epsilon = pnh.param<double>("epsilon", 0.3);
     sample_resolution = pnh.param<double>("sample_resolution", 0.1);
 
     // find map_path from maps package

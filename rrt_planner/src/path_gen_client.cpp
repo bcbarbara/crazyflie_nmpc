@@ -105,6 +105,12 @@ void generateTrajectoryForPoses(nav_msgs::Path& plan, double step, const std::st
         pose.pose.position.z = height;
     }
     plan.poses.front().pose.position.z = height;
+    geometry_msgs::PoseStamped newPose;
+    newPose.pose.position.x = plan.poses.back().pose.position.x;
+    newPose.pose.position.y = plan.poses.back().pose.position.y;
+    newPose.pose.position.z = 0.15;
+    plan.poses.push_back(newPose);
+    // plan.poses.push_back({plan.poses.back().pose.position.x, plan.poses.back().pose.position.y, 0.15});
     geometry_msgs::PoseStamped currentPose = plan.poses.front();
     currentPose.pose.position.z = 0.0;
     bool isFirstCall = true;
