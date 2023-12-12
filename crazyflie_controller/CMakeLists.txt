@@ -105,3 +105,6 @@ catkin_install_python(PROGRAMS src/map_gen.py
 catkin_install_python(PROGRAMS src/rrt_client.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
+catkin_install_python(PROGRAMS src/optitrack_mocap_rotate.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
