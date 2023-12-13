@@ -10,12 +10,21 @@
       <inertia ixx="0.01152" ixy="0.0" ixz="0.0" iyy="0.01152" iyz="0.0" izz="0.0218" />
     </inertial>
 
+    <joint name="crazyflie_joint" type="fixed">
+      <origin xyz="0 0 0"
+        rpy="0 0 0"/>
+      <parent link="world"/>
+      <child link="base_link"/>
+  </joint>
+  
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
         <mesh filename="package://crazyflie_description/meshes/crazyflie.dae"/>
       </geometry>
     </visual>
+
+    
 
     <!-- ToDo: insert collision model -->
 

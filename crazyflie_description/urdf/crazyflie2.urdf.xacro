@@ -4,7 +4,20 @@
 
   <xacro:property name="rotor_drag_coefficient" value="1.8580e-05"/> <!-- [N.m.s^2] -->
   <xacro:property name="moment_constant" value="0.005"/> <!-- [N.s^2] -->
-  
+
+  <xacro:property name="obj_pose_file" value="$(find maps)/config/cylinder_gen.yaml"/>
+  <xacro:property name="obj_pose" value="${xacro.load_yaml(obj_pose_file)}"/> 
+
+  <xacro:property name="x1" value="${obj_pose['obstacles'][0]['x']}" />
+  <xacro:property name="y1" value="${obj_pose['obstacles'][0]['y']}" />
+  <xacro:property name="r1" value="${obj_pose['obstacles'][0]['r']}" />
+
+  <xacro:property name="x2" value="${obj_pose['obstacles'][1]['x']}" />
+  <xacro:property name="y2" value="${obj_pose['obstacles'][1]['y']}" />
+  <xacro:property name="r2" value="${obj_pose['obstacles'][1]['r']}" />
+
+
+ 
   <link name="base_link">
     <inertial>
       <mass value="0.027" />
@@ -24,5 +37,6 @@
     <!-- ToDo: insert collision model -->
 
   </link>
+
 
 </robot>
