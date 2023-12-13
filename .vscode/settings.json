@@ -1,0 +1,7 @@
+{
+    "cmake.sourceDirectory": "C:/Users/balub/OneDrive/Desktop/ACSI_project/acsi_crazyflie_nmpc/crazyflie",
+    "cmake.configureOnOpen": true,
+    "files.associations": {
+        "memory": "cpp"
+    }
+}
