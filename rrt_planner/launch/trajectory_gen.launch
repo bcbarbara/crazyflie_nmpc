@@ -1,0 +1,10 @@
+<launch>
+    <!-- Launch generate_map_server.py -->
+    <node name="generate_map_server" pkg="maps" type="generate_map_server.py" output="screen"/>
+
+    <!-- Launch rrt_planner_server -->
+    <node name="rrt_planner_server" pkg="rrt_planner" type="rrt_planner_server" output="screen"/>
+
+    <!-- Launch path_gen_client -->
+    <node name="path_gen_client" pkg="rrt_planner" type="path_gen_client" output="screen"/>
+</launch>

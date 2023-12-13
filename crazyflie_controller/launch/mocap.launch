@@ -12,4 +12,10 @@
         required="true">
     <rosparam file="$(arg mocap_config_file)" command="load" />
   </node>
+
+  <node name="optitrack_mocap_rotate"
+        pkg="crazyflie_controller"
+        type="optitrack_mocap_rotate.py" >
+  </node>
+
 </launch>

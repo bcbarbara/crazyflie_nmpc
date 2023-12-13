@@ -1,45 +1,73 @@
-crazyflie_nmpc
+Crazyflie NPMC
 =============
-![featured](https://user-images.githubusercontent.com/50755258/93484971-d65ea880-f902-11ea-8fca-97c12f13730d.png)
-
 ROS stack containing an efficient real-time NMPC for the [Crazyflie](http://www.bitcraze.se/) and with the following features:
 
 * Support for the Crazyflie 2.1
-* Compatible with ROS Kinetic
+* Compatible with ROS Melodic
 * NMPC controller for regulation and trajectory tracking (if motion capture system is available)
 * Publishes the onboard sensors data and the controller variables in ROS standard message formats
-
-## Citing this work
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
-If you use this project, give us the credit by citing this work:
-
-```
-@inproceedings{barroscarlos2020,
-  author      = {Carlos, B\'arbara Barros and
-                 Sartor, Tommaso and
-                 Zanelli, Andrea and
-                 Frison, Gianluca and
-                 Burgard, Wolfram and
-                 Diehl, Moritz and
-                 Oriolo, Giuseppe},
-  title       = {An Efficient Real-Time {NMPC} for Quadrotor Position Control under Communication Time-Delay},
-  booktitle   = {16th International Conference on Control, Automation, Robotics and Vision (ICARCV)},
-  pages       = {982--989},
-  year        = {2020}
-}
-
-```
-The paper can be found [here](https://ieeexplore.ieee.org/document/9305513), while the arxiv file is available [here](https://arxiv.org/abs/2010.11264).
-
-Watch our YouTube video showing the experiments:
-
-[![video](https://user-images.githubusercontent.com/50755258/96165708-40c43200-0f1d-11eb-84fa-159b6a37f391.png)](https://youtu.be/xZLVQ7BdUHA)
 
 
 ## Installation
 
-Check the [wiki](https://github.com/bcbarbara/crazyflie_nmpc/wiki) for more information, including the installation instructions for [ROS Kinetic](https://github.com/bcbarbara/crazyflie_nmpc/wiki/Install-on-Ubuntu-16.04-LTS-with-ROS-Kinetic).
+1. Install ROS Noetic (recommended: “Desktop-Full Install”) following [these instructions](http://wiki.ros.org/noetic/Installation/Ubuntu).
+2. We use Catkin Command Line Tools to build packages in the workspace. They can be installed with apt-get following [these instructions](https://catkin-tools.readthedocs.io/en/latest/installing.html#installing-on-ubuntu-with-apt-get).
+
+3. Setup your catkin workspace:
+```console
+$ mkdir -p ~/catkin_ws/src
+$ cd ~/catkin_ws/src/
+$ catkin_init_workspace
+$ cd ~/catkin_ws/
+$ catkin build
+$ source devel/setup.bash
+$ echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
+$ source ~/.bashrc
+```
+
+4. Clone the `acsi_crazyflie_nmpc` project into your catkin workspace:
+```console
+$ cd ~/catkin_ws/src/
+$ git clone git@github.com:devanshdhrafani/acsi_crazyflie_nmpc.git
+```
+
+5. Initialize all submodules:
+```console
+$ cd acsi_crazyflie_nmpc/
+$ git submodule update --init --recursive
+```
+
+6. Build and install `acados`:
+```console
+$ cd acados/
+$ make static_library -j4
+$ make -j4
+```
+> **Note** Set the appropriate `BLASFEO_TARGET` and `HPIPM_TARGET` via `<acados_root>/Makefile.local` file. For a list of supported targets, we refer to the [BLASFEO documentation](https://github.com/giaf/blasfeo/blob/master/README.md). It is also recommended to add the flag `ACADOS_WITH_QPOASES=1` to the `Makefile.local`.
+
+7. Install `acados` Python interface with Python 3.8 
+```console
+$ cd ~/catkin_ws/src/acsi_crazyflie_nmpc/acados/interfaces/acados_template/
+$ pip3 install .
+```
+
+8. In order to be able to successfully render C code templates, you need to download the `t_renderer` binaries for your platform from [here](https://github.com/acados/tera_renderer/releases/) and place them in `<acados_root>/bin`.
+> **Note** Please strip the version and platform from the binaries (e.g. `t_renderer-v0.0.20 -> t_renderer`).
+
+> **Note** Notice that you might need to make `t_renderer` executable. 
+
+9. Run `export ACADOS_SOURCE_DIR=<acados_root>` such that the location of acados will be known to the Python package at run time.
+
+10. Additionally, you will have to make sure that the environment variable `LD_LIBRARY_PATH` contains the path to `libacados.so` (default path is `<acados_root/lib>`).
+
+11. Now you are able to generate the RTI instance tailored for the crazyflie NMPC in the `scripts` folder:
+```console
+$ cd ~/catkin_ws/src/acsi_crazyflie_nmpc/crazyflie_controller/scripts/crazyflie_full_model/
+$ python3 generate_c_code.py
+```
+
+12. Then use the `catkin build` command to compile your workspace.
+
 
 ## Packages
 
@@ -51,7 +79,6 @@ A submodule with fast and embedded solvers for nonlinear optimal control.
 
 - Documentation can be found on [docs.acados.org](https://docs.acados.org/).
 - Forum: in case of any acados-related question  [discourse.acados.org](https://discourse.acados.org/).
-
 
 
 #### crazyflie_cpp
@@ -85,46 +112,7 @@ Both implementations rely on the knownledge of the global position of the Crazyf
 
 Contains sample scripts and launch files for teleoperation, hovering, and waypoint navigation for both single and multi Crazyflie cases.
 
-  For more detailed information about each   package, we refer to the `crazyflie_ros` stack [documentation](http://act.usc.edu/publications/Hoenig_Springer_ROS2017.pdf).
+  For more detailed information about each   package, we refer to the `crazyflie_ros` stack [documentation](http://act.usc.edu/publications/Hoenig_Springer_ROS2017.pdf).-=
 
-## ROS Features
-
-### Parameters
-
-The launch file supports the following arguments:
-* uri: Specifier for the crazyflie (e.g., radio://0/80/2M)
-* tf_prefix: tf prefix for the crazyflie frame
-* roll_trim: Trim in degrees (e.g., negative if the Crazyflie drifts to the left)
-* pitch_trim: Trim in degrees (e.g., negative if the Crazyflie drifts forward)
-
-See how to obtain good trim values [here](http://wiki.bitcraze.se/projects:crazyflie:userguide:tips_and_tricks).
-
-### Subscribers
-
-#### cmd_vel
-
-The following fields are used:
-* linear.y: roll (e.g., -30 to 30 degrees)
-* linear.x: pitch (e.g., -30 to 30 degrees)
-* angular.z: yawrate (e.g., -200 to 200 degrees/second)
-* linear.z: thrust (10000 to 60000 -- mapped to PWM output)
-
->**Note** See how to tune these parameters for your joystick in `crazyflie_controller/launch/logitech.launch`
-
-### Publishers
-
-#### euler_angles
-* geometry_msgs/Vector3Stamped
-* contains the euler angles from the onboard stabilizer
-* update: 10 ms (time between Crazyflie and ROS not synchronized!)
-
-#### motor_speeds
-* crazyflie_driver/GenericLogData
-* contains the individual motor speeds (PWM value)
-* update: 10 ms (time between Crazyflie and ROS not synchronized!)
-
-#### imu
-* sensor_msgs/IMU
-* contains the sensor readings of gyroscope and accelerometer
-* update: 10 ms (time between Crazyflie and ROS not synchronized!)
-* can be viewed in rviz
+## Acknowledgements
+This work is largely based on Barbara et al's paper titled An Efficient Real-Time NMPC for Quadrotor Position Control under Communication Time-Delay. Please refer the original paper [here](https://ieeexplore.ieee.org/document/9305513).
