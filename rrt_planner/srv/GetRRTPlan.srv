@@ -1,0 +1,6 @@
+geometry_msgs/PoseStamped start
+geometry_msgs/PoseStamped goal
+std_msgs/Int16MultiArray obstacle_ids
+std_msgs/String map_filename
+---
+nav_msgs/Path plan
