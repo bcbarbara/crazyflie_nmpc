@@ -23,7 +23,9 @@
 # SOFTWARE.
 
 
-from acados_template import *
+from acados_template import AcadosModel
+from casadi import SX, vertcat
+
 def export_ode_model():
 
     model_name = 'crazyflie'
@@ -106,7 +108,7 @@ def export_ode_model():
     p = []
 
     # dynamics
-    model = acados_dae()
+    model = AcadosModel()
 
     model.f_impl_expr = f_impl
     model.f_expl_expr = f_expl
