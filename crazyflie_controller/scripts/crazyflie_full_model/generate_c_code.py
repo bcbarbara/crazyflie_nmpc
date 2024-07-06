@@ -23,8 +23,7 @@
 # SOFTWARE.
 
 
-from acados_template import *
-import acados_template as at
+from acados_template import AcadosOcp, AcadosOcpSolver
 from export_ode_model import *
 import numpy as np
 import scipy.linalg
@@ -34,7 +33,7 @@ from os.path import dirname, join, abspath
 ACADOS_PATH = join(dirname(abspath(__file__)), "../../../acados")
 
 # create render arguments
-ra = acados_ocp_nlp()
+ocp = AcadosOcp()
 
 # export model
 model = export_ode_model()
@@ -47,14 +46,7 @@ ny = nx + nu
 ny_e = nx
 
 # set ocp_nlp_dimensions
-nlp_dims     = ra.dims
-nlp_dims.nx  = nx
-nlp_dims.ny  = ny
-nlp_dims.ny_e = ny_e
-nlp_dims.nbx = 0
-nlp_dims.nbu = nu
-nlp_dims.nbx_e = 0
-nlp_dims.nu  = model.u.size()[0]
+nlp_dims     = ocp.dims
 nlp_dims.N   = N
 
 # parameters
@@ -67,7 +59,7 @@ hov_w = np.sqrt((mq*g0)/(4*Ct))
 max_thrust = 22
 
 # set weighting matrices
-nlp_cost = ra.cost
+nlp_cost = ocp.cost
 Q = np.eye(nx)
 Q[0,0] = 120.0      # x
 Q[1,1] = 100.0      # y
@@ -136,7 +128,7 @@ nlp_cost.Vx_e = Vx_e
 nlp_cost.yref   = np.array([0, 0, 0.5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, hov_w, hov_w, hov_w, hov_w])
 nlp_cost.yref_e = np.array([0, 0, 0.5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
-nlp_con = ra.constraints
+nlp_con = ocp.constraints
 
 nlp_con.lbu = np.array([0,0,0,0])
 nlp_con.ubu = np.array([+max_thrust,+max_thrust,+max_thrust,+max_thrust])
@@ -144,22 +136,22 @@ nlp_con.x0  = np.array([0,0,0,1,0,0,0,0,0,0,0,0,0])
 nlp_con.idxbu = np.array([0, 1, 2, 3])
 
 ## set QP solver
-#ra.solver_options.qp_solver = 'FULL_CONDENSING_QPOASES'
-ra.solver_options.qp_solver = 'PARTIAL_CONDENSING_HPIPM'
-ra.solver_options.hessian_approx = 'GAUSS_NEWTON'
-ra.solver_options.integrator_type = 'ERK'
+#ocp.solver_options.qp_solver = 'FULL_CONDENSING_QPOASES'
+ocp.solver_options.qp_solver = 'PARTIAL_CONDENSING_HPIPM'
+ocp.solver_options.hessian_approx = 'GAUSS_NEWTON'
+ocp.solver_options.integrator_type = 'ERK'
 
 # set prediction horizon
-ra.solver_options.tf = Tf
-ra.solver_options.nlp_solver_type = 'SQP_RTI'
-#ra.solver_options.nlp_solver_type = 'SQP'
+ocp.solver_options.tf = Tf
+ocp.solver_options.nlp_solver_type = 'SQP_RTI'
+#ocp.solver_options.nlp_solver_type = 'SQP'
 
 # set header path
-ra.acados_include_path  = f'{ACADOS_PATH}/include'
-ra.acados_lib_path      = f'{ACADOS_PATH}/lib'
+ocp.acados_include_path  = f'{ACADOS_PATH}/include'
+ocp.acados_lib_path      = f'{ACADOS_PATH}/lib'
 
-ra.model = model
+ocp.model = model
 
-acados_solver = generate_solver(ra, json_file = 'acados_ocp.json')
+acados_solver = AcadosOcpSolver(ocp, json_file = 'acados_ocp.json')
 
 print('>> NMPC exported')
