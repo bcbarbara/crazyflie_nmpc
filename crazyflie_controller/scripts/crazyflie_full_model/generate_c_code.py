@@ -30,7 +30,7 @@ import scipy.linalg
 from ctypes import *
 from os.path import dirname, join, abspath
 
-ACADOS_PATH = join(dirname(abspath(__file__)), "../../../acados")
+# ACADOS_PATH = join(dirname(abspath(__file__)), "../../../acados")
 
 # create render arguments
 ocp = AcadosOcp()
@@ -147,8 +147,8 @@ ocp.solver_options.nlp_solver_type = 'SQP_RTI'
 #ocp.solver_options.nlp_solver_type = 'SQP'
 
 # set header path
-ocp.acados_include_path  = f'{ACADOS_PATH}/include'
-ocp.acados_lib_path      = f'{ACADOS_PATH}/lib'
+# ocp.acados_include_path  = f'{ACADOS_PATH}/include'
+# ocp.acados_lib_path      = f'{ACADOS_PATH}/lib'
 
 ocp.model = model
 
