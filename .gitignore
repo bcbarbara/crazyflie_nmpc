@@ -1,12 +1,15 @@
 catkin_generated/*
-c_generated_code/
 CMakeFiles/*
+
+# auto generated acados files
+**/c_generate_code
+**/*.json
 
 # vim
 .*.sw[a-z]
 
 # python
-__pycache__
+**/__pycache__
 *.pyc
 
 .devcontainer/devcontainer.json
