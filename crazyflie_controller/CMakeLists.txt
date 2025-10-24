@@ -8,16 +8,14 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(Eigen3 REQUIRED)
-
-# Python3 interpreter for acados codegen
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 # ============================================================
 # 2. ACADOS environment setup
 # ============================================================
-# Use environment variable if provided; fallback to /opt/acados
 if(DEFINED ENV{ACADOS_SOURCE_DIR})
   set(ACADOS_SOURCE_DIR $ENV{ACADOS_SOURCE_DIR})
 else()
@@ -26,8 +24,7 @@ endif()
 
 set(T_RENDERER_PATH "${ACADOS_SOURCE_DIR}/bin/t_renderer")
 if(NOT EXISTS "${T_RENDERER_PATH}")
-  message(FATAL_ERROR "t_renderer not found at ${T_RENDERER_PATH}.
-Please ensure it is installed in the Docker image or system path.")
+  message(FATAL_ERROR "t_renderer not found at ${T_RENDERER_PATH}")
 else()
   message(STATUS "Found t_renderer at ${T_RENDERER_PATH}")
 endif()
@@ -46,13 +43,12 @@ include_directories(
 link_directories(${ACADOS_LIB_DIR})
 
 # ============================================================
-# 3. NMPC code generation
+# 3. NMPC solver code generation
 # ============================================================
 set(acados_scripts_path "${CMAKE_CURRENT_SOURCE_DIR}/acados_scripts")
 set(nmpc_solver_generator_script "${acados_scripts_path}/main.py")
 set(nmpc_solver_model_name "crazyflie_model")
 set(nmpc_solver_generated_code_path "${CMAKE_CURRENT_BINARY_DIR}/${nmpc_solver_model_name}")
-set(generated_code_makefile "Makefile")
 
 file(GLOB_RECURSE nmpc_solver_src_files
   LIST_DIRECTORIES false
@@ -62,45 +58,49 @@ file(GLOB_RECURSE nmpc_solver_src_files
 
 file(MAKE_DIRECTORY ${nmpc_solver_generated_code_path})
 
-# -----------------------------
-# Generate solver code
-# -----------------------------
-add_custom_command(
-  OUTPUT "${nmpc_solver_generated_code_path}/${generated_code_makefile}"
-  COMMAND ${Python3_EXECUTABLE} ${nmpc_solver_generator_script} ${nmpc_solver_generated_code_path}
-  DEPENDS ${nmpc_solver_src_files}
-  WORKING_DIRECTORY ${acados_scripts_path}
-  COMMENT "Generating NMPC solver code with acados"
-)
-
+# Generate solver code as a custom target
 add_custom_target(
   acados_generate_solver ALL
-  DEPENDS "${nmpc_solver_generated_code_path}/${generated_code_makefile}"
-  COMMENT "ACADOS NMPC solver generation target"
+  COMMAND ${Python3_EXECUTABLE} ${nmpc_solver_generator_script} ${nmpc_solver_generated_code_path}
+  WORKING_DIRECTORY ${acados_scripts_path}
+  COMMENT "Generating ACADOS NMPC solver code"
+  VERBATIM
 )
 
-# -----------------------------
-# Build the solver C code
-# -----------------------------
+# Build the solver C code after code generation
 add_custom_command(
   TARGET acados_generate_solver
   POST_BUILD
   COMMAND make -C ${nmpc_solver_generated_code_path}
-  COMMENT "Building ACADOS solver shared library..."
+  COMMENT "Building ACADOS solver shared library"
+  VERBATIM
 )
 
 # ============================================================
-# 4. Example node (if any)
+# 4. IMU node
 # ============================================================
-# add_executable(controller_node src/controller.cpp)
-# ament_target_dependencies(controller_node rclcpp std_msgs geometry_msgs tf2)
+add_executable(crazyflie_imu src/crazyflie_imu.cpp)
+ament_target_dependencies(crazyflie_imu rclcpp sensor_msgs)
 
 # ============================================================
-# 5. Install & Export
+# 5. Install targets
 # ============================================================
-install(
-  DIRECTORY ${nmpc_solver_generated_code_path}/
+# Node binaries
+install(TARGETS crazyflie_imu
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+# ACADOS generated code
+install(DIRECTORY ${nmpc_solver_generated_code_path}/
   DESTINATION share/${PROJECT_NAME}/generated
 )
 
+# Package metadata
+install(FILES package.xml
+  DESTINATION share/${PROJECT_NAME}
+)
+
+# ============================================================
+# 6. Finalize as a ROS2 ament package
+# ============================================================
 ament_package()
