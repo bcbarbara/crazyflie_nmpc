@@ -1,7 +1,8 @@
-<package>
+<?xml version="1.0"?>
+<package format="3">
   <name>crazyflie_nmpc</name>
   <version>2.0.0</version>
-  <description>ROS integration for Crazyflie Nano Quadcopter from Bitcraze</description>
+  <description>ROS2 integration for Crazyflie Nano Quadcopter from Bitcraze</description>
 
   <maintainer email="whoenig@usc.edu">Wolfgang Hoenig</maintainer>
   <maintainer email="barros@diag.uniroma1.it">Barbara Barros Carlos</maintainer>
@@ -9,26 +10,18 @@
 
   <license>MIT</license>
 
-  <url type="website">http://ros.org/wiki/crazyflie</url>
-  <url type="bugtracker">https://github.com/whoenig/crazyflie_ros/issues</url>
-
   <author email="whoenig@usc.edu">Wolfgang Hoenig</author>
   <author email="barros@diag.uniroma1.it">Barbara Barros Carlos</author>
   <author email="tommaso.sartor@imtek.uni-freiburg.de">Tommaso Sartor</author>
 
-  <!-- Dependencies which this package needs to build itself. -->
-  <buildtool_depend>catkin</buildtool_depend>
+  <!-- Build system dependency -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <!-- Dependencies needed after this package is compiled. -->
-  <!-- <run_depend>crazyflie_cpp</run_depend>
-  <run_depend>crazyflie_driver</run_depend>
-  <run_depend>crazyflie_description</run_depend> -->
-  <run_depend>crazyflie_controller</run_depend>
-  <!-- <run_depend>crazyflie_demo</run_depend>
-  <run_depend>crazyflie_tools</run_depend>
-  <run_depend>cortex_stream</run_depend> -->
+  <!-- Dependencies needed to build or run -->
+  <depend>crazyflie_controller</depend>
 
   <export>
-    <metapackage/>
+    <!-- Mark as an ament package -->
+    <build_type>ament_cmake</build_type>
   </export>
 </package>
