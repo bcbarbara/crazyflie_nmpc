@@ -25,11 +25,12 @@
 from model import export_crazyflie_model
 from ocp import export_ocp_solver
 from prms import ModelParameters, SolverConfig
-
+import sys
 
 def main():
+    output_directory = sys.argv[1] if len(sys.argv) > 1 else None
     # Build and export solver
-    solver = export_ocp_solver(export_crazyflie_model(ModelParameters()), SolverConfig())
+    export_ocp_solver(export_crazyflie_model(ModelParameters()), SolverConfig(), output_directory)
 
 if __name__ == "__main__":
     main()

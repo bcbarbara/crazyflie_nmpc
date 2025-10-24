@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>crazyflie_controller</name>
-  <version>1.0.0</version>
+  <version>2.0.0</version>
   <description>NMPC controller for the Crazyflie 2.1</description>
 
   <maintainer email="barros@diag.uniroma1.it">Barbara Barros Carlos</maintainer>
@@ -18,12 +18,11 @@
   <build_depend>tf</build_depend>
   <build_depend>dynamic_reconfigure</build_depend>
   <build_depend>message_generation</build_depend>
-  <build_depend>crazyflie_demo</build_depend>
 
   <run_depend>tf</run_depend>
   <run_depend>dynamic_reconfigure</run_depend>
   <run_depend>message_generation</run_depend>
   <run_depend>message_runtime</run_depend>
   <run_depend>std_msgs</run_depend>
-  <run_depend>crazyflie_demo</run_depend>
+
 </package>

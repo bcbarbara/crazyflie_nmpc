@@ -27,11 +27,14 @@ from casadi import vertcat, diagcat
 import numpy as np
 
 
-def export_ocp_solver(model, ocp_config):
+def export_ocp_solver(model, ocp_config, output_directory):
     """Build and exports the OCP solver for the Crazyflie NMPC."""
 
     # Create OCP object
     ocp = AcadosOcp()
+    
+    # Directory for code gen
+    ocp.code_export_directory = output_directory
 
     # Set model
     ocp.model = model
@@ -47,9 +50,10 @@ def export_ocp_solver(model, ocp_config):
     ocp.solver_options.N_horizon = N
     ocp.solver_options.tf = tf
 
-    # Cost matrices
-    Q = np.diag([120.0, 100.0, 100.0, 1.0e-3, 1.0e-3, 1.0e-3, 1.0e-3, 7.0e-1, 1.0, 4.0, 1.0e-5, 1.0e-5, 10.0])
-    R = np.diag([0.06, 0.06, 0.06, 0.06])
+    # Cost matrices 
+    # (it will be changed in the closed-loop)
+    Q = np.eye(nx)
+    R = np.eye(nu)
 
     # Set tage cost
     ocp.cost.cost_type = 'NONLINEAR_LS'
@@ -83,5 +87,3 @@ def export_ocp_solver(model, ocp_config):
     # Create solver
     ocp_solver = AcadosOcpSolver(ocp)
     print("OCP solver successfully exported for model: {}".format(model.name))
-
-    return ocp_solver
